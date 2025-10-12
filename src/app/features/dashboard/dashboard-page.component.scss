@@ -1,0 +1,214 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--color-bg-primary);
+  min-height: 100vh;
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+
+  .spinner {
+    border: 3px solid var(--color-bg-tertiary);
+    border-top: 3px solid var(--color-primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    color: var(--color-text-tertiary);
+    font-size: 16px;
+    margin: 0;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-state {
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px 0;
+  text-align: center;
+
+  h3 {
+    color: var(--color-error);
+    margin: 0 0 12px 0;
+  }
+
+  .error-message {
+    color: var(--color-error);
+    margin: 8px 0;
+  }
+
+  button {
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: var(--color-error);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 24px 0;
+  border-bottom: 2px solid var(--color-border);
+
+  button {
+    flex: 1;
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--color-text-tertiary);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: var(--color-text-primary);
+      background: var(--color-surface-hover);
+    }
+
+    &.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+  }
+}
+
+.filter-chips {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+  flex-wrap: wrap;
+
+  .chip {
+    padding: 8px 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--color-bg-tertiary);
+      border-color: var(--color-border-dark);
+    }
+
+    &.active {
+      font-weight: 600;
+      
+      &.over {
+        background: var(--color-error-bg);
+        border-color: var(--color-error);
+        color: var(--color-error);
+      }
+
+      &.at-risk {
+        background: var(--color-warning-bg);
+        border-color: var(--color-warning);
+        color: var(--color-warning);
+      }
+
+      &.on-track {
+        background: var(--color-success-bg);
+        border-color: var(--color-success);
+        color: var(--color-success);
+      }
+    }
+  }
+}
+
+.hidden-section {
+  margin-top: 32px;
+
+  .hidden-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f5f5f5;
+      border-color: #ccc;
+    }
+
+    .icon {
+      font-size: 12px;
+      color: #999;
+      transition: transform 0.2s ease;
+    }
+
+    .hidden-label {
+      flex: 1;
+      text-align: left;
+      font-weight: 500;
+    }
+  }
+
+  category-progress-list {
+    margin-top: 16px;
+  }
+}
+
+recurring-expenses-panel {
+  display: block;
+  margin: 24px 0;
+}
+
+category-progress-list {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+
+  .tabs {
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+  }
+
+  .filter-chips {
+    .chip {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+  }
+}

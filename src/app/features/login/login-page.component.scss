@@ -1,0 +1,138 @@
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--gradient-primary);
+  padding: 1rem;
+}
+
+.login-card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 450px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    font-size: 0.95rem;
+    color: var(--color-text-tertiary);
+    margin: 0;
+  }
+}
+
+.login-form {
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 2px solid var(--color-border);
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      border-radius: 8px;
+      transition: all 0.2s;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(251, 183, 0, 0.1);
+      }
+
+      &::placeholder {
+        color: var(--color-text-muted);
+      }
+    }
+
+    .error-message {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--color-error);
+    }
+  }
+
+  .submit-button {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a202c;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(251, 183, 0, 0.3);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.login-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+
+  p {
+    font-size: 0.875rem;
+    color: #718096;
+    margin: 0;
+
+    a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .login-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .login-header h1 {
+    font-size: 1.75rem;
+  }
+}

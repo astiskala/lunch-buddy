@@ -1,0 +1,47 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Lunch Buddy</h1>
+      <p>Enter your API key to continue</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="apiKey">API Key</label>
+        <input
+          type="password"
+          id="apiKey"
+          [value]="apiKey()"
+          (input)="onApiKeyChange($any($event.target).value)"
+          placeholder="Enter your API key"
+          required
+          autocomplete="off"
+        />
+        @if (errorMessage()) {
+          <span class="error-message">{{ errorMessage() }}</span>
+        }
+      </div>
+
+      <button 
+        type="submit" 
+        class="submit-button"
+        [disabled]="isSubmitting()"
+      >
+        @if (isSubmitting()) {
+          <span>Logging in...</span>
+        } @else {
+          <span>Continue</span>
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>
+        Don't have an API key? 
+        <a href="https://my.lunchmoney.app/developers" target="_blank" rel="noopener noreferrer">
+          Get one from Lunch Money
+        </a>
+      </p>
+    </div>
+  </div>
+</div>

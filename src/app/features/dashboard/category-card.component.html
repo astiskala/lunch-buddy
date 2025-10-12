@@ -1,0 +1,105 @@
+<div class="category-card" [attr.data-status]="item().status" (click)="toggleDetails()" (keydown.enter)="toggleDetails()" (keydown.space)="toggleDetails(); $event.preventDefault()" tabindex="0" role="button">
+  <div class="card-header">
+    <div class="category-info">
+      <h3>{{ item().categoryName }}</h3>
+      @if (item().categoryGroupName) {
+        <p class="group-name">{{ item().categoryGroupName }}</p>
+      }
+    </div>
+    <div class="status-badge" [attr.data-status]="item().status">
+      @if (item().status === 'over') {
+        <span>Over</span>
+      } @else if (item().status === 'at-risk') {
+        <span>At risk</span>
+      } @else {
+        <span>On track</span>
+      }
+    </div>
+    <button class="expand-btn" (click)="toggleDetails(); $event.stopPropagation()" [attr.aria-label]="showDetails() ? 'Hide details' : 'Show details'">
+      @if (showDetails()) {
+        <span>▲</span>
+      } @else {
+        <span>▼</span>
+      }
+    </button>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress spent" [style.width.%]="progressValue()" [attr.data-color]="statusColor()"></div>
+    @if (upcomingRecurringTotal() > 0 && projectedValue() > progressValue()) {
+      <div class="progress projected" 
+           [style.width.%]="projectedValue() - progressValue()" 
+           [style.left.%]="progressValue()"
+           [attr.data-color]="statusColor()"></div>
+    }
+    <div class="month-indicator" [style.left.%]="monthProgressPercent()" title="Month progress: {{ monthProgressPercent() }}%">
+      <div class="indicator-line"></div>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <span class="label">Spent</span>
+      <span class="value">{{ spentLabel() }}</span>
+    </div>
+    <div class="metric" [class.has-upcoming]="upcomingRecurringTotal() > 0">
+      <span class="label">Upcoming</span>
+      <span class="value">{{ upcomingLabel() }}</span>
+    </div>
+    <div class="metric">
+      <span class="label">Budget</span>
+      <span class="value">{{ budgetLabel() }}</span>
+    </div>
+    <div class="metric" [class.negative]="remainingAfterUpcoming() < 0">
+      <span class="label">Remaining</span>
+      <span class="value">
+        @if (remainingAfterUpcoming() < 0) {
+          <span>-{{ remainingAfterUpcomingLabel() }}</span>
+        } @else {
+          <span>{{ remainingAfterUpcomingLabel() }}</span>
+        }
+      </span>
+    </div>
+  </div>
+
+  @if (showDetails()) {
+    <div 
+      class="details" 
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      role="region"
+      aria-label="Category details"
+    >
+      <h4>This month's activity</h4>
+      @if (isLoadingTransactions()) {
+        <div class="loading">Loading transactions...</div>
+      } @else if (activityEntries().length === 0) {
+        <p class="empty">No transactions or upcoming recurring charges recorded for this category this month.</p>
+      } @else {
+        <div class="activity-list">
+          @for (entry of activityEntries(); track entry.id) {
+            <div class="activity-item">
+              <div class="activity-info">
+                <div class="activity-header">
+                  <span class="activity-label">{{ entry.label }}</span>
+                  @if (entry.kind === 'upcoming') {
+                    <span class="badge upcoming">Upcoming</span>
+                  }
+                </div>
+                <div class="activity-meta">
+                  <span class="date">{{ formatDate(entry) }}</span>
+                  @if (entry.notes) {
+                    <span class="notes">{{ entry.notes }}</span>
+                  }
+                </div>
+              </div>
+              <div class="activity-amount" [attr.data-color]="getAmountColor(entry)">
+                {{ formatAmount(entry) }}
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

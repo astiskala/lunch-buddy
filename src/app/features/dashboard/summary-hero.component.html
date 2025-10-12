@@ -1,0 +1,95 @@
+<div class="summary-hero">
+  <div class="header">
+    <h2>{{ monthName() }} Budget</h2>
+    <div class="action-buttons">
+      <button class="icon-btn customize-btn" (click)="customize.emit()" title="Customize dashboard">
+        <mat-icon class="icon">settings</mat-icon>
+        <span class="label">Customize</span>
+      </button>
+      <button class="icon-btn logout-btn" (click)="logout.emit()" title="Logout">
+        <mat-icon class="icon">logout</mat-icon>
+        <span class="label">Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="budget-bars">
+    <!-- Expenses -->
+    <div class="budget-section">
+      <div class="section-header">
+        <h3>Expenses</h3>
+        <div class="totals">
+          <span class="spent">{{ expenseProjectedFormatted() }}</span>
+          <span class="separator">/</span>
+          <span class="budget">{{ expenseBudgetFormatted() }}</span>
+        </div>
+      </div>
+      
+      <div class="progress-bars">
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar spent" [style.width.%]="expenseSpentPercent()"></div>
+          <div class="progress-bar projected" [style.width.%]="expenseProjectedPercent()"></div>
+          <div class="month-indicator" [style.left.%]="monthProgressPercent()" title="Month progress: {{ monthProgressPercent() }}%">
+            <div class="indicator-line"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Spent</span>
+          <span class="metric-value">{{ expenseSpentFormatted() }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Upcoming</span>
+          <span class="metric-value">{{ expenseUpcomingFormatted() }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Remaining</span>
+          <span class="metric-value" [class.negative]="expenseRemaining() < 0">
+            {{ expenseRemainingFormatted() }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income -->
+    <div class="budget-section">
+      <div class="section-header">
+        <h3>Income</h3>
+        <div class="totals">
+          <span class="spent">{{ incomeSpentFormatted() }}</span>
+          <span class="separator">/</span>
+          <span class="budget">{{ incomeBudgetFormatted() }}</span>
+        </div>
+      </div>
+      
+      <div class="progress-bars">
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar spent" [style.width.%]="incomeSpentPercent()"></div>
+          <div class="progress-bar projected" [style.width.%]="incomeProjectedPercent()"></div>
+          <div class="month-indicator" [style.left.%]="monthProgressPercent()" title="Month progress: {{ monthProgressPercent() }}%">
+            <div class="indicator-line"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <span class="metric-label">Received</span>
+          <span class="metric-value">{{ incomeSpentFormatted() }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Upcoming</span>
+          <span class="metric-value">{{ incomeUpcomingFormatted() }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Remaining</span>
+          <span class="metric-value" [class.negative]="incomeRemaining() < 0">
+            {{ incomeRemainingFormatted() }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

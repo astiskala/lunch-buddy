@@ -1,1 +1,164 @@
-/* You can add global styles to this file, and also import other style files */
+
+// Include theming for Angular Material with `mat.theme()`.
+@use '@angular/material' as mat;
+
+// Define custom primary color palette based on #FBB700
+$lunch-buddy-primary: (
+  0: #000000,
+  10: #2b1f00,
+  20: #473400,
+  25: #564000,
+  30: #664d00,
+  35: #765900,
+  40: #876600,
+  50: #a98100,
+  60: #cc9c00,
+  70: #f0b800,
+  80: #fbb700,
+  90: #ffde9f,
+  95: #ffeed9,
+  98: #fff8f0,
+  99: #fffbf7,
+  100: #ffffff,
+);
+
+html {
+  @include mat.theme((
+    color: (
+      primary: $lunch-buddy-primary,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+// CSS Custom Properties for theming
+:root {
+  // Primary color
+  --color-primary: #fbb700;
+  --color-primary-dark: #d99d00;
+  --color-primary-light: #ffde9f;
+  
+  // Secondary color
+  --color-secondary: #44958c;
+  --color-secondary-dark: #357872;
+  --color-secondary-light: #6bb3ab;
+  
+  // Background colors
+  --color-bg-primary: #fcfcfc;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #e8e8e8;
+  
+  // Surface colors
+  --color-surface: #ffffff;
+  --color-surface-hover: #f9f9f9;
+  
+  // Text colors
+  --color-text-primary: #1a202c;
+  --color-text-secondary: #4a5568;
+  --color-text-tertiary: #718096;
+  --color-text-muted: #a0aec0;
+  
+  // Border colors
+  --color-border: #e2e8f0;
+  --color-border-dark: #cbd5e0;
+  
+  // Status colors
+  --color-success: #4caf50;
+  --color-success-bg: #e8f5e9;
+  --color-warning: #ff9800;
+  --color-warning-bg: #fff3e0;
+  --color-error: #f44336;
+  --color-error-bg: #ffebee;
+  
+  // Shadows
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+  
+  // Gradients
+  --gradient-primary: linear-gradient(135deg, #fbb700 0%, #d99d00 100%);
+  --gradient-secondary: linear-gradient(135deg, #44958c 0%, #357872 100%);
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+  :root {
+    // Primary color (slightly adjusted for dark mode)
+    --color-primary: #fbb700;
+    --color-primary-dark: #d99d00;
+    --color-primary-light: #ffd54f;
+    
+    // Secondary color
+    --color-secondary: #44958c;
+    --color-secondary-dark: #357872;
+    --color-secondary-light: #6bb3ab;
+    
+    // Background colors
+    --color-bg-primary: #272727;
+    --color-bg-secondary: #303030;
+    --color-bg-tertiary: #3a3a3a;
+    
+    // Surface colors
+    --color-surface: #303030;
+    --color-surface-hover: #3a3a3a;
+    
+    // Text colors
+    --color-text-primary: #e8e8e8;
+    --color-text-secondary: #b8b8b8;
+    --color-text-tertiary: #888888;
+    --color-text-muted: #666666;
+    
+    // Border colors
+    --color-border: #444444;
+    --color-border-dark: #555555;
+    
+    // Status colors (adjusted for dark mode)
+    --color-success: #66bb6a;
+    --color-success-bg: #1b3a1e;
+    --color-warning: #ffb74d;
+    --color-warning-bg: #3d2f1a;
+    --color-error: #ef5350;
+    --color-error-bg: #3d1a1a;
+    
+    // Shadows
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
+    
+    // Gradients
+    --gradient-primary: linear-gradient(135deg, #fbb700 0%, #ffde9f 100%);
+    --gradient-secondary: linear-gradient(135deg, #44958c 0%, #6bb3ab 100%);
+  }
+}
+
+body {
+  // Support both light and dark color schemes based on user preference
+  color-scheme: light dark;
+
+  // Use CSS custom properties for colors
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: var(--mat-sys-body-medium);
+
+  // Reset the user agent margin.
+  margin: 0;
+}
+
+/* Global styles */
+
+html, body { 
+  height: 100%; 
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+

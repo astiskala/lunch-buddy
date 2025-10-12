@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "lunchmoney-budget-angular": {
+    "lunch-buddy": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -61,10 +61,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "lunchmoney-budget-angular:build:production"
+              "buildTarget": "lunch-buddy:build:production"
             },
             "development": {
-              "buildTarget": "lunchmoney-budget-angular:build:development"
+              "buildTarget": "lunch-buddy:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -85,6 +85,15 @@
             ],
             "styles": [
               "src/styles.scss"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
             ]
           }
         }

@@ -1,0 +1,120 @@
+<div class="dashboard-container">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading budget data...</p>
+    </div>
+  } @else if (errors().length > 0) {
+    <div class="error-state">
+      <h3>Error Loading Budget</h3>
+      @for (error of errors(); track error) {
+        <p class="error-message">{{ error }}</p>
+      }
+      <button (click)="refresh()">Retry</button>
+    </div>
+  } @else {
+    <summary-hero
+      [monthStart]="startDate()"
+      [monthProgressRatio]="monthProgressRatio()"
+      [totalExpenseSpent]="totalExpenseSpent()"
+      [totalExpenseBudget]="totalExpenseBudget()"
+      [totalExpenseUpcoming]="totalExpenseUpcoming()"
+      [totalIncomeSpent]="totalIncomeSpent()"
+      [totalIncomeBudget]="totalIncomeBudget()"
+      [totalIncomeUpcoming]="totalIncomeUpcoming()"
+      [currency]="currency()"
+      (customize)="openPreferencesDialog()"
+      (logout)="logout()"
+    />
+
+    <div class="tabs">
+      <button 
+        [class.active]="activeTab() === 'expenses'"
+        (click)="handleTabChange('expenses')">
+        Expenses
+      </button>
+      <button 
+        [class.active]="activeTab() === 'income'"
+        (click)="handleTabChange('income')">
+        Income
+      </button>
+    </div>
+
+    <div class="filter-chips">
+      <button 
+        class="chip"
+        [class.active]="statusFilter() === 'over'"
+        [class.over]="statusFilter() === 'over'"
+        (click)="handleStatusFilterChange('over')">
+        Over Budget ({{ statusCounts().over }})
+      </button>
+      <button 
+        class="chip"
+        [class.active]="statusFilter() === 'at-risk'"
+        [class.at-risk]="statusFilter() === 'at-risk'"
+        (click)="handleStatusFilterChange('at-risk')">
+        At Risk ({{ statusCounts().atRisk }})
+      </button>
+      <button 
+        class="chip"
+        [class.active]="statusFilter() === 'on-track'"
+        [class.on-track]="statusFilter() === 'on-track'"
+        (click)="handleStatusFilterChange('on-track')">
+        On Track ({{ statusCounts().onTrack }})
+      </button>
+    </div>
+
+    @if (recurringByCategory().unassigned.length > 0) {
+      <recurring-expenses-panel 
+        [expenses]="recurringByCategory().unassigned" 
+        [defaultCurrency]="currency() ?? 'USD'" />
+    }
+
+    <category-progress-list
+      [items]="filteredVisibleItems()"
+      [recurringByCategory]="recurringByCategory().assigned"
+      [defaultCurrency]="currency() ?? 'USD'"
+      [startDate]="startDate()"
+      [endDate]="endDate()"
+      [monthProgressRatio]="monthProgressRatio()"
+      [emptyMessage]="visibleEmptyMessage()"
+    />
+
+    @if (filteredHiddenItems().length > 0) {
+      <div class="hidden-section">
+        <button class="hidden-toggle" (click)="toggleHidden()">
+          @if (showHidden()) {
+            <span class="icon">▼</span>
+          } @else {
+            <span class="icon">▶</span>
+          }
+          <span class="hidden-label">
+            {{ filteredHiddenItems().length }} hidden {{ hiddenLabel() }}
+            ({{ hiddenTotalFormatted() }})
+          </span>
+        </button>
+
+        @if (showHidden()) {
+          <category-progress-list
+            [items]="filteredHiddenItems()"
+            [recurringByCategory]="recurringByCategory().assigned"
+            [defaultCurrency]="currency() ?? 'USD'"
+            [startDate]="startDate()"
+            [endDate]="endDate()"
+            [monthProgressRatio]="monthProgressRatio()"
+            [emptyMessage]="hiddenEmptyMessage()"
+          />
+        }
+      </div>
+    }
+
+    <category-preferences-dialog
+      [open]="showPreferencesDialog()"
+      [items]="filteredVisibleItems()"
+      [hiddenItems]="filteredHiddenItems()"
+      [preferences]="preferences()"
+      (dialogClose)="closePreferencesDialog()"
+      (preferencesChange)="handlePreferencesChange($event)"
+    />
+  }
+</div>

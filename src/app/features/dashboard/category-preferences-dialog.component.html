@@ -1,0 +1,154 @@
+@if (open()) {
+  <div 
+    class="dialog-overlay" 
+    (click)="handleClose()"
+    role="button"
+    tabindex="0"
+    (keydown.escape)="handleClose()"
+    aria-label="Close dialog"
+  >
+    <div 
+      class="dialog-container" 
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      role="dialog"
+      aria-labelledby="dialog-title"
+      aria-modal="true"
+    >
+      <div class="dialog-header">
+        <h2 id="dialog-title">Customize your dashboard</h2>
+        <button class="close-btn" (click)="handleClose()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="dialog-content">
+        <!-- Alert Threshold -->
+        <div class="setting-section">
+          <div class="setting-header">
+            <span class="icon warning">⚠</span>
+            <div class="setting-info">
+              <h3>Alert threshold</h3>
+              <p>Control when a category is flagged as "at risk" relative to its budget.</p>
+            </div>
+          </div>
+          <div class="slider-container">
+            <input 
+              type="range" 
+              min="50" 
+              max="95" 
+              step="1" 
+              [value]="warnAtPercent()"
+              (input)="handleWarnRatioChange($event)"
+              class="slider"
+            />
+            <div class="slider-labels">
+              <span>50%</span>
+              <span class="current-value">{{ warnAtPercent() }}%</span>
+              <span>95%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="setting-section">
+          <div class="setting-header">
+            <label class="toggle-container">
+              <input 
+                type="checkbox" 
+                [checked]="notificationsEnabled()"
+                (change)="handleNotificationsChange($event)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <div class="setting-info">
+              <h3>Push notifications</h3>
+              <p>Get notified when a category is at risk or goes over budget (requires browser permission).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visible Categories -->
+        <div class="setting-section">
+          <div class="section-title">
+            <h3>Visible categories</h3>
+            <p>Reorder or hide categories to match what you care about most.</p>
+          </div>
+          <div class="category-list">
+            @for (category of visibleCategories(); track category.categoryId; let i = $index) {
+              <div class="category-item">
+                <div class="category-info">
+                  <div class="category-name">{{ category.categoryName }}</div>
+                  @if (category.categoryGroupName) {
+                    <div class="category-group">{{ category.categoryGroupName }}</div>
+                  }
+                </div>
+                <div class="category-actions">
+                  <button 
+                    class="icon-btn"
+                    [disabled]="!canMoveUp(i)"
+                    (click)="moveCategory(category.categoryId, -1)"
+                    title="Move up">
+                    ▲
+                  </button>
+                  <button 
+                    class="icon-btn"
+                    [disabled]="!canMoveDown(i)"
+                    (click)="moveCategory(category.categoryId, 1)"
+                    title="Move down">
+                    ▼
+                  </button>
+                  <button 
+                    class="icon-btn hide-btn"
+                    (click)="toggleVisibility(category.categoryId)"
+                    title="Hide category">
+                    👁
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Hidden Categories -->
+        @if (hiddenCategories().length > 0) {
+          <div class="setting-section">
+            <div class="section-title">
+              <h3>Hidden categories ({{ hiddenCategories().length }})</h3>
+              <p>Click to show again on your dashboard.</p>
+            </div>
+            <div class="category-list">
+              @for (category of hiddenCategories(); track category.categoryId) {
+                <div class="category-item hidden">
+                  <div class="category-info">
+                    <div class="category-name">{{ category.categoryName }}</div>
+                    @if (category.categoryGroupName) {
+                      <div class="category-group">{{ category.categoryGroupName }}</div>
+                    }
+                  </div>
+                  <div class="category-actions">
+                    <button 
+                      class="icon-btn show-btn"
+                      (click)="toggleVisibility(category.categoryId)"
+                      title="Show category">
+                      👁
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" (click)="resetPreferences()">
+          <span class="icon">↺</span>
+          Reset to defaults
+        </button>
+        <div class="actions-right">
+          <button class="btn btn-text" (click)="handleClose()">Cancel</button>
+          <button class="btn btn-primary" (click)="handleSave()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
