@@ -63,8 +63,8 @@
       [value]="activeTab()"
       (valueChange)="handleTabChange($event)"
       aria-label="Budget category toggle">
-      <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
-      <mat-button-toggle value="income">Income</mat-button-toggle>
+      <mat-button-toggle class="segmented-option" value="expenses">Expenses</mat-button-toggle>
+      <mat-button-toggle class="segmented-option" value="income">Income</mat-button-toggle>
     </mat-button-toggle-group>
 
     <div class="filter-chips">
