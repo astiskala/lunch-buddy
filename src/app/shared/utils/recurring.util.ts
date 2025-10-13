@@ -1,6 +1,7 @@
 export interface RecurringDateOptions {
   windowStart?: string;
   windowEnd?: string;
+  referenceDate?: Date;
 }
 
 const parseDate = (value: string | null | undefined): Date | null => {
@@ -115,15 +116,6 @@ const addDuration = (date: Date, duration: Duration): Date => {
   return result;
 };
 
-const subtractDuration = (date: Date, duration: Duration): Date => {
-  const result = new Date(date);
-  if (duration.years) result.setFullYear(result.getFullYear() - duration.years);
-  if (duration.months) result.setMonth(result.getMonth() - duration.months);
-  if (duration.weeks) result.setDate(result.getDate() - duration.weeks * 7);
-  if (duration.days) result.setDate(result.getDate() - duration.days);
-  return result;
-};
-
 const isWithinInterval = (date: Date, interval: { start: Date; end: Date }): boolean => {
   const time = date.getTime();
   return time >= interval.start.getTime() && time <= interval.end.getTime();
@@ -140,6 +132,12 @@ const isAfter = (date: Date, dateToCompare: Date): boolean => {
 const clampToWindow = (candidate: Date, windowStart: Date, windowEnd: Date): boolean =>
   isWithinInterval(candidate, { start: windowStart, end: windowEnd });
 
+const startOfDay = (date: Date): Date => {
+  const result = new Date(date.getTime());
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
 /**
  * Returns the expected date for a recurring expense within a given window.
  */
@@ -147,7 +145,7 @@ export const getRecurringDate = (
   expense: { next_occurrence?: string | null; billing_date: string; start_date: string | null; cadence: string },
   options?: RecurringDateOptions,
 ): Date | null => {
-  const candidate =
+  let candidate =
     parseDate(expense.next_occurrence) ??
     parseDate(expense.billing_date) ??
     parseDate(expense.start_date);
@@ -158,44 +156,70 @@ export const getRecurringDate = (
 
   const windowStart = parseWindowDate(options?.windowStart, 'start');
   const windowEnd = parseWindowDate(options?.windowEnd, 'end');
-
-  if (!windowStart || !windowEnd) {
-    return candidate;
-  }
-
-  if (clampToWindow(candidate, windowStart, windowEnd)) {
-    return candidate;
-  }
-
   const cadenceDuration = getCadenceDuration(expense.cadence);
+  const reference = options?.referenceDate ? startOfDay(options.referenceDate) : null;
 
-  if (cadenceDuration) {
+  if (windowStart && windowEnd) {
+    if (isAfter(candidate, windowEnd)) {
+      return null;
+    }
+
     if (isBefore(candidate, windowStart)) {
-      let projected = candidate;
-      let iterations = 0;
-      while (isBefore(projected, windowStart) && iterations < 60) {
-        projected = addDuration(projected, cadenceDuration);
-        iterations += 1;
+      if (cadenceDuration) {
+        let projected = candidate;
+        let iterations = 0;
+        while (isBefore(projected, windowStart) && iterations < 60) {
+          projected = addDuration(projected, cadenceDuration);
+          iterations += 1;
+        }
+
+        if (clampToWindow(projected, windowStart, windowEnd)) {
+          candidate = projected;
+        }
       }
-      if (clampToWindow(projected, windowStart, windowEnd)) {
-        return projected;
+
+      if (!clampToWindow(candidate, windowStart, windowEnd)) {
+        const aligned = alignToWindowMonth(candidate, windowStart);
+        if (clampToWindow(aligned, windowStart, windowEnd)) {
+          candidate = aligned;
+        } else {
+          return null;
+        }
       }
-    } else if (isAfter(candidate, windowEnd)) {
-      let projected = candidate;
-      let iterations = 0;
-      while (isAfter(projected, windowEnd) && iterations < 60) {
-        projected = subtractDuration(projected, cadenceDuration);
-        iterations += 1;
-      }
-      if (clampToWindow(projected, windowStart, windowEnd)) {
-        return projected;
-      }
+    }
+
+    if (!clampToWindow(candidate, windowStart, windowEnd)) {
+      return null;
     }
   }
 
-  const aligned = alignToWindowMonth(candidate, windowStart);
-  if (clampToWindow(aligned, windowStart, windowEnd)) {
-    return aligned;
+  if (reference) {
+    if (isBefore(startOfDay(candidate), reference)) {
+      if (!cadenceDuration) {
+        return null;
+      }
+
+      let projected = candidate;
+      let iterations = 0;
+      while (isBefore(startOfDay(projected), reference) && iterations < 60) {
+        projected = addDuration(projected, cadenceDuration);
+        iterations += 1;
+
+        if (windowStart && windowEnd && isAfter(projected, windowEnd)) {
+          return null;
+        }
+      }
+
+      if (windowStart && windowEnd && !clampToWindow(projected, windowStart, windowEnd)) {
+        return null;
+      }
+
+      if (isBefore(startOfDay(projected), reference)) {
+        return null;
+      }
+
+      candidate = projected;
+    }
   }
 
   return candidate;

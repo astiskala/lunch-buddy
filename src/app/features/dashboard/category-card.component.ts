@@ -138,13 +138,16 @@ export class CategoryCardComponent {
     }
 
     let total = 0;
+
     for (const instance of recurring) {
-      if (!recordedRecurringIds.has(instance.expense.id)) {
-        total += Math.abs(parseFloat(instance.expense.amount));
+      if (recordedRecurringIds.has(instance.expense.id)) {
+        continue;
       }
+
+      total += Math.abs(parseFloat(instance.expense.amount));
     }
 
-    return total || Math.max(this.item().recurringTotal, 0);
+    return total;
   });
 
   readonly upcomingLabel = computed(() =>

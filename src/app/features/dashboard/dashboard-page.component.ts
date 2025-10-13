@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService, CategoryPreferences } from '../../shared/services/budget.service';
@@ -29,12 +29,15 @@ export class DashboardPageComponent {
   private budgetService = inject(BudgetService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
+  private readonly locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
 
   // Local state
   protected readonly activeTab = signal<TabType>('expenses');
   protected readonly statusFilter = signal<StatusFilter>('all');
   protected readonly showHidden = signal(false);
   protected readonly showPreferencesDialog = signal(false);
+  protected readonly isOffline = signal<boolean>(!isNavigatorOnline());
 
   // Signals from service
   protected readonly isLoading = this.budgetService.getIsLoading;
@@ -49,6 +52,7 @@ export class DashboardPageComponent {
   protected readonly recurringByCategory = this.budgetService.getRecurringByCategory;
   protected readonly errors = this.budgetService.getErrors;
   protected readonly preferences = this.budgetService.getPreferences;
+  protected readonly lastRefresh = this.budgetService.getLastRefresh;
 
   // Computed values
   protected readonly activeItems = computed(() =>
@@ -156,6 +160,40 @@ export class DashboardPageComponent {
       : `No hidden ${this.hiddenLabel()}.`;
   });
 
+  protected readonly hasLoadedOnce = computed(() =>
+    this.lastRefresh() !== null || this.expenses().length > 0 || this.incomes().length > 0
+  );
+
+  protected readonly showInitialLoading = computed(() => this.isLoading() && !this.hasLoadedOnce());
+  protected readonly isRefreshing = computed(() => this.isLoading() && this.hasLoadedOnce());
+
+  protected readonly lastRefreshText = computed(() => {
+    const timestamp = this.lastRefresh();
+    if (!timestamp) {
+      return 'Waiting for first sync';
+    }
+
+    const formatter = new Intl.DateTimeFormat(this.locale, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+
+    return `Last updated ${formatter.format(timestamp)}`;
+  });
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const handleOnline = () => this.isOffline.set(false);
+      const handleOffline = () => this.isOffline.set(true);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      this.destroyRef.onDestroy(() => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      });
+    }
+  }
+
   private getFilterDescription(): string | null {
     switch (this.statusFilter()) {
       case 'over': return 'over budget';
@@ -200,4 +238,8 @@ export class DashboardPageComponent {
     this.authService.clearApiKey();
     this.router.navigate(['/login']);
   }
+}
+
+function isNavigatorOnline(): boolean {
+  return typeof navigator !== 'undefined' ? navigator.onLine : true;
 }

@@ -41,27 +41,29 @@ import { decodeHtmlEntities } from '../../shared/utils/text.util';
   `,
   styles: [`
     .recurring-panel {
-      background: #fff;
+      background: var(--color-surface);
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--shadow-sm);
       overflow: hidden;
+      border: 1px solid rgba(68, 149, 140, 0.15);
     }
 
     .panel-header {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-      color: white;
+      background: var(--gradient-secondary);
+      color: #1a202c;
       padding: 20px 24px;
 
       h3 {
         margin: 0 0 8px 0;
         font-size: 18px;
         font-weight: 600;
+        color: #1a202c;
       }
 
       .total {
         margin: 0;
         font-size: 14px;
-        opacity: 0.95;
+        opacity: 0.85;
       }
     }
 
@@ -74,7 +76,7 @@ import { decodeHtmlEntities } from '../../shared/utils/text.util';
       justify-content: space-between;
       align-items: flex-start;
       padding: 16px;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--color-border);
 
       &:last-child {
         border-bottom: none;
@@ -87,13 +89,13 @@ import { decodeHtmlEntities } from '../../shared/utils/text.util';
 
       .payee {
         font-weight: 600;
-        color: #333;
+        color: var(--color-text-primary);
         margin-bottom: 4px;
       }
 
       .description {
         font-size: 13px;
-        color: #666;
+        color: var(--color-text-secondary);
         margin-bottom: 8px;
       }
 
@@ -112,13 +114,13 @@ import { decodeHtmlEntities } from '../../shared/utils/text.util';
         letter-spacing: 0.3px;
 
         &.upcoming {
-          background: #fff3cd;
-          color: #856404;
+          background: var(--color-secondary-light);
+          color: var(--color-secondary-dark);
         }
 
         &.suggested {
-          background: #e7f3ff;
-          color: #004085;
+          background: rgba(68, 149, 140, 0.15);
+          color: var(--color-primary-dark);
         }
       }
     }
@@ -129,14 +131,14 @@ import { decodeHtmlEntities } from '../../shared/utils/text.util';
 
       .amount {
         font-weight: 700;
-        color: #333;
+        color: var(--color-text-primary);
         font-size: 16px;
         margin-bottom: 4px;
       }
 
       .date {
         font-size: 12px;
-        color: #999;
+        color: var(--color-text-muted);
       }
     }
   `],

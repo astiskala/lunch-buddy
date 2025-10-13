@@ -1,5 +1,5 @@
 <div class="dashboard-container">
-  @if (isLoading()) {
+  @if (showInitialLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
       <p>Loading budget data...</p>
@@ -13,6 +13,23 @@
       <button (click)="refresh()">Retry</button>
     </div>
   } @else {
+    <div class="refresh-bar">
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="refresh()"
+        [disabled]="isLoading()"
+        aria-label="Refresh data">
+        <span class="material-icons" [class.spin]="isRefreshing()">refresh</span>
+      </button>
+      <div class="refresh-meta">
+        <span class="last-refresh" aria-live="polite">{{ lastRefreshText() }}</span>
+        @if (isOffline()) {
+          <span class="offline-note" aria-live="polite">Offline mode &mdash; showing cached data</span>
+        }
+      </div>
+    </div>
+
     <summary-hero
       [monthStart]="startDate()"
       [monthProgressRatio]="monthProgressRatio()"

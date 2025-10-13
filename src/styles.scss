@@ -1,9 +1,29 @@
 
 // Include theming for Angular Material with `mat.theme()`.
 @use '@angular/material' as mat;
+@use 'styles/dashboard-components';
 
-// Define custom primary color palette based on #FBB700
+// Define custom color palettes
 $lunch-buddy-primary: (
+  0: #000000,
+  10: #001716,
+  20: #00312d,
+  25: #003d37,
+  30: #004943,
+  35: #00554f,
+  40: #0f605a,
+  50: #2c7a73,
+  60: #44958c,
+  70: #5ea9a0,
+  80: #78bdb4,
+  90: #bfe4de,
+  95: #dcf2ef,
+  98: #f2fbfa,
+  99: #f7fefd,
+  100: #ffffff,
+);
+
+$lunch-buddy-secondary: (
   0: #000000,
   10: #2b1f00,
   20: #473400,
@@ -26,6 +46,7 @@ html {
   @include mat.theme((
     color: (
       primary: $lunch-buddy-primary,
+      secondary: $lunch-buddy-secondary,
       tertiary: mat.$blue-palette,
     ),
     typography: Roboto,
@@ -36,14 +57,14 @@ html {
 // CSS Custom Properties for theming
 :root {
   // Primary color
-  --color-primary: #fbb700;
-  --color-primary-dark: #d99d00;
-  --color-primary-light: #ffde9f;
+  --color-primary: #44958c;
+  --color-primary-dark: #357872;
+  --color-primary-light: #6bb3ab;
   
   // Secondary color
-  --color-secondary: #44958c;
-  --color-secondary-dark: #357872;
-  --color-secondary-light: #6bb3ab;
+  --color-secondary: #fbb700;
+  --color-secondary-dark: #d99d00;
+  --color-secondary-light: #ffde9f;
   
   // Background colors
   --color-bg-primary: #fcfcfc;
@@ -78,22 +99,22 @@ html {
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
   
   // Gradients
-  --gradient-primary: linear-gradient(135deg, #fbb700 0%, #d99d00 100%);
-  --gradient-secondary: linear-gradient(135deg, #44958c 0%, #357872 100%);
+  --gradient-primary: linear-gradient(135deg, #44958c 0%, #357872 100%);
+  --gradient-secondary: linear-gradient(135deg, #fbb700 0%, #d99d00 100%);
 }
 
 // Dark mode
 @media (prefers-color-scheme: dark) {
   :root {
     // Primary color (slightly adjusted for dark mode)
-    --color-primary: #fbb700;
-    --color-primary-dark: #d99d00;
-    --color-primary-light: #ffd54f;
+  --color-primary: #44958c;
+  --color-primary-dark: #357872;
+  --color-primary-light: #6bb3ab;
     
     // Secondary color
-    --color-secondary: #44958c;
-    --color-secondary-dark: #357872;
-    --color-secondary-light: #6bb3ab;
+  --color-secondary: #fbb700;
+  --color-secondary-dark: #d99d00;
+  --color-secondary-light: #ffd54f;
     
     // Background colors
     --color-bg-primary: #272727;
@@ -128,8 +149,8 @@ html {
     --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
     
     // Gradients
-    --gradient-primary: linear-gradient(135deg, #fbb700 0%, #ffde9f 100%);
-    --gradient-secondary: linear-gradient(135deg, #44958c 0%, #6bb3ab 100%);
+  --gradient-primary: linear-gradient(135deg, #44958c 0%, #6bb3ab 100%);
+  --gradient-secondary: linear-gradient(135deg, #fbb700 0%, #ffde9f 100%);
   }
 }
 

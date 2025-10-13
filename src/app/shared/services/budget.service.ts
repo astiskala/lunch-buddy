@@ -39,6 +39,7 @@ export class BudgetService {
   protected readonly recurringExpenses = signal<RecurringExpense[]>([]);
   protected readonly isLoading = signal(true);
   protected readonly isRecurringLoading = signal(false);
+  protected readonly lastRefresh = signal<Date | null>(loadLastRefresh());
   protected readonly errors = signal<Error[]>([]);
 
   // Preferences
@@ -99,11 +100,13 @@ export class BudgetService {
 
     const windowStart = this.startDate();
     const windowEnd = this.endDate();
+    const referenceDate = deriveReferenceDate(windowStart, windowEnd);
 
     for (const expense of expenses) {
       const occurrenceDate = getRecurringDate(expense, {
         windowStart,
         windowEnd,
+        referenceDate,
       });
 
       if (!occurrenceDate) {
@@ -179,6 +182,12 @@ export class BudgetService {
 
           this.budgetData.set(progress);
           this.isLoading.set(false);
+
+          if (canUseNavigator() ? navigator.onLine : true) {
+            const timestamp = new Date();
+            this.lastRefresh.set(timestamp);
+            persistLastRefresh(timestamp);
+          }
         },
         error: (error: Error) => {
           this.errors.set([error]);
@@ -222,4 +231,83 @@ export class BudgetService {
   getMonthProgressRatio = this.monthProgressRatio;
   getPreferences = this.preferences;
   getRecurringByCategory = this.recurringByCategory;
+  getLastRefresh = this.lastRefresh;
+}
+
+const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
+
+function loadLastRefresh(): Date | null {
+  if (typeof localStorage === 'undefined') {
+    return null;
+  }
+  try {
+    const rawValue = localStorage.getItem(LAST_REFRESH_KEY);
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsed = new Date(rawValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  } catch (error) {
+    console.error('Failed to read last refresh timestamp', error);
+    return null;
+  }
+}
+
+function persistLastRefresh(timestamp: Date): void {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+  try {
+    localStorage.setItem(LAST_REFRESH_KEY, timestamp.toISOString());
+  } catch (error) {
+    console.error('Failed to store last refresh timestamp', error);
+  }
+}
+
+function canUseNavigator(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
+}
+
+function deriveReferenceDate(windowStart: string, windowEnd: string): Date {
+  const today = startOfToday();
+  const start = parseIsoDay(windowStart);
+  const end = parseIsoDay(windowEnd);
+
+  if (start && end) {
+    if (today.getTime() < start.getTime()) {
+      return start;
+    }
+
+    const dayAfterEnd = new Date(end.getTime());
+    dayAfterEnd.setDate(dayAfterEnd.getDate() + 1);
+
+    if (today.getTime() > end.getTime()) {
+      return dayAfterEnd;
+    }
+
+    return today;
+  }
+
+  return today;
+}
+
+function parseIsoDay(value: string): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  parsed.setHours(0, 0, 0, 0);
+  return parsed;
+}
+
+function startOfToday(): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
 }
