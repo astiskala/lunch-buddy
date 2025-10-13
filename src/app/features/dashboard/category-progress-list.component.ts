@@ -24,27 +24,31 @@ import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.
       </div>
     }
   `,
-  styles: [`
-    .empty-message {
-      color: #666;
-      text-align: center;
-      padding: 24px;
-      font-size: 14px;
-    }
+  styles: [
+    `
+      .empty-message {
+        color: #666;
+        text-align: center;
+        padding: 24px;
+        font-size: 14px;
+      }
 
-    .category-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-  `],
+      .category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryProgressListComponent {
   readonly items = input.required<BudgetProgress[]>();
   readonly defaultCurrency = input.required<string>();
   readonly recurringByCategory = input<Map<number, RecurringInstance[]>>();
-  readonly emptyMessage = input<string>('No categories available. Adjust your filters or configure your budgets in Lunch Money.');
+  readonly emptyMessage = input<string>(
+    'No categories available. Adjust your filters or configure your budgets in Lunch Money.',
+  );
   readonly startDate = input.required<string>();
   readonly endDate = input.required<string>();
   readonly monthProgressRatio = input<number>(0);

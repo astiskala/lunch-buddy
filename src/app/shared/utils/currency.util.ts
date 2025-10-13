@@ -1,7 +1,5 @@
 const resolveLocale = (): string =>
-  typeof navigator !== 'undefined' && navigator.language
-    ? navigator.language
-    : 'en-US';
+  typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US';
 
 export interface FormatCurrencyOptions {
   readonly locale?: string;

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal, computed, inject, DestroyRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  computed,
+  inject,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -63,50 +70,64 @@ export class DashboardPageComponent {
 
   // Computed values
   protected readonly activeItems = computed(() =>
-    this.activeTab() === 'expenses' ? this.expenses() : this.incomes()
+    this.activeTab() === 'expenses' ? this.expenses() : this.incomes(),
   );
 
   protected readonly hiddenItems = computed(() =>
-    this.activeTab() === 'expenses' ? this.hiddenExpenses() : this.hiddenIncomes()
+    this.activeTab() === 'expenses' ? this.hiddenExpenses() : this.hiddenIncomes(),
   );
 
   protected readonly filteredVisibleItems = computed(() => {
     const items = this.activeItems();
     const filter = this.statusFilter();
     if (filter === 'all') return items;
-    return items.filter(item => item.status === filter);
+    return items.filter((item) => item.status === filter);
   });
 
   protected readonly filteredHiddenItems = computed(() => {
     const items = this.hiddenItems();
     const filter = this.statusFilter();
     if (filter === 'all') return items;
-    return items.filter(item => item.status === filter);
+    return items.filter((item) => item.status === filter);
   });
 
   protected readonly totalExpenseSpent = computed(() =>
-    [...this.expenses(), ...this.hiddenExpenses()].reduce((sum, item) => sum + item.spent, 0)
+    [...this.expenses(), ...this.hiddenExpenses()].reduce((sum, item) => sum + item.spent, 0),
   );
 
   protected readonly totalExpenseBudget = computed(() =>
-    [...this.expenses(), ...this.hiddenExpenses()].reduce((sum, item) => sum + item.budgetAmount, 0)
+    [...this.expenses(), ...this.hiddenExpenses()].reduce(
+      (sum, item) => sum + item.budgetAmount,
+      0,
+    ),
   );
 
   protected readonly totalIncomeSpent = computed(() =>
-    [...this.incomes(), ...this.hiddenIncomes()].reduce((sum, item) => sum + Math.abs(item.spent), 0)
+    [...this.incomes(), ...this.hiddenIncomes()].reduce(
+      (sum, item) => sum + Math.abs(item.spent),
+      0,
+    ),
   );
 
   protected readonly totalIncomeBudget = computed(() =>
-    [...this.incomes(), ...this.hiddenIncomes()].reduce((sum, item) => sum + Math.abs(item.budgetAmount), 0)
+    [...this.incomes(), ...this.hiddenIncomes()].reduce(
+      (sum, item) => sum + Math.abs(item.budgetAmount),
+      0,
+    ),
   );
 
   protected readonly totalExpenseUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const category = [...this.expenses(), ...this.hiddenExpenses()].find(c => c.categoryId === categoryId);
+      const category = [...this.expenses(), ...this.hiddenExpenses()].find(
+        (c) => c.categoryId === categoryId,
+      );
       if (category && !category.isIncome) {
-        total += instances.reduce((sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)), 0);
+        total += instances.reduce(
+          (sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)),
+          0,
+        );
       }
     }
     return total;
@@ -116,9 +137,14 @@ export class DashboardPageComponent {
     const recurring = this.recurringByCategory();
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const category = [...this.incomes(), ...this.hiddenIncomes()].find(c => c.categoryId === categoryId);
+      const category = [...this.incomes(), ...this.hiddenIncomes()].find(
+        (c) => c.categoryId === categoryId,
+      );
       if (category && category.isIncome) {
-        total += instances.reduce((sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)), 0);
+        total += instances.reduce(
+          (sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)),
+          0,
+        );
       }
     }
     return total;
@@ -127,22 +153,22 @@ export class DashboardPageComponent {
   protected readonly statusCounts = computed(() => {
     const items = this.activeItems();
     return {
-      over: items.filter(item => item.status === 'over').length,
-      atRisk: items.filter(item => item.status === 'at-risk').length,
-      onTrack: items.filter(item => item.status === 'on-track').length,
+      over: items.filter((item) => item.status === 'over').length,
+      atRisk: items.filter((item) => item.status === 'at-risk').length,
+      onTrack: items.filter((item) => item.status === 'on-track').length,
     };
   });
 
   protected readonly hiddenTotal = computed(() =>
-    this.filteredHiddenItems().reduce((sum, item) => sum + item.spent, 0)
+    this.filteredHiddenItems().reduce((sum, item) => sum + item.spent, 0),
   );
 
   protected readonly hiddenLabel = computed(() =>
-    this.activeTab() === 'expenses' ? 'categories' : 'income categories'
+    this.activeTab() === 'expenses' ? 'categories' : 'income categories',
   );
 
   protected readonly hiddenTotalFormatted = computed(() =>
-    formatCurrency(this.hiddenTotal(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.hiddenTotal(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   protected readonly visibleEmptyMessage = computed(() => {
@@ -167,8 +193,8 @@ export class DashboardPageComponent {
       : `No hidden ${this.hiddenLabel()}.`;
   });
 
-  protected readonly hasLoadedOnce = computed(() =>
-    this.lastRefresh() !== null || this.expenses().length > 0 || this.incomes().length > 0
+  protected readonly hasLoadedOnce = computed(
+    () => this.lastRefresh() !== null || this.expenses().length > 0 || this.incomes().length > 0,
   );
 
   protected readonly showInitialLoading = computed(() => this.isLoading() && !this.hasLoadedOnce());
@@ -203,10 +229,14 @@ export class DashboardPageComponent {
 
   private getFilterDescription(): string | null {
     switch (this.statusFilter()) {
-      case 'over': return 'over budget';
-      case 'at-risk': return 'at risk';
-      case 'on-track': return 'on track';
-      default: return null;
+      case 'over':
+        return 'over budget';
+      case 'at-risk':
+        return 'at risk';
+      case 'on-track':
+        return 'on track';
+      default:
+        return null;
     }
   }
 
@@ -221,12 +251,12 @@ export class DashboardPageComponent {
   }
 
   handleStatusFilterChange(status: 'over' | 'at-risk' | 'on-track'): void {
-    this.statusFilter.update(current => current === status ? 'all' : status);
+    this.statusFilter.update((current) => (current === status ? 'all' : status));
     this.showHidden.set(false);
   }
 
   toggleHidden(): void {
-    this.showHidden.update(v => !v);
+    this.showHidden.update((v) => !v);
   }
 
   openPreferencesDialog(): void {

@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, signal, computed, output, input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  computed,
+  output,
+  input,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
@@ -16,7 +24,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly items = input.required<BudgetProgress[]>();
   readonly hiddenItems = input.required<BudgetProgress[]>();
   readonly preferences = input.required<CategoryPreferences>();
-  
+
   readonly dialogClose = output<void>();
   readonly preferencesChange = output<CategoryPreferences>();
 
@@ -33,13 +41,13 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     const all = this.allCategories();
 
     return order
-      .map(id => all.find(cat => cat.categoryId === id))
+      .map((id) => all.find((cat) => cat.categoryId === id))
       .filter((cat): cat is BudgetProgress => !!cat && !hidden.has(cat.categoryId));
   });
 
   readonly hiddenCategories = computed(() => {
     const hidden = this.hiddenIds();
-    return this.allCategories().filter(cat => hidden.has(cat.categoryId));
+    return this.allCategories().filter((cat) => hidden.has(cat.categoryId));
   });
 
   readonly warnAtPercent = computed(() => Math.round(this.warnAtRatio() * 100));
@@ -65,14 +73,14 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   }
 
   moveCategory(categoryId: number, direction: -1 | 1): void {
-    this.orderedIds.update(previous => {
+    this.orderedIds.update((previous) => {
       const order = this.ensureOrderContains(previous);
       const index = order.indexOf(categoryId);
       if (index === -1) return order;
-      
+
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= order.length) return order;
-      
+
       const copy = [...order];
       const [removed] = copy.splice(index, 1);
       copy.splice(nextIndex, 0, removed!);
@@ -81,7 +89,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   }
 
   toggleVisibility(categoryId: number): void {
-    this.hiddenIds.update(previous => {
+    this.hiddenIds.update((previous) => {
       const next = new Set(previous);
       if (next.has(categoryId)) {
         next.delete(categoryId);

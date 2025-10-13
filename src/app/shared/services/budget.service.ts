@@ -1,6 +1,11 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
-import { BudgetProgress, BudgetSummaryItem, RecurringExpense, RecurringInstance } from '../../core/models/lunchmoney.types';
+import {
+  BudgetProgress,
+  BudgetSummaryItem,
+  RecurringExpense,
+  RecurringInstance,
+} from '../../core/models/lunchmoney.types';
 import { buildBudgetProgress, rankBudgetProgress } from '../utils/budget.util';
 import { getCurrentMonthRange, getMonthProgress, toIsoDate } from '../utils/date.util';
 import { getRecurringDate } from '../utils/recurring.util';
@@ -50,7 +55,7 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(item => !item.isIncome && !hiddenIds.has(item.categoryId));
+    const items = data.filter((item) => !item.isIncome && !hiddenIds.has(item.categoryId));
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
@@ -58,7 +63,7 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(item => !item.isIncome && hiddenIds.has(item.categoryId));
+    const items = data.filter((item) => !item.isIncome && hiddenIds.has(item.categoryId));
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
@@ -66,7 +71,7 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(item => item.isIncome && !hiddenIds.has(item.categoryId));
+    const items = data.filter((item) => item.isIncome && !hiddenIds.has(item.categoryId));
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
@@ -74,17 +79,17 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(item => item.isIncome && hiddenIds.has(item.categoryId));
+    const items = data.filter((item) => item.isIncome && hiddenIds.has(item.categoryId));
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
   protected readonly currency = computed(() => {
     const data = this.budgetData();
-    const firstExpense = data.find(item => !item.isIncome && item.budgetCurrency);
+    const firstExpense = data.find((item) => !item.isIncome && item.budgetCurrency);
     if (firstExpense?.budgetCurrency) {
       return firstExpense.budgetCurrency;
     }
-    const firstIncome = data.find(item => item.isIncome && item.budgetCurrency);
+    const firstIncome = data.find((item) => item.isIncome && item.budgetCurrency);
     return firstIncome?.budgetCurrency ?? null;
   });
 
@@ -168,49 +173,47 @@ export class BudgetService {
     this.isLoading.set(true);
     this.errors.set([]);
 
-    this.lunchMoneyService
-      .getBudgetSummary(this.startDate(), this.endDate())
-      .subscribe({
-        next: (summaries: BudgetSummaryItem[]) => {
-          const monthKey = this.monthKey;
-          const monthProgress = this.monthProgressRatio();
-          const warnAtRatio = this.preferences().warnAtRatio;
+    this.lunchMoneyService.getBudgetSummary(this.startDate(), this.endDate()).subscribe({
+      next: (summaries: BudgetSummaryItem[]) => {
+        const monthKey = this.monthKey;
+        const monthProgress = this.monthProgressRatio();
+        const warnAtRatio = this.preferences().warnAtRatio;
 
-          const progress = summaries
-            .map((summary: BudgetSummaryItem) => buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio))
-            .filter((item: BudgetProgress) => !item.excludeFromBudget && !item.isGroup);
+        const progress = summaries
+          .map((summary: BudgetSummaryItem) =>
+            buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio),
+          )
+          .filter((item: BudgetProgress) => !item.excludeFromBudget && !item.isGroup);
 
-          this.budgetData.set(progress);
-          this.isLoading.set(false);
+        this.budgetData.set(progress);
+        this.isLoading.set(false);
 
-          if (canUseNavigator() ? navigator.onLine : true) {
-            const timestamp = new Date();
-            this.lastRefresh.set(timestamp);
-            persistLastRefresh(timestamp);
-          }
-        },
-        error: (error: Error) => {
-          this.errors.set([error]);
-          this.isLoading.set(false);
-        },
-      });
+        if (canUseNavigator() ? navigator.onLine : true) {
+          const timestamp = new Date();
+          this.lastRefresh.set(timestamp);
+          persistLastRefresh(timestamp);
+        }
+      },
+      error: (error: Error) => {
+        this.errors.set([error]);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   loadRecurringExpenses(): void {
     this.isRecurringLoading.set(true);
 
-    this.lunchMoneyService
-      .getRecurringExpenses(this.startDate())
-      .subscribe({
-        next: (expenses: RecurringExpense[]) => {
-          this.recurringExpenses.set(expenses);
-          this.isRecurringLoading.set(false);
-        },
-        error: (error: Error) => {
-          console.error('Failed to load recurring expenses', error);
-          this.isRecurringLoading.set(false);
-        },
-      });
+    this.lunchMoneyService.getRecurringExpenses(this.startDate()).subscribe({
+      next: (expenses: RecurringExpense[]) => {
+        this.recurringExpenses.set(expenses);
+        this.isRecurringLoading.set(false);
+      },
+      error: (error: Error) => {
+        console.error('Failed to load recurring expenses', error);
+        this.isRecurringLoading.set(false);
+      },
+    });
   }
 
   refresh(): void {

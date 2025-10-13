@@ -22,11 +22,7 @@
         }
       </div>
 
-      <button 
-        type="submit" 
-        class="submit-button"
-        [disabled]="isSubmitting()"
-      >
+      <button type="submit" class="submit-button" [disabled]="isSubmitting()">
         @if (isSubmitting()) {
           <span>Logging in...</span>
         } @else {
@@ -37,7 +33,7 @@
 
     <div class="login-footer">
       <p>
-        Don't have an API key? 
+        Don't have an API key?
         <a href="https://my.lunchmoney.app/developers" target="_blank" rel="noopener noreferrer">
           Get one from Lunch Money
         </a>

@@ -16,8 +16,8 @@ describe('authGuard', () => {
       providers: [
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authServiceSpy },
-        { provide: Router, useValue: routerSpy }
-      ]
+        { provide: Router, useValue: routerSpy },
+      ],
     });
 
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
@@ -27,8 +27,8 @@ describe('authGuard', () => {
   it('should allow activation when user has API key', () => {
     authService.hasApiKey.and.returnValue(true);
 
-    const result = TestBed.runInInjectionContext(() => 
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     );
 
     expect(result).toBe(true);
@@ -40,8 +40,8 @@ describe('authGuard', () => {
     const loginUrl = router.parseUrl('/login');
     router.parseUrl.and.returnValue(loginUrl);
 
-    const result = TestBed.runInInjectionContext(() => 
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    const result = TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     );
 
     expect(result).toBe(loginUrl);

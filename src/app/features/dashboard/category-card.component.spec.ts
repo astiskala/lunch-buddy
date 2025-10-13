@@ -26,16 +26,13 @@ describe('CategoryCardComponent', () => {
     recurringTotal: 300,
     recurringItems: [],
     progressRatio: 0.5,
-    status: 'on-track'
+    status: 'on-track',
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CategoryCardComponent],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideHttpClient()
-      ]
+      providers: [provideZonelessChangeDetection(), provideHttpClient()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CategoryCardComponent);

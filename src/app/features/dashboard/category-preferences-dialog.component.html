@@ -1,14 +1,14 @@
 @if (open()) {
-  <div 
-    class="dialog-overlay" 
+  <div
+    class="dialog-overlay"
     (click)="handleClose()"
     role="button"
     tabindex="0"
     (keydown.escape)="handleClose()"
     aria-label="Close dialog"
   >
-    <div 
-      class="dialog-container" 
+    <div
+      class="dialog-container"
       (click)="$event.stopPropagation()"
       (keydown)="$event.stopPropagation()"
       role="dialog"
@@ -31,11 +31,11 @@
             </div>
           </div>
           <div class="slider-container">
-            <input 
-              type="range" 
-              min="50" 
-              max="95" 
-              step="1" 
+            <input
+              type="range"
+              min="50"
+              max="95"
+              step="1"
               [value]="warnAtPercent()"
               (input)="handleWarnRatioChange($event)"
               class="slider"
@@ -52,8 +52,8 @@
         <div class="setting-section">
           <div class="setting-header">
             <label class="toggle-container">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 [checked]="notificationsEnabled()"
                 (change)="handleNotificationsChange($event)"
               />
@@ -61,7 +61,10 @@
             </label>
             <div class="setting-info">
               <h3>Push notifications</h3>
-              <p>Get notified when a category is at risk or goes over budget (requires browser permission).</p>
+              <p>
+                Get notified when a category is at risk or goes over budget (requires browser
+                permission).
+              </p>
             </div>
           </div>
         </div>
@@ -82,24 +85,27 @@
                   }
                 </div>
                 <div class="category-actions">
-                  <button 
+                  <button
                     class="icon-btn"
                     [disabled]="!canMoveUp(i)"
                     (click)="moveCategory(category.categoryId, -1)"
-                    title="Move up">
+                    title="Move up"
+                  >
                     ▲
                   </button>
-                  <button 
+                  <button
                     class="icon-btn"
                     [disabled]="!canMoveDown(i)"
                     (click)="moveCategory(category.categoryId, 1)"
-                    title="Move down">
+                    title="Move down"
+                  >
                     ▼
                   </button>
-                  <button 
+                  <button
                     class="icon-btn hide-btn"
                     (click)="toggleVisibility(category.categoryId)"
-                    title="Hide category">
+                    title="Hide category"
+                  >
                     👁
                   </button>
                 </div>
@@ -125,10 +131,11 @@
                     }
                   </div>
                   <div class="category-actions">
-                    <button 
+                    <button
                       class="icon-btn show-btn"
                       (click)="toggleVisibility(category.categoryId)"
-                      title="Show category">
+                      title="Show category"
+                    >
                       👁
                     </button>
                   </div>

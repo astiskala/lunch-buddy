@@ -147,4 +147,3 @@ export interface BudgetProgress {
   status: BudgetStatus;
   progressRatio: number;
 }
-

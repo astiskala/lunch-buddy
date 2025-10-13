@@ -36,27 +36,25 @@ export class CategoryCardComponent {
   readonly transactions = signal<Transaction[]>([]);
   readonly isLoadingTransactions = signal(false);
 
-  readonly budgetLabel = computed(() => 
+  readonly budgetLabel = computed(() =>
     formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    })
+    }),
   );
 
   readonly spentLabel = computed(() =>
     formatCurrency(this.item().spent, this.item().budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    })
+    }),
   );
 
   readonly progressValue = computed(() =>
-    Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100)))
+    Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100))),
   );
 
   readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount ?? 0) > 0);
 
-  readonly monthProgressPercent = computed(() =>
-    Math.round(this.monthProgressRatio() * 100)
-  );
+  readonly monthProgressPercent = computed(() => Math.round(this.monthProgressRatio() * 100));
 
   readonly statusColor = computed(() => {
     const st = this.item().status;
@@ -75,9 +73,10 @@ export class CategoryCardComponent {
     for (const transaction of txns) {
       const amount = parseFloat(transaction.amount);
       const date = new Date(transaction.date);
-      const label = decodeHtmlEntities(
-        transaction.display_name ?? transaction.payee ?? 'Unnamed transaction'
-      ) ?? 'Unnamed transaction';
+      const label =
+        decodeHtmlEntities(
+          transaction.display_name ?? transaction.payee ?? 'Unnamed transaction',
+        ) ?? 'Unnamed transaction';
       const notes = decodeHtmlEntities(transaction.notes);
 
       entries.push({
@@ -131,7 +130,7 @@ export class CategoryCardComponent {
   readonly upcomingRecurringTotal = computed(() => {
     const recurring = this.recurringExpenses();
     const txns = this.transactions();
-    
+
     const recordedRecurringIds = new Set<number>();
     for (const transaction of txns) {
       if (transaction.recurring_id) {
@@ -155,19 +154,21 @@ export class CategoryCardComponent {
   readonly upcomingLabel = computed(() =>
     formatCurrency(this.upcomingRecurringTotal(), this.item().budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    })
+    }),
   );
 
   readonly remainingAfterUpcoming = computed(() => {
     const item = this.item();
     const upcoming = this.upcomingRecurringTotal();
-    return item.budgetAmount ? item.budgetAmount - item.spent - upcoming : item.remaining - upcoming;
+    return item.budgetAmount
+      ? item.budgetAmount - item.spent - upcoming
+      : item.remaining - upcoming;
   });
 
   readonly remainingAfterUpcomingLabel = computed(() =>
     formatCurrency(Math.abs(this.remainingAfterUpcoming()), this.item().budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    })
+    }),
   );
 
   readonly projectedValue = computed(() => {
@@ -214,7 +215,20 @@ export class CategoryCardComponent {
 
   formatDate(entry: ActivityEntry): string {
     if (!entry.date) return '—';
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return `${months[entry.date.getMonth()]} ${entry.date.getDate()}`;
   }
 

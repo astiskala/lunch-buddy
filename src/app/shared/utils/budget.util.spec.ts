@@ -21,15 +21,11 @@ describe('Budget Utils', () => {
       recurringTotal: 0,
       recurringItems: [],
       progressRatio: 0.5,
-      status: 'on-track'
+      status: 'on-track',
     });
 
     it('should preserve API order when no custom order provided', () => {
-      const items = [
-        createItem(1, 'A'),
-        createItem(2, 'B'),
-        createItem(3, 'C')
-      ];
+      const items = [createItem(1, 'A'), createItem(2, 'B'), createItem(3, 'C')];
 
       const ranked = rankBudgetProgress(items, []);
 
@@ -40,11 +36,7 @@ describe('Budget Utils', () => {
     });
 
     it('should apply custom order when provided', () => {
-      const items = [
-        createItem(1, 'A'),
-        createItem(2, 'B'),
-        createItem(3, 'C')
-      ];
+      const items = [createItem(1, 'A'), createItem(2, 'B'), createItem(3, 'C')];
 
       const ranked = rankBudgetProgress(items, [3, 1, 2]);
 
@@ -54,11 +46,7 @@ describe('Budget Utils', () => {
     });
 
     it('should handle items not in custom order', () => {
-      const items = [
-        createItem(1, 'A'),
-        createItem(2, 'B'),
-        createItem(3, 'C')
-      ];
+      const items = [createItem(1, 'A'), createItem(2, 'B'), createItem(3, 'C')];
 
       const ranked = rankBudgetProgress(items, [3]);
 

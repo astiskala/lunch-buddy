@@ -3,7 +3,7 @@ import { Injectable, signal } from '@angular/core';
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly apiKey = signal<string | null>(this.getStoredApiKey());

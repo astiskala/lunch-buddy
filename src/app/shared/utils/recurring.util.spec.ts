@@ -13,7 +13,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-15',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate }
+      { windowStart, windowEnd, referenceDate },
     );
 
     expect(result?.toISOString()).toBe('2025-10-15T00:00:00.000Z');
@@ -27,7 +27,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate }
+      { windowStart, windowEnd, referenceDate },
     );
 
     expect(result).toBeNull();
@@ -41,7 +41,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate }
+      { windowStart, windowEnd, referenceDate },
     );
 
     expect(result?.toISOString()).toBe('2025-10-01T00:00:00.000Z');
@@ -55,7 +55,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate }
+      { windowStart, windowEnd, referenceDate },
     );
 
     expect(result).toBeNull();

@@ -1,4 +1,9 @@
-import { BudgetMonthData, BudgetSummaryItem, BudgetProgress, BudgetRecurringItem } from '../../core/models/lunchmoney.types';
+import {
+  BudgetMonthData,
+  BudgetSummaryItem,
+  BudgetProgress,
+  BudgetRecurringItem,
+} from '../../core/models/lunchmoney.types';
 import { decodeHtmlEntities } from './text.util';
 
 const pickMonthData = (summary: BudgetSummaryItem, monthKey: string): BudgetMonthData | null =>
@@ -55,10 +60,8 @@ export const buildBudgetProgress = (
     const amount = item.to_base ?? item.amount ?? 0;
     return total + amount;
   }, 0);
-  const progressRatio =
-    budgetAmount > 0 ? Math.min(1, Math.max(0, spent / budgetAmount)) : 0;
-  const budgetCurrency =
-    monthData?.budget_currency ?? summary.config?.currency ?? null;
+  const progressRatio = budgetAmount > 0 ? Math.min(1, Math.max(0, spent / budgetAmount)) : 0;
+  const budgetCurrency = monthData?.budget_currency ?? summary.config?.currency ?? null;
 
   return {
     categoryId: summary.category_id,

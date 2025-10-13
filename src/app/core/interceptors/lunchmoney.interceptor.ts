@@ -7,10 +7,10 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
   // Only add auth header for Lunch Money API requests
   if (req.url.includes('lunchmoney.app')) {
     const authService = inject(AuthService);
-    
+
     // Try localStorage first, then fall back to environment (for development)
     const apiKey = authService.getApiKey() ?? environment.lunchmoneyApiKey;
-    
+
     if (apiKey) {
       const clonedReq = req.clone({
         setHeaders: {
@@ -20,6 +20,6 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
       return next(clonedReq);
     }
   }
-  
+
   return next(req);
 };

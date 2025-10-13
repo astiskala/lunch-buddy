@@ -25,9 +25,7 @@ export class SummaryHeroComponent {
   readonly customize = output<void>();
   readonly logout = output<void>();
 
-  readonly monthProgressPercent = computed(() => 
-    Math.round(this.monthProgressRatio() * 100)
-  );
+  readonly monthProgressPercent = computed(() => Math.round(this.monthProgressRatio() * 100));
 
   readonly expenseSpentPercent = computed(() => {
     const budget = this.totalExpenseBudget();
@@ -53,36 +51,32 @@ export class SummaryHeroComponent {
     return budget > 0 ? Math.round((projected / budget) * 100) : 0;
   });
 
-  readonly expenseRemaining = computed(() => 
-    this.totalExpenseBudget() - this.totalExpenseSpent()
-  );
+  readonly expenseRemaining = computed(() => this.totalExpenseBudget() - this.totalExpenseSpent());
 
-  readonly incomeRemaining = computed(() => 
-    this.totalIncomeBudget() - this.totalIncomeSpent()
-  );
+  readonly incomeRemaining = computed(() => this.totalIncomeBudget() - this.totalIncomeSpent());
 
   readonly expenseSpentFormatted = computed(() =>
-    formatCurrency(this.totalExpenseSpent(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.totalExpenseSpent(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   readonly expenseUpcomingFormatted = computed(() =>
-    formatCurrency(this.totalExpenseUpcoming(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.totalExpenseUpcoming(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   readonly expenseRemainingFormatted = computed(() =>
-    formatCurrency(this.expenseRemaining(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.expenseRemaining(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   readonly incomeSpentFormatted = computed(() =>
-    formatCurrency(this.totalIncomeSpent(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.totalIncomeSpent(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   readonly incomeUpcomingFormatted = computed(() =>
-    formatCurrency(this.totalIncomeUpcoming(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.totalIncomeUpcoming(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   readonly incomeRemainingFormatted = computed(() =>
-    formatCurrency(this.incomeRemaining(), this.currency(), { fallbackCurrency: 'USD' })
+    formatCurrency(this.incomeRemaining(), this.currency(), { fallbackCurrency: 'USD' }),
   );
 
   readonly monthName = computed(() => {

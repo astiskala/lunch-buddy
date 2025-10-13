@@ -9,7 +9,7 @@ describe('SummaryHeroComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SummaryHeroComponent],
-      providers: [provideZonelessChangeDetection()]
+      providers: [provideZonelessChangeDetection()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SummaryHeroComponent);
@@ -63,7 +63,7 @@ describe('SummaryHeroComponent', () => {
 
   it('should emit customize event when button clicked', () => {
     let emitted = false;
-    component.customize.subscribe(() => emitted = true);
+    component.customize.subscribe(() => (emitted = true));
 
     fixture.componentRef.setInput('monthStart', '2025-10-01');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
@@ -79,7 +79,7 @@ describe('SummaryHeroComponent', () => {
 
   it('should emit logout event when button clicked', () => {
     let emitted = false;
-    component.logout.subscribe(() => emitted = true);
+    component.logout.subscribe(() => (emitted = true));
 
     fixture.componentRef.setInput('monthStart', '2025-10-01');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);

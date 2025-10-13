@@ -9,7 +9,7 @@ describe('AuthService', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()]
+      providers: [provideZonelessChangeDetection()],
     });
     service = TestBed.inject(AuthService);
   });

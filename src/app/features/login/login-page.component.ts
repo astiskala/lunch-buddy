@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './login-page.component.html',
   styleUrls: ['./login-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule]
+  imports: [FormsModule],
 })
 export class LoginPageComponent {
   private readonly authService = inject(AuthService);

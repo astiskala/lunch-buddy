@@ -29,20 +29,16 @@ export class LunchMoneyService {
    * Get all categories
    */
   getCategories(): Observable<LunchMoneyCategory[]> {
-    return this.http.get<{ categories: LunchMoneyCategory[] }>(
-      `${LUNCH_MONEY_API_BASE}/categories`
-    ).pipe(
-      map(response => response.categories)
-    );
+    return this.http
+      .get<{ categories: LunchMoneyCategory[] }>(`${LUNCH_MONEY_API_BASE}/categories`)
+      .pipe(map((response) => response.categories));
   }
 
   /**
    * Get budget summary for a specific date range
    */
   getBudgetSummary(startDate: string, endDate: string): Observable<BudgetSummaryItem[]> {
-    const params = new HttpParams()
-      .set('start_date', startDate)
-      .set('end_date', endDate);
+    const params = new HttpParams().set('start_date', startDate).set('end_date', endDate);
 
     return this.http.get<BudgetSummaryItem[]>(`${LUNCH_MONEY_API_BASE}/budgets`, {
       params,
@@ -53,16 +49,13 @@ export class LunchMoneyService {
    * Get recurring expenses
    */
   getRecurringExpenses(monthStart: string): Observable<RecurringExpense[]> {
-    const params = new HttpParams()
-      .set('start_date', monthStart)
-      .set('debit_as_negative', 'true');
+    const params = new HttpParams().set('start_date', monthStart).set('debit_as_negative', 'true');
 
-    return this.http.get<{ recurring_expenses: RecurringExpense[] }>(
-      `${LUNCH_MONEY_API_BASE}/recurring_expenses`,
-      { params }
-    ).pipe(
-      map(response => response.recurring_expenses)
-    );
+    return this.http
+      .get<{
+        recurring_expenses: RecurringExpense[];
+      }>(`${LUNCH_MONEY_API_BASE}/recurring_expenses`, { params })
+      .pipe(map((response) => response.recurring_expenses));
   }
 
   /**
@@ -71,7 +64,7 @@ export class LunchMoneyService {
   getCategoryTransactions(
     categoryId: number,
     startDate: string,
-    endDate: string
+    endDate: string,
   ): Observable<TransactionsResponse> {
     const params = new HttpParams()
       .set('category_id', categoryId.toString())
@@ -80,10 +73,6 @@ export class LunchMoneyService {
       .set('debit_as_negative', 'true')
       .set('status', 'cleared');
 
-    return this.http.get<TransactionsResponse>(
-      `${LUNCH_MONEY_API_BASE}/transactions`,
-      { params }
-    );
+    return this.http.get<TransactionsResponse>(`${LUNCH_MONEY_API_BASE}/transactions`, { params });
   }
 }
-

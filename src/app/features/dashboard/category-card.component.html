@@ -1,4 +1,12 @@
-<div class="category-card" [attr.data-status]="item().status" (click)="toggleDetails()" (keydown.enter)="toggleDetails()" (keydown.space)="toggleDetails(); $event.preventDefault()" tabindex="0" role="button">
+<div
+  class="category-card"
+  [attr.data-status]="item().status"
+  (click)="toggleDetails()"
+  (keydown.enter)="toggleDetails()"
+  (keydown.space)="toggleDetails(); $event.preventDefault()"
+  tabindex="0"
+  role="button"
+>
   <div class="card-header">
     <div class="category-info">
       <h3>{{ item().categoryName }}</h3>
@@ -15,7 +23,11 @@
         <span>On track</span>
       }
     </div>
-    <button class="expand-btn" (click)="toggleDetails(); $event.stopPropagation()" [attr.aria-label]="showDetails() ? 'Hide details' : 'Show details'">
+    <button
+      class="expand-btn"
+      (click)="toggleDetails(); $event.stopPropagation()"
+      [attr.aria-label]="showDetails() ? 'Hide details' : 'Show details'"
+    >
       @if (showDetails()) {
         <span>▲</span>
       } @else {
@@ -25,15 +37,28 @@
   </div>
 
   @if (hasBudget()) {
-    <div class="progress-bar" [class.has-projected]="upcomingRecurringTotal() > 0 && projectedValue() > progressValue()">
-      <div class="progress spent" [style.width.%]="progressValue()" [attr.data-color]="statusColor()"></div>
+    <div
+      class="progress-bar"
+      [class.has-projected]="upcomingRecurringTotal() > 0 && projectedValue() > progressValue()"
+    >
+      <div
+        class="progress spent"
+        [style.width.%]="progressValue()"
+        [attr.data-color]="statusColor()"
+      ></div>
       @if (upcomingRecurringTotal() > 0 && projectedValue() > progressValue()) {
-        <div class="progress projected" 
-             [style.width.%]="projectedValue() - progressValue()" 
-             [style.left.%]="progressValue()"
-             [attr.data-color]="statusColor()"></div>
+        <div
+          class="progress projected"
+          [style.width.%]="projectedValue() - progressValue()"
+          [style.left.%]="progressValue()"
+          [attr.data-color]="statusColor()"
+        ></div>
       }
-      <div class="month-indicator" [style.left.%]="monthProgressPercent()" title="Month progress: {{ monthProgressPercent() }}%">
+      <div
+        class="month-indicator"
+        [style.left.%]="monthProgressPercent()"
+        title="Month progress: {{ monthProgressPercent() }}%"
+      >
         <div class="indicator-line"></div>
       </div>
     </div>
@@ -65,8 +90,8 @@
   </div>
 
   @if (showDetails()) {
-    <div 
-      class="details" 
+    <div
+      class="details"
       (click)="$event.stopPropagation()"
       (keydown)="$event.stopPropagation()"
       role="region"
@@ -76,7 +101,9 @@
       @if (isLoadingTransactions()) {
         <div class="loading">Loading transactions...</div>
       } @else if (activityEntries().length === 0) {
-        <p class="empty">No transactions or upcoming recurring charges recorded for this category this month.</p>
+        <p class="empty">
+          No transactions or upcoming recurring charges recorded for this category this month.
+        </p>
       } @else {
         <div class="activity-list">
           @for (entry of activityEntries(); track entry.id) {

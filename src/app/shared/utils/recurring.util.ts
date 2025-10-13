@@ -142,7 +142,12 @@ const startOfDay = (date: Date): Date => {
  * Returns the expected date for a recurring expense within a given window.
  */
 export const getRecurringDate = (
-  expense: { next_occurrence?: string | null; billing_date: string; start_date: string | null; cadence: string },
+  expense: {
+    next_occurrence?: string | null;
+    billing_date: string;
+    start_date: string | null;
+    cadence: string;
+  },
   options?: RecurringDateOptions,
 ): Date | null => {
   let candidate =

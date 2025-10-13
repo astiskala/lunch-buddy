@@ -21,7 +21,8 @@
           height="40"
           alt="Lunch Buddy logo"
           priority
-          class="brand-logo" />
+          class="brand-logo"
+        />
         <span class="brand-name">Lunch Buddy</span>
       </div>
       <div class="header-status">
@@ -33,12 +34,15 @@
             class="refresh-button"
             (click)="refresh()"
             [disabled]="isLoading()"
-            aria-label="Refresh data">
+            aria-label="Refresh data"
+          >
             <mat-icon [class.spin]="isRefreshing()">refresh</mat-icon>
           </button>
         </div>
         @if (isOffline()) {
-          <span class="offline-note" aria-live="polite">Offline mode &mdash; showing cached data</span>
+          <span class="offline-note" aria-live="polite"
+            >Offline mode &mdash; showing cached data</span
+          >
         }
       </div>
     </div>
@@ -62,39 +66,44 @@
       appearance="standard"
       [value]="activeTab()"
       (valueChange)="handleTabChange($event)"
-      aria-label="Budget category toggle">
+      aria-label="Budget category toggle"
+    >
       <mat-button-toggle class="segmented-option" value="expenses">Expenses</mat-button-toggle>
       <mat-button-toggle class="segmented-option" value="income">Income</mat-button-toggle>
     </mat-button-toggle-group>
 
     <div class="filter-chips">
-      <button 
+      <button
         class="chip"
         [class.active]="statusFilter() === 'over'"
         [class.over]="statusFilter() === 'over'"
-        (click)="handleStatusFilterChange('over')">
+        (click)="handleStatusFilterChange('over')"
+      >
         Over Budget ({{ statusCounts().over }})
       </button>
-      <button 
+      <button
         class="chip"
         [class.active]="statusFilter() === 'at-risk'"
         [class.at-risk]="statusFilter() === 'at-risk'"
-        (click)="handleStatusFilterChange('at-risk')">
+        (click)="handleStatusFilterChange('at-risk')"
+      >
         At Risk ({{ statusCounts().atRisk }})
       </button>
-      <button 
+      <button
         class="chip"
         [class.active]="statusFilter() === 'on-track'"
         [class.on-track]="statusFilter() === 'on-track'"
-        (click)="handleStatusFilterChange('on-track')">
+        (click)="handleStatusFilterChange('on-track')"
+      >
         On Track ({{ statusCounts().onTrack }})
       </button>
     </div>
 
     @if (recurringByCategory().unassigned.length > 0) {
-      <recurring-expenses-panel 
-        [expenses]="recurringByCategory().unassigned" 
-        [defaultCurrency]="currency() ?? 'USD'" />
+      <recurring-expenses-panel
+        [expenses]="recurringByCategory().unassigned"
+        [defaultCurrency]="currency() ?? 'USD'"
+      />
     }
 
     <category-progress-list
@@ -116,8 +125,9 @@
             <span class="icon">▶</span>
           }
           <span class="hidden-label">
-            {{ filteredHiddenItems().length }} hidden {{ hiddenLabel() }}
-            ({{ hiddenTotalFormatted() }})
+            {{ filteredHiddenItems().length }} hidden {{ hiddenLabel() }} ({{
+              hiddenTotalFormatted()
+            }})
           </span>
         </button>
 
