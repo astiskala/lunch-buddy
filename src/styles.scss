@@ -4,7 +4,7 @@
 
 // Define custom color palettes
 $lunch-buddy-primary: (
-  0: #000000,
+  0: #000,
   10: #001716,
   20: #00312d,
   25: #003d37,
@@ -19,11 +19,10 @@ $lunch-buddy-primary: (
   95: #dcf2ef,
   98: #f2fbfa,
   99: #f7fefd,
-  100: #ffffff,
+  100: #fff,
 );
-
 $lunch-buddy-secondary: (
-  0: #000000,
+  0: #000,
   10: #2b1f00,
   20: #473400,
   25: #564000,
@@ -38,7 +37,7 @@ $lunch-buddy-secondary: (
   95: #ffeed9,
   98: #fff8f0,
   99: #fffbf7,
-  100: #ffffff,
+  100: #fff,
 );
 
 html {
@@ -63,17 +62,17 @@ html {
   --color-primary-light: #6bb3ab;
 
   // Secondary color
-  --color-secondary: #fbb700;
+  --color-secondary: #f0b800;
   --color-secondary-dark: #d99d00;
   --color-secondary-light: #ffde9f;
 
   // Background colors
-  --color-bg-primary: #fcfcfc;
+  --color-bg-primary: #fff;
   --color-bg-secondary: #f5f5f5;
   --color-bg-tertiary: #e8e8e8;
 
   // Surface colors
-  --color-surface: #ffffff;
+  --color-surface: #fff;
   --color-surface-hover: #f9f9f9;
 
   // Text colors
@@ -95,9 +94,9 @@ html {
   --color-error-bg: #ffebee;
 
   // Shadows
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgb(0 0 0 / 8%);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 12%);
+  --shadow-lg: 0 20px 60px rgb(0 0 0 / 30%);
 
   // Gradients
   --gradient-primary: linear-gradient(135deg, #0f605a 0%, #357872 100%);
@@ -107,34 +106,34 @@ html {
 // Dark mode
 @media (prefers-color-scheme: dark) {
   :root {
-    // Primary color (slightly adjusted for dark mode)
+    // Primary color
     --color-primary: #44958c;
     --color-primary-dark: #357872;
     --color-primary-light: #6bb3ab;
 
     // Secondary color
-    --color-secondary: #fbb700;
+    --color-secondary: #f0b800;
     --color-secondary-dark: #d99d00;
     --color-secondary-light: #ffd54f;
 
     // Background colors
-    --color-bg-primary: #272727;
+    --color-bg-primary: #1e1e1e;
     --color-bg-secondary: #303030;
     --color-bg-tertiary: #3a3a3a;
 
     // Surface colors
-    --color-surface: #303030;
+    --color-surface: #2a2a2a;
     --color-surface-hover: #3a3a3a;
 
     // Text colors
     --color-text-primary: #e8e8e8;
     --color-text-secondary: #b8b8b8;
-    --color-text-tertiary: #888888;
-    --color-text-muted: #666666;
+    --color-text-tertiary: #888;
+    --color-text-muted: #666;
 
     // Border colors
-    --color-border: #444444;
-    --color-border-dark: #555555;
+    --color-border: #444;
+    --color-border-dark: #555;
 
     // Status colors (adjusted for dark mode)
     --color-success: #66bb6a;
@@ -145,27 +144,14 @@ html {
     --color-error-bg: #3d1a1a;
 
     // Shadows
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
+    --shadow-sm: 0 2px 8px rgb(0 0 0 / 40%);
+    --shadow-md: 0 4px 16px rgb(0 0 0 / 50%);
+    --shadow-lg: 0 20px 60px rgb(0 0 0 / 70%);
 
     // Gradients
     --gradient-primary: linear-gradient(135deg, #44958c 0%, #6bb3ab 100%);
     --gradient-secondary: linear-gradient(135deg, #fbb700 0%, #ffde9f 100%);
   }
-}
-
-body {
-  // Support both light and dark color schemes based on user preference
-  color-scheme: light dark;
-
-  // Use CSS custom properties for colors
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
-  margin: 0;
 }
 
 /* Global styles */
@@ -176,6 +162,9 @@ body {
 }
 
 body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font: var(--mat-sys-body-medium);
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
   transition:

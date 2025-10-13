@@ -38,7 +38,7 @@ category-card {
         }
 
         .group-name {
-          margin: 4px 0 0 0;
+          margin: 4px 0 0;
           font-size: 13px;
           color: var(--color-text-muted);
         }
@@ -83,7 +83,7 @@ category-card {
     }
 
     .progress-bar {
-      background: rgba(26, 32, 44, 0.12);
+      background: rgb(26 32 44 / 12%);
       border-radius: 10px;
       height: 12px;
       margin: 16px 0;
@@ -100,12 +100,15 @@ category-card {
         &.spent {
           z-index: 2;
         }
+
         &[data-color='success'] {
           background: var(--color-primary-dark);
         }
+
         &[data-color='warning'] {
           background: var(--color-secondary-dark);
         }
+
         &[data-color='error'] {
           background: var(--color-error);
         }
@@ -113,14 +116,17 @@ category-card {
         &.projected {
           z-index: 1;
           border-radius: 0 10px 10px 0;
+
           &[data-color='success'] {
-            background: rgba(68, 149, 140, 0.4);
+            background: rgb(68 149 140 / 40%);
           }
+
           &[data-color='warning'] {
-            background: rgba(240, 184, 0, 0.35);
+            background: rgb(240 184 0 / 35%);
           }
+
           &[data-color='error'] {
-            background: rgba(244, 67, 54, 0.35);
+            background: rgb(244 67 54 / 35%);
           }
         }
       }
@@ -144,7 +150,7 @@ category-card {
           width: 100%;
           height: 100%;
           background: var(--color-secondary);
-          box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 0 3px rgb(0 0 0 / 30%);
           border-radius: 1px;
         }
 
@@ -212,7 +218,7 @@ category-card {
       border-top: 1px solid var(--color-border);
 
       h4 {
-        margin: 0 0 16px 0;
+        margin: 0 0 16px;
         font-size: 14px;
         color: var(--color-text-muted);
         text-transform: uppercase;
@@ -268,7 +274,7 @@ category-card {
               text-transform: uppercase;
 
               &.upcoming {
-                background: rgba(68, 149, 140, 0.12);
+                background: rgb(68 149 140 / 12%);
                 color: var(--color-secondary-dark);
               }
             }
@@ -292,12 +298,15 @@ category-card {
           font-weight: 700;
           font-size: 14px;
           white-space: nowrap;
+
           &[data-color='warning'] {
             color: var(--color-secondary-dark);
           }
+
           &[data-color='error'] {
             color: var(--color-error);
           }
+
           &[data-color='success'] {
             color: var(--color-success);
           }
@@ -306,7 +315,7 @@ category-card {
     }
   }
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     .category-card .metrics {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -317,38 +326,38 @@ category-card {
   category-card {
     .category-card {
       .progress-bar {
-        background: rgba(255, 255, 255, 0.12);
+        background: rgb(255 255 255 / 12%);
       }
     }
   }
 
   .refresh-button.mat-mdc-icon-button {
-    background: rgba(68, 149, 140, 0.85);
-    border-color: rgba(68, 149, 140, 0.6);
+    background: rgb(68 149 140 / 85%);
+    border-color: rgb(68 149 140 / 60%);
 
     &:hover:not(:disabled) {
-      box-shadow: 0 8px 18px rgba(68, 149, 140, 0.4);
+      box-shadow: 0 8px 18px rgb(68 149 140 / 40%);
     }
   }
 
   .segmented-control {
-    border-color: rgba(68, 149, 140, 0.5);
-    background: rgba(68, 149, 140, 0.18);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    border-color: rgb(68 149 140 / 50%);
+    background: rgb(68 149 140 / 18%);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
 
     .segmented-option {
       &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
-        background: rgba(68, 149, 140, 0.26);
+        background: rgb(68 149 140 / 26%);
         color: #e8f7f5;
       }
 
       &.mat-button-toggle-checked .mat-button-toggle-button {
-        background: rgba(68, 149, 140, 0.85);
+        background: rgb(68 149 140 / 85%);
         color: #0b1d1c;
       }
 
       .mat-button-toggle-button:focus-visible {
-        outline-color: rgba(68, 149, 140, 0.7);
+        outline-color: rgb(68 149 140 / 70%);
       }
     }
   }
@@ -369,7 +378,7 @@ dashboard-page {
     justify-content: space-between;
     gap: 24px;
     padding: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
   }
 
   .brand {
@@ -383,7 +392,7 @@ dashboard-page {
     flex-shrink: 0;
     border-radius: 10px;
     background: var(--color-bg-secondary);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 14px rgb(0 0 0 / 8%);
     display: block;
   }
 
@@ -412,19 +421,19 @@ dashboard-page {
     align-items: center;
     gap: 4px;
     padding: 4px;
-    margin: 24px 0 0 0;
+    margin: 24px 0 0;
     border-radius: 999px;
-    border: 1px solid rgba(68, 149, 140, 0.25);
-    background: rgba(68, 149, 140, 0.08);
-    box-shadow: 0 6px 18px rgba(68, 149, 140, 0.12);
+    border: 1px solid rgb(68 149 140 / 25%);
+    background: rgb(68 149 140 / 8%);
+    box-shadow: 0 6px 18px rgb(68 149 140 / 12%);
     transition:
       box-shadow 0.2s ease,
       border-color 0.2s ease;
     width: 100%;
 
     &:hover {
-      border-color: rgba(68, 149, 140, 0.4);
-      box-shadow: 0 10px 24px rgba(68, 149, 140, 0.18);
+      border-color: rgb(68 149 140 / 40%);
+      box-shadow: 0 10px 24px rgb(68 149 140 / 18%);
     }
 
     .segmented-option {
@@ -447,18 +456,18 @@ dashboard-page {
       }
 
       &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
-        background: rgba(68, 149, 140, 0.12);
+        background: rgb(68 149 140 / 12%);
         color: var(--color-primary-dark);
       }
 
       &.mat-button-toggle-checked .mat-button-toggle-button {
         background: var(--color-primary);
-        color: #ffffff;
-        box-shadow: 0 4px 12px rgba(68, 149, 140, 0.25);
+        color: #fff;
+        box-shadow: 0 4px 12px rgb(68 149 140 / 25%);
       }
 
       .mat-button-toggle-button:focus-visible {
-        outline: 2px solid rgba(68, 149, 140, 0.45);
+        outline: 2px solid rgb(68 149 140 / 45%);
         outline-offset: 2px;
       }
 
@@ -478,13 +487,14 @@ dashboard-page {
     &.mat-mdc-icon-button {
       --mdc-icon-button-state-layer-size: 44px;
       --mdc-icon-button-icon-size: 22px;
+
       width: 44px;
       height: 44px;
       border-radius: 22px;
       border: 1px solid transparent;
       background: var(--color-primary);
       color: #fff;
-      box-shadow: 0 4px 14px rgba(68, 149, 140, 0.25);
+      box-shadow: 0 4px 14px rgb(68 149 140 / 25%);
       transition:
         transform 0.2s ease,
         box-shadow 0.2s ease;
@@ -504,7 +514,7 @@ dashboard-page {
 
     &:hover:not(:disabled) {
       transform: scale(1.05);
-      box-shadow: 0 8px 18px rgba(68, 149, 140, 0.35);
+      box-shadow: 0 8px 18px rgb(68 149 140 / 35%);
     }
 
     &:disabled {
@@ -513,6 +523,7 @@ dashboard-page {
       box-shadow: none;
     }
   }
+
   .offline-note {
     font-size: 12px;
     color: var(--color-warning);
@@ -550,6 +561,7 @@ dashboard-page {
     0% {
       transform: rotate(0deg);
     }
+
     100% {
       transform: rotate(360deg);
     }
@@ -565,8 +577,9 @@ dashboard-page {
 
     h3 {
       color: var(--color-error);
-      margin: 0 0 12px 0;
+      margin: 0 0 12px;
     }
+
     .error-message {
       color: var(--color-error);
       margin: 8px 0;
@@ -581,6 +594,7 @@ dashboard-page {
       border-radius: 4px;
       cursor: pointer;
       font-size: 14px;
+
       &:hover {
         opacity: 0.9;
       }
@@ -630,8 +644,8 @@ dashboard-page {
           color: var(--color-success);
         }
 
-        &:not(.over):not(.at-risk):not(.on-track) {
-          background: rgba(68, 149, 140, 0.16);
+        &:not(.over, .at-risk, .on-track) {
+          background: rgb(68 149 140 / 16%);
           border-color: var(--color-primary);
           color: var(--color-primary-dark);
         }
@@ -660,6 +674,7 @@ dashboard-page {
         background: var(--color-bg-tertiary);
         border-color: var(--color-border-dark);
         color: var(--color-text-primary);
+
         .icon {
           color: var(--color-primary-dark);
         }
@@ -692,7 +707,7 @@ dashboard-page {
     display: block;
   }
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     .dashboard-container {
       padding: 16px;
     }
@@ -701,7 +716,7 @@ dashboard-page {
       flex-direction: column;
       align-items: stretch;
       gap: 16px;
-      padding: 16px;
+      margin-bottom: 12px;
     }
 
     .header-status {
@@ -718,11 +733,8 @@ dashboard-page {
 category-preferences-dialog {
   .dialog-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgb(0 0 0 / 50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -785,6 +797,7 @@ category-preferences-dialog {
 
   .setting-section {
     margin-bottom: 32px;
+
     &:last-child {
       margin-bottom: 0;
     }
@@ -799,6 +812,7 @@ category-preferences-dialog {
     .icon {
       font-size: 24px;
       flex-shrink: 0;
+
       &.warning {
         color: var(--color-warning);
       }
@@ -806,12 +820,14 @@ category-preferences-dialog {
 
     .setting-info {
       flex: 1;
+
       h3 {
-        margin: 0 0 4px 0;
+        margin: 0 0 4px;
         font-size: 16px;
         font-weight: 600;
         color: var(--color-text-primary);
       }
+
       p {
         margin: 0;
         color: var(--color-text-tertiary);
@@ -830,7 +846,6 @@ category-preferences-dialog {
       border-radius: 3px;
       background: var(--color-bg-tertiary);
       outline: none;
-      -webkit-appearance: none;
       appearance: none;
 
       &::-webkit-slider-thumb,
@@ -840,9 +855,8 @@ category-preferences-dialog {
         border-radius: 50%;
         background: var(--color-primary);
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
         border: none;
-        -webkit-appearance: none;
         appearance: none;
       }
     }
@@ -875,6 +889,7 @@ category-preferences-dialog {
 
       &:checked + .toggle-slider {
         background-color: var(--color-primary);
+
         &::before {
           transform: translateX(24px);
         }
@@ -884,10 +899,7 @@ category-preferences-dialog {
     .toggle-slider {
       position: absolute;
       cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background-color: var(--color-border-dark);
       transition: 0.3s;
       border-radius: 24px;
@@ -908,11 +920,13 @@ category-preferences-dialog {
 
   .section-title {
     margin-bottom: 16px;
+
     h3 {
-      margin: 0 0 4px 0;
+      margin: 0 0 4px;
       font-size: 16px;
       font-weight: 600;
     }
+
     p {
       margin: 0;
       font-size: 13px;
@@ -936,20 +950,24 @@ category-preferences-dialog {
       &:last-child {
         border-bottom: none;
       }
+
       &:hover {
         background: var(--color-bg-tertiary);
       }
+
       &.hidden {
         opacity: 0.6;
       }
 
       .category-info {
         flex: 1;
+
         .category-name {
           font-size: 14px;
           font-weight: 500;
           color: var(--color-text-primary);
         }
+
         .category-group {
           font-size: 12px;
           color: var(--color-text-muted);
@@ -976,7 +994,7 @@ category-preferences-dialog {
           transition: all 0.2s;
 
           &:hover:not(:disabled) {
-            background: rgba(68, 149, 140, 0.12);
+            background: rgb(68 149 140 / 12%);
             border-color: var(--color-primary);
             color: var(--color-primary-dark);
           }
@@ -1021,6 +1039,7 @@ category-preferences-dialog {
       &.btn-primary {
         background: var(--color-primary);
         color: white;
+
         &:hover {
           background: var(--color-primary-dark);
         }
@@ -1030,8 +1049,9 @@ category-preferences-dialog {
         border: 1px solid var(--color-primary);
         background: transparent;
         color: var(--color-primary);
+
         &:hover {
-          background: rgba(68, 149, 140, 0.12);
+          background: rgb(68 149 140 / 12%);
           color: var(--color-primary-dark);
         }
       }
@@ -1039,6 +1059,7 @@ category-preferences-dialog {
       &.btn-text {
         background: none;
         color: var(--color-text-tertiary);
+
         &:hover {
           background: var(--color-bg-tertiary);
           color: var(--color-text-primary);
@@ -1047,15 +1068,17 @@ category-preferences-dialog {
     }
   }
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     .dialog-overlay {
       padding: 0;
     }
+
     .dialog-container {
       max-width: 100%;
       max-height: 100vh;
       border-radius: 0;
     }
+
     .dialog-actions {
       flex-direction: column;
       gap: 12px;

@@ -1,0 +1,44 @@
+{
+  "extends": [
+    "stylelint-config-standard-scss",
+    "stylelint-config-prettier-scss"
+  ],
+  "rules": {
+    "selector-pseudo-element-no-unknown": [
+      true,
+      {
+        "ignorePseudoElements": ["ng-deep"]
+      }
+    ],
+    "selector-type-no-unknown": [
+      true,
+      {
+        "ignoreTypes": [
+          "/^app-/",
+          "/^mat-/",
+          "summary-hero",
+          "category-card",
+          "dashboard-page",
+          "category-preferences-dialog",
+          "recurring-expenses-panel",
+          "category-progress-list"
+        ]
+      }
+    ],
+    "selector-class-pattern": [
+      "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$|^(mat-|mdc-|cdk-)",
+      {
+        "message": "Expected class selector to be kebab-case",
+        "resolveNestedSelectors": true
+      }
+    ],
+    "no-descending-specificity": null,
+    "scss/at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": ["tailwind", "apply", "layer"]
+      }
+    ]
+  },
+  "ignoreFiles": ["**/*.min.css", "node_modules/**"]
+}
