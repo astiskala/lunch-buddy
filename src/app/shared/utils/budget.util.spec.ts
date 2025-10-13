@@ -1,5 +1,5 @@
-import { BudgetProgress } from '../../core/models/lunchmoney.types';
-import { rankBudgetProgress } from './budget.util';
+import { BudgetProgress, BudgetSummaryItem } from '../../core/models/lunchmoney.types';
+import { buildBudgetProgress, rankBudgetProgress } from './budget.util';
 
 describe('Budget Utils', () => {
   describe('rankBudgetProgress', () => {
@@ -64,5 +64,61 @@ describe('Budget Utils', () => {
 
       expect(ranked[0].categoryId).toBe(3);
     });
+  });
+});
+
+describe('buildBudgetProgress status evaluation', () => {
+  const monthKey = '2025-10';
+  const createSummary = (spent: number, budget: number): BudgetSummaryItem => ({
+    category_name: 'Test',
+    category_id: 1,
+    category_group_name: null,
+    group_id: null,
+    is_group: false,
+    is_income: false,
+    exclude_from_budget: false,
+    exclude_from_totals: false,
+    order: 0,
+    archived: false,
+    data: {
+      [monthKey]: {
+        num_transactions: 0,
+        spending_to_base: spent,
+        budget_to_base: budget,
+        budget_amount: budget,
+        budget_currency: 'USD',
+        is_automated: false,
+      },
+    },
+    config: null,
+    recurring: { data: [] },
+  });
+
+  it('treats equal spending and budget as on track', () => {
+    const summary = createSummary(1000, 1000);
+    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+
+    expect(result.status).toBe('on-track');
+  });
+
+  it('treats minor rounding differences as on track', () => {
+    const summary = createSummary(1005, 1000);
+    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+
+    expect(result.status).toBe('on-track');
+  });
+
+  it('marks meaningfully overspent categories as over', () => {
+    const summary = createSummary(1055, 1000);
+    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+
+    expect(result.status).toBe('over');
+  });
+
+  it('marks high spending versus progress as at risk', () => {
+    const summary = createSummary(650, 1000);
+    const result = buildBudgetProgress(summary, monthKey, 0.4, 0.7);
+
+    expect(result.status).toBe('at-risk');
   });
 });

@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal, computed, inject, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { Router } from '@angular/router';
 import { BudgetService, CategoryPreferences } from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -16,6 +19,10 @@ type TabType = 'expenses' | 'income';
   selector: 'dashboard-page',
   imports: [
     CommonModule,
+    NgOptimizedImage,
+    MatIconModule,
+    MatButtonModule,
+    MatButtonToggleModule,
     CategoryProgressListComponent,
     SummaryHeroComponent,
     RecurringExpensesPanelComponent,
@@ -203,7 +210,11 @@ export class DashboardPageComponent {
     }
   }
 
-  handleTabChange(tab: TabType): void {
+  handleTabChange(tab: TabType | string): void {
+    if (tab !== 'expenses' && tab !== 'income') {
+      return;
+    }
+
     this.activeTab.set(tab);
     this.showHidden.set(false);
     this.statusFilter.set('all');

@@ -15,9 +15,14 @@ const calculateStatus = (
   }
 
   const spendingRatio = spent / budget;
+  const epsilon = 0.005;
 
-  if (spendingRatio >= 1) {
+  if (spendingRatio > 1 + epsilon) {
     return 'over';
+  }
+
+  if (Math.abs(spendingRatio - 1) <= epsilon) {
+    return 'on-track';
   }
 
   if (spendingRatio >= warnAtRatio || spendingRatio >= monthProgress + 0.1) {

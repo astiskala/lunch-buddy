@@ -52,6 +52,8 @@ export class CategoryCardComponent {
     Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100)))
   );
 
+  readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount ?? 0) > 0);
+
   readonly monthProgressPercent = computed(() =>
     Math.round(this.monthProgressRatio() * 100)
   );

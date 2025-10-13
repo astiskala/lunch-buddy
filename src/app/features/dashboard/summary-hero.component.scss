@@ -1,30 +1,147 @@
+:host {
+  display: block;
+}
+
 .summary-hero {
   background: var(--gradient-primary);
   border-radius: 16px;
   padding: 32px;
-  color: #1a202c;
+  color: var(--color-text-primary, #1a202c);
   box-shadow: var(--shadow-md);
   border: 1px solid rgba(68, 149, 140, 0.2);
 
   .header {
     display: flex;
-    :host {
-      display: block;
-    }
-    .budget-section {
-      .section-header {
-        .totals {
-          font-size: 16px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
 
-          .budget {
-            font-size: 14px;
-          }
-        }
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      --mdc-filled-button-container-height: 40px;
+      --mdc-outlined-button-container-height: 40px;
+      --mdc-filled-button-horizontal-padding: 18px;
+      --mdc-outlined-button-horizontal-padding: 18px;
+      --mdc-outlined-button-outline-width: 1px;
+      --mdc-outlined-button-outline-color: rgba(251, 183, 0, 0.55);
+      --mdc-outlined-button-label-text-color: var(--color-secondary);
+      --mat-outlined-button-state-layer-color: var(--color-secondary);
+      color: var(--color-secondary);
+      background: rgba(251, 183, 0, 0.08);
+      border-radius: 22px;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+
+      .btn-label {
+        white-space: nowrap;
       }
 
-      .metrics {
+      mat-icon {
+        font-size: 20px;
+        line-height: 1;
+        color: inherit;
+      }
+
+      &:hover {
+        background: rgba(251, 183, 0, 0.14);
+      }
+
+      &:active {
+        background: rgba(251, 183, 0, 0.2);
+      }
+
+      &:focus-visible {
+        box-shadow: 0 0 0 3px rgba(251, 183, 0, 0.25);
+      }
+    }
+  }
+
+  .budget-section {
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      text-align: right;
+
+      .metric {
+        display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 4px;
+        align-items: flex-end;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-hero {
+    padding: 24px;
+
+    .action-buttons {
+      justify-content: flex-start;
+      gap: 8px;
+
+      .action-btn {
+        min-width: 44px;
+        width: 44px;
+        padding: 0;
+        border-radius: 22px;
+        justify-content: center;
+        gap: 0;
+        --mdc-filled-button-horizontal-padding: 0;
+        --mdc-outlined-button-horizontal-padding: 0;
+        --mdc-filled-button-container-height: 44px;
+        --mdc-outlined-button-container-height: 44px;
+        background: rgba(251, 183, 0, 0.16);
+
+        .btn-label {
+          display: none;
+        }
+      }
+    }
+
+    .budget-section .metrics {
+      flex-direction: column;
+      text-align: left;
+
+      .metric {
+        align-items: flex-start;
+        max-width: none;
+        min-width: 0;
+      }
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .summary-hero {
+    .action-buttons {
+      .action-btn {
+        color: var(--color-secondary-light);
+        --mdc-outlined-button-outline-color: rgba(251, 183, 0, 0.65);
+        --mdc-outlined-button-label-text-color: var(--color-secondary-light);
+        background: rgba(251, 183, 0, 0.16);
+
+        &:hover {
+          background: rgba(251, 183, 0, 0.24);
+        }
+
+        &:active {
+          background: rgba(251, 183, 0, 0.3);
+        }
       }
     }
   }

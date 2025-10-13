@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { formatCurrency } from '../../shared/utils/currency.util';
 
 @Component({
   selector: 'summary-hero',
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule],
   templateUrl: './summary-hero.component.html',
   styleUrls: ['./summary-hero.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,14 +65,6 @@ export class SummaryHeroComponent {
     formatCurrency(this.totalExpenseSpent(), this.currency(), { fallbackCurrency: 'USD' })
   );
 
-  readonly expenseProjectedFormatted = computed(() =>
-    formatCurrency(this.totalExpenseSpent() + this.totalExpenseUpcoming(), this.currency(), { fallbackCurrency: 'USD' })
-  );
-
-  readonly expenseBudgetFormatted = computed(() =>
-    formatCurrency(this.totalExpenseBudget(), this.currency(), { fallbackCurrency: 'USD' })
-  );
-
   readonly expenseUpcomingFormatted = computed(() =>
     formatCurrency(this.totalExpenseUpcoming(), this.currency(), { fallbackCurrency: 'USD' })
   );
@@ -82,10 +75,6 @@ export class SummaryHeroComponent {
 
   readonly incomeSpentFormatted = computed(() =>
     formatCurrency(this.totalIncomeSpent(), this.currency(), { fallbackCurrency: 'USD' })
-  );
-
-  readonly incomeBudgetFormatted = computed(() =>
-    formatCurrency(this.totalIncomeBudget(), this.currency(), { fallbackCurrency: 'USD' })
   );
 
   readonly incomeUpcomingFormatted = computed(() =>

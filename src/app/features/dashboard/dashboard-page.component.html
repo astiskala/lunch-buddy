@@ -13,17 +13,30 @@
       <button (click)="refresh()">Retry</button>
     </div>
   } @else {
-    <div class="refresh-bar">
-      <button
-        type="button"
-        class="refresh-button"
-        (click)="refresh()"
-        [disabled]="isLoading()"
-        aria-label="Refresh data">
-        <span class="material-icons" [class.spin]="isRefreshing()">refresh</span>
-      </button>
-      <div class="refresh-meta">
-        <span class="last-refresh" aria-live="polite">{{ lastRefreshText() }}</span>
+    <div class="dashboard-header">
+      <div class="brand">
+        <img
+          ngSrc="icons/lunch-buddy.svg"
+          width="40"
+          height="40"
+          alt="Lunch Buddy logo"
+          priority
+          class="brand-logo" />
+        <span class="brand-name">Lunch Buddy</span>
+      </div>
+      <div class="header-status">
+        <div class="status-row">
+          <span class="last-refresh" aria-live="polite">{{ lastRefreshText() }}</span>
+          <button
+            mat-icon-button
+            type="button"
+            class="refresh-button"
+            (click)="refresh()"
+            [disabled]="isLoading()"
+            aria-label="Refresh data">
+            <mat-icon [class.spin]="isRefreshing()">refresh</mat-icon>
+          </button>
+        </div>
         @if (isOffline()) {
           <span class="offline-note" aria-live="polite">Offline mode &mdash; showing cached data</span>
         }
@@ -44,18 +57,15 @@
       (logout)="logout()"
     />
 
-    <div class="tabs">
-      <button 
-        [class.active]="activeTab() === 'expenses'"
-        (click)="handleTabChange('expenses')">
-        Expenses
-      </button>
-      <button 
-        [class.active]="activeTab() === 'income'"
-        (click)="handleTabChange('income')">
-        Income
-      </button>
-    </div>
+    <mat-button-toggle-group
+      class="segmented-control"
+      appearance="standard"
+      [value]="activeTab()"
+      (valueChange)="handleTabChange($event)"
+      aria-label="Budget category toggle">
+      <mat-button-toggle value="expenses">Expenses</mat-button-toggle>
+      <mat-button-toggle value="income">Income</mat-button-toggle>
+    </mat-button-toggle-group>
 
     <div class="filter-chips">
       <button 

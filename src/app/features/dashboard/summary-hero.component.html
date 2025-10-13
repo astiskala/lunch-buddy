@@ -1,14 +1,26 @@
 <div class="summary-hero">
   <div class="header">
-    <h2>{{ monthName() }} Budget</h2>
+    <h2>{{ monthName() }}</h2>
     <div class="action-buttons">
-      <button class="icon-btn customize-btn" (click)="customize.emit()" title="Customize dashboard">
-        <mat-icon class="icon">settings</mat-icon>
-        <span class="label">Customize</span>
+      <button
+        mat-stroked-button
+        type="button"
+        class="action-btn customize-btn"
+        (click)="customize.emit()"
+        title="Customise dashboard"
+        aria-label="Customise dashboard">
+        <mat-icon>settings</mat-icon>
+        <span class="btn-label">Customise</span>
       </button>
-      <button class="icon-btn logout-btn" (click)="logout.emit()" title="Logout">
-        <mat-icon class="icon">logout</mat-icon>
-        <span class="label">Logout</span>
+      <button
+        mat-stroked-button
+        type="button"
+        class="action-btn logout-btn"
+        (click)="logout.emit()"
+        title="Logout"
+        aria-label="Logout">
+        <mat-icon>logout</mat-icon>
+        <span class="btn-label">Logout</span>
       </button>
     </div>
   </div>
@@ -18,11 +30,6 @@
     <div class="budget-section">
       <div class="section-header">
         <h3>Expenses</h3>
-        <div class="totals">
-          <span class="spent">{{ expenseProjectedFormatted() }}</span>
-          <span class="separator">/</span>
-          <span class="budget">{{ expenseBudgetFormatted() }}</span>
-        </div>
       </div>
       
       <div class="progress-bars">
@@ -42,11 +49,11 @@
         </div>
         <div class="metric">
           <span class="metric-label">Upcoming</span>
-          <span class="metric-value highlight">{{ expenseUpcomingFormatted() }}</span>
+          <span class="metric-value">{{ expenseUpcomingFormatted() }}</span>
         </div>
         <div class="metric">
           <span class="metric-label">Remaining</span>
-          <span class="metric-value" [class.negative]="expenseRemaining() < 0">
+          <span class="metric-value highlight" [class.negative]="expenseRemaining() < 0">
             {{ expenseRemainingFormatted() }}
           </span>
         </div>
@@ -57,11 +64,6 @@
     <div class="budget-section">
       <div class="section-header">
         <h3>Income</h3>
-        <div class="totals">
-          <span class="spent">{{ incomeSpentFormatted() }}</span>
-          <span class="separator">/</span>
-          <span class="budget">{{ incomeBudgetFormatted() }}</span>
-        </div>
       </div>
       
       <div class="progress-bars">
@@ -81,11 +83,11 @@
         </div>
         <div class="metric">
           <span class="metric-label">Upcoming</span>
-          <span class="metric-value highlight">{{ incomeUpcomingFormatted() }}</span>
+          <span class="metric-value">{{ incomeUpcomingFormatted() }}</span>
         </div>
         <div class="metric">
           <span class="metric-label">Remaining</span>
-          <span class="metric-value" [class.negative]="incomeRemaining() < 0">
+          <span class="metric-value highlight" [class.negative]="incomeRemaining() < 0">
             {{ incomeRemainingFormatted() }}
           </span>
         </div>
