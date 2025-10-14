@@ -159,6 +159,7 @@ export const getRecurringDate = (
     return null;
   }
 
+  let candidateAdjustedByWindow = false;
   const windowStart = parseWindowDate(options?.windowStart, 'start');
   const windowEnd = parseWindowDate(options?.windowEnd, 'end');
   const cadenceDuration = getCadenceDuration(expense.cadence);
@@ -180,6 +181,7 @@ export const getRecurringDate = (
 
         if (clampToWindow(projected, windowStart, windowEnd)) {
           candidate = projected;
+          candidateAdjustedByWindow = true;
         }
       }
 
@@ -187,6 +189,7 @@ export const getRecurringDate = (
         const aligned = alignToWindowMonth(candidate, windowStart);
         if (clampToWindow(aligned, windowStart, windowEnd)) {
           candidate = aligned;
+          candidateAdjustedByWindow = true;
         } else {
           return null;
         }
@@ -199,31 +202,42 @@ export const getRecurringDate = (
   }
 
   if (reference) {
-    if (isBefore(startOfDay(candidate), reference)) {
+    const candidateStart = startOfDay(candidate);
+    if (isBefore(candidateStart, reference)) {
       if (!cadenceDuration) {
-        return null;
-      }
-
-      let projected = candidate;
-      let iterations = 0;
-      while (isBefore(startOfDay(projected), reference) && iterations < 60) {
-        projected = addDuration(projected, cadenceDuration);
-        iterations += 1;
-
-        if (windowStart && windowEnd && isAfter(projected, windowEnd)) {
+        if (!candidateAdjustedByWindow) {
           return null;
         }
-      }
+      } else {
+        let projected = candidate;
+        let iterations = 0;
+        let foundValidProjection = false;
 
-      if (windowStart && windowEnd && !clampToWindow(projected, windowStart, windowEnd)) {
-        return null;
-      }
+        while (isBefore(startOfDay(projected), reference) && iterations < 60) {
+          const nextProjection = addDuration(projected, cadenceDuration);
+          iterations += 1;
 
-      if (isBefore(startOfDay(projected), reference)) {
-        return null;
-      }
+          if (windowStart && windowEnd && isAfter(nextProjection, windowEnd)) {
+            break;
+          }
 
-      candidate = projected;
+          projected = nextProjection;
+
+          if (!windowStart || !windowEnd || clampToWindow(projected, windowStart, windowEnd)) {
+            if (!isBefore(startOfDay(projected), reference)) {
+              candidate = projected;
+              foundValidProjection = true;
+              break;
+            }
+          }
+        }
+
+        if (!foundValidProjection) {
+          if (!candidateAdjustedByWindow) {
+            return null;
+          }
+        }
+      }
     }
   }
 

@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "lint:styles": "stylelint \"**/*.scss\" --fix"
+    "lint:styles": "stylelint \"**/*.scss\" --fix",
+    "lint:styles:ci": "stylelint \"**/*.scss\" --max-warnings=0"
   },
   "prettier": {
     "printWidth": 100,
