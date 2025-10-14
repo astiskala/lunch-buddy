@@ -55,6 +55,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
+    },
+    {
+      "src": "icons/lunch-buddy.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
     }
   ],
   "screenshots": [
@@ -67,7 +73,7 @@
     },
     {
       "src": "screenshots/dashboard_wide_dark.png",
-      "sizes": "2736×1824",
+      "sizes": "2736x1824",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Main screen showing budget categories in dark mode"
@@ -81,7 +87,7 @@
     },
     {
       "src": "screenshots/settings_wide_dark.png",
-      "sizes": "2736×1824",
+      "sizes": "2736x1824",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Settings screen in dark mode"
