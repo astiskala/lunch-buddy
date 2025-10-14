@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 
 export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
   // Only add auth header for Lunch Money API requests

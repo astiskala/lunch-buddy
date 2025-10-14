@@ -1,6 +1,6 @@
 import { resolveLunchMoneyApiKey } from './resolve-api-key';
 
 export const environment = {
-  production: true,
+  production: false,
   lunchmoneyApiKey: resolveLunchMoneyApiKey(),
 };

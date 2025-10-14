@@ -12,6 +12,8 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+Before starting the server, provide your Lunch Money API key via an environment variable named `NG_APP_LUNCHMONEY_API_KEY`. You can export it in your shell or create an `.env` file at the project root with `NG_APP_LUNCHMONEY_API_KEY=<your-api-key>` so the Angular CLI loads it automatically.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
@@ -101,6 +103,7 @@ To enable automatic deployments:
 1. Sign in to [Netlify](https://app.netlify.com/) and choose **Add new site → Import an existing project**.
 2. Connect your GitHub account and select the repository you pushed above.
 3. Accept the detected build settings (command `npm run build`, publish directory `dist/lunch-buddy/browser`), or adjust to match `netlify.toml`.
-4. Trigger the initial deploy; subsequent pushes to `main` will rebuild and deploy automatically.
+4. In **Site settings → Environment variables**, add `NG_APP_LUNCHMONEY_API_KEY` with your Lunch Money API token so builds have access to the credential.
+5. Trigger the initial deploy; subsequent pushes to `main` will rebuild and deploy automatically.
 
 Optional: enable Netlify deploy previews for pull requests to review changes before merging.
