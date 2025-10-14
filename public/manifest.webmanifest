@@ -6,6 +6,7 @@
   "categories": [
     "finance"
   ],
+  "display_override": ["fullscreen", "minimal-ui"],
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
