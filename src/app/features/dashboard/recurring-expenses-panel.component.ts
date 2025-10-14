@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
 import { formatCurrency } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
+import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
 
 @Component({
   selector: 'recurring-expenses-panel',
@@ -153,11 +154,13 @@ export class RecurringExpensesPanelComponent {
   readonly expenses = input.required<RecurringInstance[]>();
   readonly currency = input<string | null>(null);
   readonly defaultCurrency = input.required<string>();
+  readonly referenceDate = input.required<Date>();
 
   readonly sortedExpenses = computed(() => {
-    return [...this.expenses()].sort(
-      (a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime(),
-    );
+    const referenceDate = this.referenceDate();
+    return this.expenses()
+      .filter((instance) => isRecurringInstancePending(instance, { referenceDate }))
+      .sort((a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime());
   });
 
   readonly totalFormatted = computed(() => {

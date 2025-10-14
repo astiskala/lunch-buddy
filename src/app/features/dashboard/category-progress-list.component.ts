@@ -19,6 +19,7 @@ import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.
             [startDate]="startDate()"
             [endDate]="endDate()"
             [monthProgressRatio]="monthProgressRatio()"
+            [referenceDate]="referenceDate()"
           ></category-card>
         }
       </div>
@@ -52,4 +53,5 @@ export class CategoryProgressListComponent {
   readonly startDate = input.required<string>();
   readonly endDate = input.required<string>();
   readonly monthProgressRatio = input<number>(0);
+  readonly referenceDate = input.required<Date>();
 }

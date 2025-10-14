@@ -4,6 +4,7 @@ import { BudgetProgress, RecurringInstance, Transaction } from '../../core/model
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { formatCurrency } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
+import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
 
 interface ActivityEntry {
   id: string;
@@ -31,6 +32,7 @@ export class CategoryCardComponent {
   readonly startDate = input.required<string>();
   readonly endDate = input.required<string>();
   readonly monthProgressRatio = input<number>(0);
+  readonly referenceDate = input.required<Date>();
 
   readonly showDetails = signal(false);
   readonly transactions = signal<Transaction[]>([]);
@@ -67,6 +69,7 @@ export class CategoryCardComponent {
     const txns = this.transactions();
     const recurring = this.recurringExpenses();
     const item = this.item();
+    const referenceDate = this.referenceDate();
     const entries: ActivityEntry[] = [];
 
     // Add transactions
@@ -100,6 +103,9 @@ export class CategoryCardComponent {
 
     // Add upcoming recurring expenses
     for (const instance of recurring) {
+      if (!isRecurringInstancePending(instance, { referenceDate })) {
+        continue;
+      }
       if (recordedRecurringIds.has(instance.expense.id)) {
         continue;
       }
@@ -130,6 +136,7 @@ export class CategoryCardComponent {
   readonly upcomingRecurringTotal = computed(() => {
     const recurring = this.recurringExpenses();
     const txns = this.transactions();
+    const referenceDate = this.referenceDate();
 
     const recordedRecurringIds = new Set<number>();
     for (const transaction of txns) {
@@ -141,6 +148,9 @@ export class CategoryCardComponent {
     let total = 0;
 
     for (const instance of recurring) {
+      if (!isRecurringInstancePending(instance, { referenceDate })) {
+        continue;
+      }
       if (recordedRecurringIds.has(instance.expense.id)) {
         continue;
       }

@@ -18,6 +18,7 @@ import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
 import { formatCurrency } from '../../shared/utils/currency.util';
+import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
 
 type StatusFilter = 'all' | 'over' | 'at-risk' | 'on-track';
 type TabType = 'expenses' | 'income';
@@ -67,6 +68,7 @@ export class DashboardPageComponent {
   protected readonly errors = this.budgetService.getErrors;
   protected readonly preferences = this.budgetService.getPreferences;
   protected readonly lastRefresh = this.budgetService.getLastRefresh;
+  protected readonly referenceDate = this.budgetService.getReferenceDate;
 
   // Computed values
   protected readonly activeItems = computed(() =>
@@ -118,13 +120,20 @@ export class DashboardPageComponent {
 
   protected readonly totalExpenseUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
+    const referenceDate = this.referenceDate();
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
+      const pendingInstances = instances.filter((instance) =>
+        isRecurringInstancePending(instance, { referenceDate }),
+      );
+      if (pendingInstances.length === 0) {
+        continue;
+      }
       const category = [...this.expenses(), ...this.hiddenExpenses()].find(
         (c) => c.categoryId === categoryId,
       );
       if (category && !category.isIncome) {
-        total += instances.reduce(
+        total += pendingInstances.reduce(
           (sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)),
           0,
         );
@@ -135,13 +144,20 @@ export class DashboardPageComponent {
 
   protected readonly totalIncomeUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
+    const referenceDate = this.referenceDate();
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
+      const pendingInstances = instances.filter((instance) =>
+        isRecurringInstancePending(instance, { referenceDate }),
+      );
+      if (pendingInstances.length === 0) {
+        continue;
+      }
       const category = [...this.incomes(), ...this.hiddenIncomes()].find(
         (c) => c.categoryId === categoryId,
       );
       if (category && category.isIncome) {
-        total += instances.reduce(
+        total += pendingInstances.reduce(
           (sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)),
           0,
         );

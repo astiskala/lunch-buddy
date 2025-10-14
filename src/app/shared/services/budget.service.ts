@@ -7,7 +7,12 @@ import {
   RecurringInstance,
 } from '../../core/models/lunchmoney.types';
 import { buildBudgetProgress, rankBudgetProgress } from '../utils/budget.util';
-import { getCurrentMonthRange, getMonthProgress, toIsoDate } from '../utils/date.util';
+import {
+  deriveReferenceDate,
+  getCurrentMonthRange,
+  getMonthProgress,
+  toIsoDate,
+} from '../utils/date.util';
 import { getRecurringDate } from '../utils/recurring.util';
 
 export interface CategoryPreferences {
@@ -92,6 +97,10 @@ export class BudgetService {
     const firstIncome = data.find((item) => item.isIncome && item.budgetCurrency);
     return firstIncome?.budgetCurrency ?? null;
   });
+
+  protected readonly referenceDate = computed(() =>
+    deriveReferenceDate(this.startDate(), this.endDate()),
+  );
 
   // Recurring expenses by category
   protected readonly recurringByCategory = computed(() => {
@@ -235,6 +244,7 @@ export class BudgetService {
   getPreferences = this.preferences;
   getRecurringByCategory = this.recurringByCategory;
   getLastRefresh = this.lastRefresh;
+  getReferenceDate = this.referenceDate;
 }
 
 const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
@@ -270,47 +280,4 @@ function persistLastRefresh(timestamp: Date): void {
 
 function canUseNavigator(): boolean {
   return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
-}
-
-function deriveReferenceDate(windowStart: string, windowEnd: string): Date {
-  const today = startOfToday();
-  const start = parseIsoDay(windowStart);
-  const end = parseIsoDay(windowEnd);
-
-  if (start && end) {
-    if (today.getTime() < start.getTime()) {
-      return start;
-    }
-
-    const dayAfterEnd = new Date(end.getTime());
-    dayAfterEnd.setDate(dayAfterEnd.getDate() + 1);
-
-    if (today.getTime() > end.getTime()) {
-      return dayAfterEnd;
-    }
-
-    return today;
-  }
-
-  return today;
-}
-
-function parseIsoDay(value: string): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  parsed.setHours(0, 0, 0, 0);
-  return parsed;
-}
-
-function startOfToday(): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
 }

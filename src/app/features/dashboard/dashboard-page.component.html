@@ -103,6 +103,7 @@
       <recurring-expenses-panel
         [expenses]="recurringByCategory().unassigned"
         [defaultCurrency]="currency() ?? 'USD'"
+        [referenceDate]="referenceDate()"
       />
     }
 
@@ -114,6 +115,7 @@
       [endDate]="endDate()"
       [monthProgressRatio]="monthProgressRatio()"
       [emptyMessage]="visibleEmptyMessage()"
+      [referenceDate]="referenceDate()"
     />
 
     @if (filteredHiddenItems().length > 0) {
@@ -140,6 +142,7 @@
             [endDate]="endDate()"
             [monthProgressRatio]="monthProgressRatio()"
             [emptyMessage]="hiddenEmptyMessage()"
+            [referenceDate]="referenceDate()"
           />
         }
       </div>
