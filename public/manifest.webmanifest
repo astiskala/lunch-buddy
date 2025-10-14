@@ -6,7 +6,12 @@
   "categories": [
     "finance"
   ],
-  "display_override": ["fullscreen", "minimal-ui"],
+  "lang": "en",
+  "dir": "ltr",
+  "display_override": [
+    "fullscreen",
+    "minimal-ui"
+  ],
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
@@ -92,5 +97,8 @@
       "form_factor": "wide",
       "label": "Settings screen in dark mode"
     }
-  ]
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
