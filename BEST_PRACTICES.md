@@ -137,10 +137,11 @@ changeDetection: ChangeDetectionStrategy.OnPush;
 - `LunchMoneyService`
 - `BudgetService`
 
-### 12. **LocalStorage for Persistence**
+### 12. **Secure Persistence**
 
-- ✅ API key stored in localStorage (not environment)
-- ✅ Category preferences persisted
+- ✅ Sensitive API key encrypted with Web Crypto before persisting
+- ✅ Dedicated `SecureStorageService` handles encryption key rotation and migration
+- ✅ Category preferences persisted using localStorage
 - ✅ Proper cleanup on logout
 
 ### 13. **Material Design Icons**

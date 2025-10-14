@@ -12,7 +12,9 @@ describe('LoginPageComponent', () => {
 
   beforeEach(async () => {
     const authServiceSpy = jasmine.createSpyObj('AuthService', ['setApiKey']);
+    authServiceSpy.setApiKey.and.returnValue(Promise.resolve());
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    routerSpy.navigate.and.returnValue(Promise.resolve(true));
 
     await TestBed.configureTestingModule({
       imports: [LoginPageComponent],
@@ -41,38 +43,38 @@ describe('LoginPageComponent', () => {
     expect(compiled.querySelector('button[type="submit"]')).toBeTruthy();
   });
 
-  it('should show error when submitting empty API key', () => {
-    component['onSubmit']();
+  it('should show error when submitting empty API key', async () => {
+    await component['onSubmit']();
     expect(component['errorMessage']()).toBe('Please enter your API key');
   });
 
-  it('should show error when API key is too short', () => {
+  it('should show error when API key is too short', async () => {
     component['onApiKeyChange']('short');
-    component['onSubmit']();
+    await component['onSubmit']();
     expect(component['errorMessage']()).toBe('API key appears to be invalid');
   });
 
-  it('should accept valid API key and navigate to dashboard', () => {
+  it('should accept valid API key and navigate to dashboard', async () => {
     const validKey = 'a'.repeat(30);
     component['onApiKeyChange'](validKey);
-    component['onSubmit']();
+    await component['onSubmit']();
 
     expect(authService.setApiKey).toHaveBeenCalledWith(validKey);
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('should clear error message when API key changes', () => {
-    component['onSubmit'](); // Trigger error
+  it('should clear error message when API key changes', async () => {
+    await component['onSubmit'](); // Trigger error
     expect(component['errorMessage']()).toBeTruthy();
 
     component['onApiKeyChange']('new-key');
     expect(component['errorMessage']()).toBe('');
   });
 
-  it('should trim whitespace from API key', () => {
+  it('should trim whitespace from API key', async () => {
     const key = 'a'.repeat(30);
     component['onApiKeyChange'](`  ${key}  `);
-    component['onSubmit']();
+    await component['onSubmit']();
 
     expect(authService.setApiKey).toHaveBeenCalledWith(key);
   });

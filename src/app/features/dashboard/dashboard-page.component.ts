@@ -275,9 +275,12 @@ export class DashboardPageComponent {
     this.budgetService.refresh();
   }
 
-  logout(): void {
-    this.authService.clearApiKey();
-    this.router.navigate(['/login']);
+  async logout(): Promise<void> {
+    try {
+      await this.authService.clearApiKey();
+    } finally {
+      await this.router.navigate(['/login']);
+    }
   }
 }
 

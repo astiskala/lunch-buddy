@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint",
+    "lint": "ng lint --fix",
+    "lint:ci": "ng lint",
     "lint:styles": "stylelint \"**/*.scss\" --fix",
     "lint:styles:ci": "stylelint \"**/*.scss\" --max-warnings=0"
   },

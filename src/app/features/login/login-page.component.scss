@@ -90,19 +90,21 @@
     font-size: 1rem;
     font-weight: 600;
     color: var(--color-text-primary);
-    background: var(--gradient-primary);
+    background: var(--color-secondary);
     border: none;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 8px 18px rgb(68 149 140 / 25%);
+    box-shadow: 0 8px 18px rgb(240 184 0 / 25%);
 
     &:hover:not(:disabled) {
+      background: var(--color-secondary-dark);
       transform: translateY(-2px);
-      box-shadow: 0 14px 24px rgb(251 183 0 / 35%);
+      box-shadow: 0 14px 24px rgb(240 184 0 / 35%);
     }
 
     &:active:not(:disabled) {
+      background: var(--color-secondary-dark);
       transform: translateY(0);
     }
 

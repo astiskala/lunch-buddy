@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { SecureStorageService } from './secure-storage.service';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 
@@ -6,11 +7,12 @@ const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly apiKey = signal<string | null>(this.getStoredApiKey());
+  private readonly secureStorage = inject(SecureStorageService);
+  private readonly apiKey = signal<string | null>(null);
+  private readonly readyPromise: Promise<void>;
 
   constructor() {
-    // Initialize signal from localStorage
-    this.apiKey.set(this.getStoredApiKey());
+    this.readyPromise = this.initialize();
   }
 
   /**
@@ -23,16 +25,16 @@ export class AuthService {
   /**
    * Set and persist the API key
    */
-  setApiKey(key: string): void {
-    localStorage.setItem(API_KEY_STORAGE_KEY, key);
+  async setApiKey(key: string): Promise<void> {
+    await this.secureStorage.setItem(API_KEY_STORAGE_KEY, key);
     this.apiKey.set(key);
   }
 
   /**
    * Clear the API key (logout)
    */
-  clearApiKey(): void {
-    localStorage.removeItem(API_KEY_STORAGE_KEY);
+  async clearApiKey(): Promise<void> {
+    await this.secureStorage.removeItem(API_KEY_STORAGE_KEY);
     this.apiKey.set(null);
   }
 
@@ -44,9 +46,19 @@ export class AuthService {
   }
 
   /**
-   * Get stored API key from localStorage
+   * Wait for the storage to initialize (needed before reading the API key)
    */
-  private getStoredApiKey(): string | null {
-    return localStorage.getItem(API_KEY_STORAGE_KEY);
+  async ready(): Promise<void> {
+    await this.readyPromise;
+  }
+
+  private async initialize(): Promise<void> {
+    try {
+      const stored = await this.secureStorage.getItem(API_KEY_STORAGE_KEY);
+      this.apiKey.set(stored);
+    } catch (error) {
+      console.error('AuthService: failed to load stored API key', error);
+      this.apiKey.set(null);
+    }
   }
 }

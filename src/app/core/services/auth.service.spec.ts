@@ -1,6 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
+import { SecureStorageService } from './secure-storage.service';
+
+class InsecureTestSecureStorageService {
+  async getItem(key: string): Promise<string | null> {
+    return localStorage.getItem(key);
+  }
+
+  async setItem(key: string, value: string): Promise<void> {
+    localStorage.setItem(key, value);
+  }
+
+  async removeItem(key: string): Promise<void> {
+    localStorage.removeItem(key);
+  }
+}
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -8,8 +23,12 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()],
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: SecureStorageService, useClass: InsecureTestSecureStorageService },
+      ],
     });
     service = TestBed.inject(AuthService);
   });
@@ -22,34 +41,44 @@ describe('AuthService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should return null when no API key is stored', () => {
+  it('should return null when no API key is stored', async () => {
+    await service.ready();
     expect(service.getApiKey()).toBeNull();
   });
 
-  it('should return false when no API key is stored', () => {
+  it('should return false when no API key is stored', async () => {
+    await service.ready();
     expect(service.hasApiKey()).toBeFalse();
   });
 
-  it('should store and retrieve API key', () => {
-    service.setApiKey(TEST_API_KEY);
+  it('should store and retrieve API key', async () => {
+    await service.setApiKey(TEST_API_KEY);
     expect(service.getApiKey()).toBe(TEST_API_KEY);
     expect(service.hasApiKey()).toBeTrue();
   });
 
-  it('should persist API key to localStorage', () => {
-    service.setApiKey(TEST_API_KEY);
+  it('should persist API key to localStorage', async () => {
+    await service.setApiKey(TEST_API_KEY);
     expect(localStorage.getItem('lunchbuddy_api_key')).toBe(TEST_API_KEY);
   });
 
-  it('should load API key from localStorage on initialization', () => {
+  it('should load API key from localStorage on initialization', async () => {
     localStorage.setItem('lunchbuddy_api_key', TEST_API_KEY);
-    const newService = new AuthService();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: SecureStorageService, useClass: InsecureTestSecureStorageService },
+      ],
+    });
+    const newService = TestBed.inject(AuthService);
+    await newService.ready();
     expect(newService.getApiKey()).toBe(TEST_API_KEY);
   });
 
-  it('should remove API key from localStorage when cleared', () => {
-    service.setApiKey(TEST_API_KEY);
-    service.clearApiKey();
+  it('should remove API key from localStorage when cleared', async () => {
+    await service.setApiKey(TEST_API_KEY);
+    await service.clearApiKey();
 
     expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
   });

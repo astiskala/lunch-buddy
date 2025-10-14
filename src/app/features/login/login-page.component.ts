@@ -19,7 +19,7 @@ export class LoginPageComponent {
   protected readonly errorMessage = signal('');
   protected readonly isSubmitting = signal(false);
 
-  protected onSubmit(): void {
+  protected async onSubmit(): Promise<void> {
     if (!this.apiKey().trim()) {
       this.errorMessage.set('Please enter your API key');
       return;
@@ -34,11 +34,18 @@ export class LoginPageComponent {
     this.errorMessage.set('');
     this.isSubmitting.set(true);
 
-    // Store the API key (trimmed)
-    this.authService.setApiKey(this.apiKey().trim());
+    try {
+      // Store the API key (trimmed)
+      await this.authService.setApiKey(this.apiKey().trim());
 
-    // Navigate to dashboard
-    this.router.navigate(['/']);
+      // Navigate to dashboard
+      await this.router.navigate(['/']);
+    } catch (error) {
+      console.error('LoginPageComponent: failed to persist API key', error);
+      this.errorMessage.set('We could not save your API key. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 
   protected onApiKeyChange(value: string): void {

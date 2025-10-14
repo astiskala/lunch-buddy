@@ -9,7 +9,7 @@ describe('authGuard', () => {
   let router: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['hasApiKey']);
+    const authServiceSpy = jasmine.createSpyObj('AuthService', ['hasApiKey', 'ready']);
     const routerSpy = jasmine.createSpyObj('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
@@ -22,25 +22,27 @@ describe('authGuard', () => {
 
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
     router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    authService.ready.and.returnValue(Promise.resolve());
   });
 
-  it('should allow activation when user has API key', () => {
+  it('should allow activation when user has API key', async () => {
     authService.hasApiKey.and.returnValue(true);
 
-    const result = TestBed.runInInjectionContext(() =>
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    const result = await TestBed.runInInjectionContext(() =>
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot) as Promise<boolean>,
     );
 
     expect(result).toBe(true);
     expect(router.parseUrl).not.toHaveBeenCalled();
   });
 
-  it('should redirect to login when user has no API key', () => {
+  it('should redirect to login when user has no API key', async () => {
     authService.hasApiKey.and.returnValue(false);
-    const loginUrl = router.parseUrl('/login');
+    const loginUrl = {} as ReturnType<Router['parseUrl']>;
     router.parseUrl.and.returnValue(loginUrl);
 
-    const result = TestBed.runInInjectionContext(() =>
+    const result = await TestBed.runInInjectionContext(() =>
       authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
     );
 
