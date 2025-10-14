@@ -17,7 +17,9 @@
     >
       <div class="dialog-header">
         <h2 id="dialog-title">Customize your dashboard</h2>
-        <button class="close-btn" (click)="handleClose()" aria-label="Close">✕</button>
+        <button mat-icon-button (click)="handleClose()" aria-label="Close dialog">
+          <mat-icon fontIcon="close"></mat-icon>
+        </button>
       </div>
 
       <div class="dialog-content">
@@ -86,27 +88,32 @@
                 </div>
                 <div class="category-actions">
                   <button
-                    class="icon-btn"
+                    mat-icon-button
+                    color="primary"
                     [disabled]="!canMoveUp(i)"
                     (click)="moveCategory(category.categoryId, -1)"
-                    title="Move up"
+                    matTooltip="Move up"
+                    [attr.aria-label]="'Move ' + category.categoryName + ' up'"
                   >
-                    ▲
+                    <mat-icon fontIcon="arrow_upward"></mat-icon>
                   </button>
                   <button
-                    class="icon-btn"
+                    mat-icon-button
+                    color="primary"
                     [disabled]="!canMoveDown(i)"
                     (click)="moveCategory(category.categoryId, 1)"
-                    title="Move down"
+                    matTooltip="Move down"
+                    [attr.aria-label]="'Move ' + category.categoryName + ' down'"
                   >
-                    ▼
+                    <mat-icon fontIcon="arrow_downward"></mat-icon>
                   </button>
                   <button
-                    class="icon-btn hide-btn"
+                    mat-icon-button
                     (click)="toggleVisibility(category.categoryId)"
-                    title="Hide category"
+                    matTooltip="Hide category"
+                    [attr.aria-label]="'Hide ' + category.categoryName"
                   >
-                    👁
+                    <mat-icon fontIcon="visibility_off"></mat-icon>
                   </button>
                 </div>
               </div>
@@ -132,11 +139,12 @@
                   </div>
                   <div class="category-actions">
                     <button
-                      class="icon-btn show-btn"
+                      mat-icon-button
                       (click)="toggleVisibility(category.categoryId)"
-                      title="Show category"
+                      matTooltip="Show category"
+                      [attr.aria-label]="'Show ' + category.categoryName"
                     >
-                      👁
+                      <mat-icon fontIcon="visibility"></mat-icon>
                     </button>
                   </div>
                 </div>
@@ -147,13 +155,15 @@
       </div>
 
       <div class="dialog-actions">
-        <button class="btn btn-secondary" (click)="resetPreferences()">
-          <span class="icon">↺</span>
+        <button mat-stroked-button color="primary" (click)="resetPreferences()">
+          <mat-icon fontIcon="restart_alt"></mat-icon>
           Reset to defaults
         </button>
         <div class="actions-right">
-          <button class="btn btn-text" (click)="handleClose()">Cancel</button>
-          <button class="btn btn-primary" (click)="handleSave()">Save</button>
+          <button mat-button type="button" (click)="handleClose()">Cancel</button>
+          <button mat-flat-button color="primary" type="button" (click)="handleSave()">
+            Save
+          </button>
         </div>
       </div>
     </div>

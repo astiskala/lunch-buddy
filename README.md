@@ -14,6 +14,31 @@ Once the server is running, open your browser and navigate to `http://localhost:
 
 Before starting the server, provide your Lunch Money API key via an environment variable named `NG_APP_LUNCHMONEY_API_KEY`. You can export it in your shell or create an `.env` file at the project root with `NG_APP_LUNCHMONEY_API_KEY=<your-api-key>` so the Angular CLI loads it automatically.
 
+## Mock Lunch Money API
+
+The project includes a lightweight mock implementation of the Lunch Money API for development and testing. It serves realistic sample data for the endpoints that Lunch Buddy consumes (`/me`, `/categories`, `/budgets`, `/recurring_expenses`, and `/transactions`).
+
+To start the mock server:
+
+```bash
+npm run mock:server
+```
+
+By default it listens on `http://localhost:4600/v1`. You can change the port by exporting `MOCK_API_PORT` before running the command.
+
+Point the Angular app at the mock by overriding the base URL when you start the dev server:
+
+```bash
+NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v1
+npm start
+```
+
+`npm start` (and other Angular CLI scripts) automatically capture any `NG_APP_*` variables that are present when the command begins and writes them to `src/environments/runtime-env.generated.ts`. If you temporarily override the API base or key, run `npm run generate:env` afterward to clear the generated file before committing.
+
+The mock API feeds the app with month-to-date activity. Budgets scale with the current calendar progress, transactions are regenerated with realistic payees and amounts, and recurring expenses surface the next billing dates.
+
+An API key is not required when using the mock API, but you may leave `NG_APP_LUNCHMONEY_API_KEY` set—requests without the Lunch Money domain simply omit the authorization header.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

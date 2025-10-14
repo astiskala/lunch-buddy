@@ -1067,23 +1067,10 @@ category-preferences-dialog {
       color: var(--color-text-primary);
     }
 
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 24px;
+    button[mat-icon-button] {
       color: var(--color-text-tertiary);
-      cursor: pointer;
-      padding: 4px;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s;
 
       &:hover {
-        background: var(--color-bg-tertiary);
         color: var(--color-text-primary);
       }
     }
@@ -1279,29 +1266,19 @@ category-preferences-dialog {
         display: flex;
         gap: 4px;
 
-        .icon-btn {
-          background: none;
-          border: 1px solid var(--color-border);
-          border-radius: 4px;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 14px;
+        button[mat-icon-button] {
           color: var(--color-text-tertiary);
-          transition: all 0.2s;
 
           &:hover:not(:disabled) {
-            background: rgb(68 149 140 / 12%);
-            border-color: var(--color-primary);
-            color: var(--color-primary-dark);
+            color: var(--color-primary);
           }
 
           &:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
+            opacity: 0.38;
+          }
+
+          mat-icon {
+            font-size: 20px;
           }
         }
       }
@@ -1320,51 +1297,11 @@ category-preferences-dialog {
       gap: 12px;
     }
 
-    .btn {
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      display: flex;
+    button[mat-stroked-button] {
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
-
-      .icon {
-        font-size: 16px;
-      }
-
-      &.btn-primary {
-        background: var(--color-primary);
-        color: white;
-
-        &:hover {
-          background: var(--color-primary-dark);
-        }
-      }
-
-      &.btn-secondary {
-        border: 1px solid var(--color-primary);
-        background: transparent;
-        color: var(--color-primary);
-
-        &:hover {
-          background: rgb(68 149 140 / 12%);
-          color: var(--color-primary-dark);
-        }
-      }
-
-      &.btn-text {
-        background: none;
-        color: var(--color-text-tertiary);
-
-        &:hover {
-          background: var(--color-bg-tertiary);
-          color: var(--color-text-primary);
-        }
-      }
+      gap: 8px;
+      font-weight: 500;
     }
   }
 

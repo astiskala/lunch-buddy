@@ -3,14 +3,20 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "generate:env": "node tools/write-runtime-env.mjs",
+    "prestart": "npm run generate:env",
     "start": "ng serve",
+    "prebuild": "npm run generate:env",
     "build": "ng build",
+    "prewatch": "npm run generate:env",
     "watch": "ng build --watch --configuration development",
+    "pretest": "npm run generate:env",
     "test": "ng test",
     "lint": "ng lint --fix",
     "lint:ci": "ng lint",
     "lint:styles": "stylelint \"**/*.scss\" --fix",
-    "lint:styles:ci": "stylelint \"**/*.scss\" --max-warnings=0"
+    "lint:styles:ci": "stylelint \"**/*.scss\" --max-warnings=0",
+    "mock:server": "node mock-server/server.js"
   },
   "prettier": {
     "printWidth": 100,
@@ -50,7 +56,9 @@
     "@types/jasmine": "~5.1.9",
     "@typescript-eslint/eslint-plugin": "7.11.0",
     "@typescript-eslint/parser": "7.11.0",
+    "cors": "^2.8.5",
     "eslint": "8.57.1",
+    "express": "^4.21.2",
     "jasmine-core": "~5.12.0",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.2.0",

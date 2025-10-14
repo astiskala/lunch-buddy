@@ -10,13 +10,16 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 
 @Component({
   selector: 'category-preferences-dialog',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
   templateUrl: './category-preferences-dialog.component.html',
   styleUrls: ['./category-preferences-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

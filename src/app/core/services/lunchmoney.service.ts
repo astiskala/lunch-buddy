@@ -9,8 +9,13 @@ import {
   TransactionsResponse,
   RecurringExpense,
 } from '../models/lunchmoney.types';
+import { environment } from '../../../environments/environment';
 
-const LUNCH_MONEY_API_BASE = 'https://dev.lunchmoney.app/v1';
+const normalizeBaseUrl = (baseUrl: string): string => baseUrl.replace(/\/+$/, '');
+
+const LUNCH_MONEY_API_BASE = normalizeBaseUrl(
+  environment.lunchmoneyApiBase ?? 'https://dev.lunchmoney.app/v1',
+);
 
 @Injectable({
   providedIn: 'root',
