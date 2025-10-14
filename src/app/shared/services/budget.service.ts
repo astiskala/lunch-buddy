@@ -14,6 +14,7 @@ import {
   toIsoDate,
 } from '../utils/date.util';
 import { getRecurringDate } from '../utils/recurring.util';
+import { PushNotificationService } from './push-notification.service';
 
 export interface CategoryPreferences {
   customOrder: number[];
@@ -36,6 +37,7 @@ const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 })
 export class BudgetService {
   private lunchMoneyService = inject(LunchMoneyService);
+  private pushNotificationService = inject(PushNotificationService);
 
   // Month information
   private monthRange = getCurrentMonthRange();
@@ -152,6 +154,23 @@ export class BudgetService {
     this.loadRecurringExpenses();
   }
 
+  private maybeDispatchNotifications(progress: BudgetProgress[]): void {
+    const preferences = this.preferences();
+    if (!preferences.notificationsEnabled) {
+      return;
+    }
+
+    const alerts = filterAlerts(progress, preferences.hiddenCategoryIds);
+    if (!alerts.length) {
+      return;
+    }
+
+    const currency = this.currency();
+    this.pushNotificationService
+      .notifyBudgetAlerts(alerts, { currency })
+      .catch((error) => console.error('Failed to deliver budget notifications', error));
+  }
+
   private loadPreferences(): CategoryPreferences {
     try {
       const stored = localStorage.getItem(PREFERENCES_KEY);
@@ -196,6 +215,8 @@ export class BudgetService {
 
         this.budgetData.set(progress);
         this.isLoading.set(false);
+
+        this.maybeDispatchNotifications(progress);
 
         if (canUseNavigator() ? navigator.onLine : true) {
           const timestamp = new Date();
@@ -280,4 +301,14 @@ function persistLastRefresh(timestamp: Date): void {
 
 function canUseNavigator(): boolean {
   return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
+}
+
+function filterAlerts(progress: BudgetProgress[], hiddenCategoryIds: number[]): BudgetProgress[] {
+  const hidden = new Set(hiddenCategoryIds);
+  return progress.filter(
+    (item) =>
+      !hidden.has(item.categoryId) &&
+      !item.isIncome &&
+      (item.status === 'over' || item.status === 'at-risk'),
+  );
 }

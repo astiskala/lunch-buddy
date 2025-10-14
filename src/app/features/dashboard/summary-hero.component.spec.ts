@@ -65,6 +65,8 @@ describe('SummaryHeroComponent', () => {
   it('should subtract upcoming from income remaining', () => {
     fixture.componentRef.setInput('monthStart', '2025-10-01');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalExpenseSpent', 0);
+    fixture.componentRef.setInput('totalExpenseBudget', 0);
     fixture.componentRef.setInput('totalIncomeBudget', 2000);
     fixture.componentRef.setInput('totalIncomeSpent', 1200);
     fixture.componentRef.setInput('totalIncomeUpcoming', 300);

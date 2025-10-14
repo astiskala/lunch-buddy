@@ -6,11 +6,13 @@ import {
   output,
   input,
   OnInit,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
+import { PushNotificationService } from '../../shared/services/push-notification.service';
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -20,6 +22,8 @@ import { CategoryPreferences } from '../../shared/services/budget.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryPreferencesDialogComponent implements OnInit {
+  private readonly pushNotificationService = inject(PushNotificationService);
+
   readonly open = input.required<boolean>();
   readonly items = input.required<BudgetProgress[]>();
   readonly hiddenItems = input.required<BudgetProgress[]>();
@@ -128,9 +132,24 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.warnAtRatio.set(parseInt(target.value) / 100);
   }
 
-  handleNotificationsChange(event: Event): void {
+  async handleNotificationsChange(event: Event): Promise<void> {
     const target = event.target as HTMLInputElement;
-    this.notificationsEnabled.set(target.checked);
+    if (!target.checked) {
+      this.notificationsEnabled.set(false);
+      return;
+    }
+
+    try {
+      const granted = await this.pushNotificationService.ensurePermission();
+      this.notificationsEnabled.set(granted);
+      if (!granted) {
+        target.checked = false;
+      }
+    } catch (error) {
+      console.error('Failed to enable push notifications', error);
+      this.notificationsEnabled.set(false);
+      target.checked = false;
+    }
   }
 
   canMoveUp(index: number): boolean {
