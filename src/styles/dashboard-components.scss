@@ -812,10 +812,6 @@ dashboard-page {
       height: 100%;
     }
 
-    mat-icon {
-      font-size: 22px;
-    }
-
     &:hover:not(:disabled) {
       transform: scale(1.05);
       box-shadow: 0 8px 18px rgb(68 149 140 / 35%);

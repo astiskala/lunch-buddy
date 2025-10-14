@@ -41,6 +41,17 @@ describe('SummaryHeroComponent', () => {
     expect(component.expenseProjectedPercent()).toBe(80);
   });
 
+  it('should subtract upcoming from expense remaining', () => {
+    fixture.componentRef.setInput('monthStart', '2025-10-01');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalExpenseBudget', 1000);
+    fixture.componentRef.setInput('totalExpenseSpent', 400);
+    fixture.componentRef.setInput('totalExpenseUpcoming', 250);
+    fixture.detectChanges();
+
+    expect(component.expenseRemaining()).toBe(350);
+  });
+
   it('should handle zero budget', () => {
     fixture.componentRef.setInput('monthStart', '2025-10-01');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
@@ -49,6 +60,17 @@ describe('SummaryHeroComponent', () => {
     fixture.detectChanges();
 
     expect(component.expenseSpentPercent()).toBe(0);
+  });
+
+  it('should subtract upcoming from income remaining', () => {
+    fixture.componentRef.setInput('monthStart', '2025-10-01');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalIncomeBudget', 2000);
+    fixture.componentRef.setInput('totalIncomeSpent', 1200);
+    fixture.componentRef.setInput('totalIncomeUpcoming', 300);
+    fixture.detectChanges();
+
+    expect(component.incomeRemaining()).toBe(500);
   });
 
   it('should calculate month progress percent', () => {

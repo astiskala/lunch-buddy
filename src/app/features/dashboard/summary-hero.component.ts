@@ -51,9 +51,13 @@ export class SummaryHeroComponent {
     return budget > 0 ? Math.round((projected / budget) * 100) : 0;
   });
 
-  readonly expenseRemaining = computed(() => this.totalExpenseBudget() - this.totalExpenseSpent());
+  readonly expenseRemaining = computed(
+    () => this.totalExpenseBudget() - (this.totalExpenseSpent() + this.totalExpenseUpcoming()),
+  );
 
-  readonly incomeRemaining = computed(() => this.totalIncomeBudget() - this.totalIncomeSpent());
+  readonly incomeRemaining = computed(
+    () => this.totalIncomeBudget() - (this.totalIncomeSpent() + this.totalIncomeUpcoming()),
+  );
 
   readonly expenseSpentFormatted = computed(() =>
     formatCurrency(this.totalExpenseSpent(), this.currency(), { fallbackCurrency: 'USD' }),
