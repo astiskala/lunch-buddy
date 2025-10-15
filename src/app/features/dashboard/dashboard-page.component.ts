@@ -93,34 +93,56 @@ export class DashboardPageComponent {
     this.filterItemsByStatus(this.hiddenItems(), this.statusFilter()),
   );
 
-  protected readonly totalExpenseSpent = computed(() =>
-    [...this.expenses(), ...this.hiddenExpenses()].reduce((sum, item) => sum + item.spent, 0),
-  );
+  protected readonly totalExpenseSpent = computed(() => {
+    let total = 0;
+    for (const item of this.expenses()) {
+      total += item.spent;
+    }
+    for (const item of this.hiddenExpenses()) {
+      total += item.spent;
+    }
+    return total;
+  });
 
-  protected readonly totalExpenseBudget = computed(() =>
-    [...this.expenses(), ...this.hiddenExpenses()].reduce(
-      (sum, item) => sum + item.budgetAmount,
-      0,
-    ),
-  );
+  protected readonly totalExpenseBudget = computed(() => {
+    let total = 0;
+    for (const item of this.expenses()) {
+      total += item.budgetAmount;
+    }
+    for (const item of this.hiddenExpenses()) {
+      total += item.budgetAmount;
+    }
+    return total;
+  });
 
-  protected readonly totalIncomeSpent = computed(() =>
-    [...this.incomes(), ...this.hiddenIncomes()].reduce(
-      (sum, item) => sum + Math.abs(item.spent),
-      0,
-    ),
-  );
+  protected readonly totalIncomeSpent = computed(() => {
+    let total = 0;
+    for (const item of this.incomes()) {
+      total += Math.abs(item.spent);
+    }
+    for (const item of this.hiddenIncomes()) {
+      total += Math.abs(item.spent);
+    }
+    return total;
+  });
 
-  protected readonly totalIncomeBudget = computed(() =>
-    [...this.incomes(), ...this.hiddenIncomes()].reduce(
-      (sum, item) => sum + Math.abs(item.budgetAmount),
-      0,
-    ),
-  );
+  protected readonly totalIncomeBudget = computed(() => {
+    let total = 0;
+    for (const item of this.incomes()) {
+      total += Math.abs(item.budgetAmount);
+    }
+    for (const item of this.hiddenIncomes()) {
+      total += Math.abs(item.budgetAmount);
+    }
+    return total;
+  });
 
   protected readonly totalExpenseUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
     const referenceDate = this.referenceDate();
+    const allExpenses = [...this.expenses(), ...this.hiddenExpenses()];
+    const expenseMap = new Map(allExpenses.map(exp => [exp.categoryId, exp]));
+    
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
       const pendingInstances = instances.filter((instance) =>
@@ -129,14 +151,11 @@ export class DashboardPageComponent {
       if (pendingInstances.length === 0) {
         continue;
       }
-      const category = [...this.expenses(), ...this.hiddenExpenses()].find(
-        (c) => c.categoryId === categoryId,
-      );
+      const category = expenseMap.get(categoryId);
       if (category && !category.isIncome) {
-        total += pendingInstances.reduce(
-          (sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)),
-          0,
-        );
+        for (const inst of pendingInstances) {
+          total += Math.abs(parseFloat(inst.expense.amount));
+        }
       }
     }
     return total;
@@ -145,6 +164,9 @@ export class DashboardPageComponent {
   protected readonly totalIncomeUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
     const referenceDate = this.referenceDate();
+    const allIncomes = [...this.incomes(), ...this.hiddenIncomes()];
+    const incomeMap = new Map(allIncomes.map(inc => [inc.categoryId, inc]));
+    
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
       const pendingInstances = instances.filter((instance) =>
@@ -153,14 +175,11 @@ export class DashboardPageComponent {
       if (pendingInstances.length === 0) {
         continue;
       }
-      const category = [...this.incomes(), ...this.hiddenIncomes()].find(
-        (c) => c.categoryId === categoryId,
-      );
+      const category = incomeMap.get(categoryId);
       if (category && category.isIncome) {
-        total += pendingInstances.reduce(
-          (sum, inst) => sum + Math.abs(parseFloat(inst.expense.amount)),
-          0,
-        );
+        for (const inst of pendingInstances) {
+          total += Math.abs(parseFloat(inst.expense.amount));
+        }
       }
     }
     return total;

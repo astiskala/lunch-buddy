@@ -41,11 +41,11 @@ const readFromProcessEnv = (): string | undefined => {
 const readFromRuntimeModule = (): string | undefined =>
   runtimeEnv['NG_APP_LUNCHMONEY_API_KEY'];
 
-export const resolveLunchMoneyApiKey = (): string | undefined => {
+export const resolveLunchMoneyApiKey = (): string | null => {
   return (
     readFromImportMeta() ??
     readFromProcessEnv() ??
     readFromRuntimeModule() ??
     readFromGlobalThis()
-  );
+  ) ?? null;
 };
