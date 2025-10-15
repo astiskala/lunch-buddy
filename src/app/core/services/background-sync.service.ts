@@ -1,6 +1,7 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../../../environments/environment';
+import { LoggerService } from './logger.service';
 
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -34,6 +35,7 @@ interface BackgroundConfigPayload {
 })
 export class BackgroundSyncService {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly logger = inject(LoggerService);
   private readonly apiBaseUrl = environment.lunchmoneyApiBase ?? DEFAULT_API_BASE;
 
   private registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
@@ -97,7 +99,7 @@ export class BackgroundSyncService {
     try {
       worker.postMessage(message);
     } catch (error) {
-      console.error('BackgroundSyncService: failed to post config to service worker', error);
+      this.logger.error('BackgroundSyncService: failed to post config to service worker', error);
     }
   }
 
@@ -129,7 +131,7 @@ export class BackgroundSyncService {
             });
           }
         } catch (error) {
-          console.warn('BackgroundSyncService: periodic sync unavailable', error);
+          this.logger.warn('BackgroundSyncService: periodic sync unavailable', error);
           await this.registerOneOffSync(registration);
         }
         return;
@@ -149,7 +151,7 @@ export class BackgroundSyncService {
         try {
           await syncManager.register(PERIODIC_SYNC_TAG);
         } catch (error) {
-          console.warn('BackgroundSyncService: sync registration failed', error);
+          this.logger.warn('BackgroundSyncService: sync registration failed', error);
         }
       }
     }
@@ -168,7 +170,7 @@ export class BackgroundSyncService {
             tags.filter((tag: string) => tag === PERIODIC_SYNC_TAG).map((tag: string) => periodicSync.unregister(tag)),
           );
         } catch (error) {
-          console.warn('BackgroundSyncService: failed to unregister periodic sync', error);
+          this.logger.warn('BackgroundSyncService: failed to unregister periodic sync', error);
         }
       }
     }

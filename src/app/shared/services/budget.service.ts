@@ -15,6 +15,7 @@ import {
 } from '../utils/date.util';
 import { getRecurringDate } from '../utils/recurring.util';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
+import { LoggerService } from '../../core/services/logger.service';
 
 export interface CategoryPreferences {
   customOrder: number[];
@@ -31,6 +32,7 @@ const defaultCategoryPreferences: CategoryPreferences = {
 };
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
+const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
 
 @Injectable({
   providedIn: 'root',
@@ -38,6 +40,7 @@ const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 export class BudgetService {
   private lunchMoneyService = inject(LunchMoneyService);
   private backgroundSyncService = inject(BackgroundSyncService);
+  private logger = inject(LoggerService);
 
   // Month information
   private monthRange = getCurrentMonthRange();
@@ -51,7 +54,7 @@ export class BudgetService {
   protected readonly recurringExpenses = signal<RecurringExpense[]>([]);
   protected readonly isLoading = signal(true);
   protected readonly isRecurringLoading = signal(false);
-  protected readonly lastRefresh = signal<Date | null>(loadLastRefresh());
+  protected readonly lastRefresh = signal<Date | null>(this.loadLastRefresh());
   protected readonly errors = signal<Error[]>([]);
 
   // Preferences
@@ -162,7 +165,7 @@ export class BudgetService {
         return { ...defaultCategoryPreferences, ...JSON.parse(stored) };
       }
     } catch (error) {
-      console.error('Failed to load preferences', error);
+      this.logger.error('Failed to load preferences', error);
     }
     return defaultCategoryPreferences;
   }
@@ -171,7 +174,7 @@ export class BudgetService {
     try {
       localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
     } catch (error) {
-      console.error('Failed to save preferences', error);
+      this.logger.error('Failed to save preferences', error);
     }
   }
 
@@ -202,10 +205,10 @@ export class BudgetService {
         this.isLoading.set(false);
         this.syncBackgroundPreferences();
 
-        if (canUseNavigator() ? navigator.onLine : true) {
+        if (this.canUseNavigator() ? navigator.onLine : true) {
           const timestamp = new Date();
           this.lastRefresh.set(timestamp);
-          persistLastRefresh(timestamp);
+          this.persistLastRefresh(timestamp);
         }
       },
       error: (error: Error) => {
@@ -224,7 +227,7 @@ export class BudgetService {
         this.isRecurringLoading.set(false);
       },
       error: (error: Error) => {
-        console.error('Failed to load recurring expenses', error);
+        this.logger.error('Failed to load recurring expenses', error);
         this.isRecurringLoading.set(false);
       },
     });
@@ -262,41 +265,39 @@ export class BudgetService {
         warnAtRatio: prefs.warnAtRatio,
         currency,
       })
-      .catch((error) => console.error('Failed to sync background preferences', error));
+      .catch((error) => this.logger.error('Failed to sync background preferences', error));
   }
-}
 
-const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
-
-function loadLastRefresh(): Date | null {
-  if (typeof localStorage === 'undefined') {
-    return null;
-  }
-  try {
-    const rawValue = localStorage.getItem(LAST_REFRESH_KEY);
-    if (!rawValue) {
+  private loadLastRefresh(): Date | null {
+    if (typeof localStorage === 'undefined') {
       return null;
     }
+    try {
+      const rawValue = localStorage.getItem(LAST_REFRESH_KEY);
+      if (!rawValue) {
+        return null;
+      }
 
-    const parsed = new Date(rawValue);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  } catch (error) {
-    console.error('Failed to read last refresh timestamp', error);
-    return null;
+      const parsed = new Date(rawValue);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    } catch (error) {
+      this.logger.error('Failed to read last refresh timestamp', error);
+      return null;
+    }
   }
-}
 
-function persistLastRefresh(timestamp: Date): void {
-  if (typeof localStorage === 'undefined') {
-    return;
+  private persistLastRefresh(timestamp: Date): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
+      localStorage.setItem(LAST_REFRESH_KEY, timestamp.toISOString());
+    } catch (error) {
+      this.logger.error('Failed to store last refresh timestamp', error);
+    }
   }
-  try {
-    localStorage.setItem(LAST_REFRESH_KEY, timestamp.toISOString());
-  } catch (error) {
-    console.error('Failed to store last refresh timestamp', error);
-  }
-}
 
-function canUseNavigator(): boolean {
-  return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
+  private canUseNavigator(): boolean {
+    return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
+  }
 }

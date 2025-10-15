@@ -1,6 +1,7 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BackgroundSyncService } from './background-sync.service';
+import { LoggerService } from './logger.service';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 
@@ -10,6 +11,7 @@ const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly backgroundSync = inject(BackgroundSyncService);
+  private readonly logger = inject(LoggerService);
   private readonly apiKey = signal<string | null>(null);
   private readonly readyPromise: Promise<void>;
 
@@ -62,7 +64,7 @@ export class AuthService {
       this.apiKey.set(stored);
       await this.backgroundSync.updateApiCredentials(stored);
     } catch (error) {
-      console.error('AuthService: failed to load stored API key', error);
+      this.logger.error('AuthService: failed to load stored API key', error);
       this.apiKey.set(null);
       await this.backgroundSync.updateApiCredentials(null);
     }
@@ -76,7 +78,7 @@ export class AuthService {
     try {
       localStorage.setItem(API_KEY_STORAGE_KEY, value);
     } catch (error) {
-      console.error('AuthService: failed to persist API key', error);
+      this.logger.error('AuthService: failed to persist API key', error);
     }
   }
 
@@ -88,7 +90,7 @@ export class AuthService {
     try {
       localStorage.removeItem(API_KEY_STORAGE_KEY);
     } catch (error) {
-      console.error('AuthService: failed to clear API key', error);
+      this.logger.error('AuthService: failed to clear API key', error);
     }
   }
 
@@ -100,7 +102,7 @@ export class AuthService {
     try {
       return localStorage.getItem(API_KEY_STORAGE_KEY);
     } catch (error) {
-      console.error('AuthService: failed to read stored API key', error);
+      this.logger.error('AuthService: failed to read stored API key', error);
       return null;
     }
   }

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/cor
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { LoggerService } from '../../core/services/logger.service';
 
 @Component({
   selector: 'app-login-page',
@@ -13,6 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class LoginPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly logger = inject(LoggerService);
   private readonly router = inject(Router);
 
   protected readonly apiKey = signal('');
@@ -41,7 +43,7 @@ export class LoginPageComponent {
       // Navigate to dashboard
       await this.router.navigate(['/']);
     } catch (error) {
-      console.error('LoginPageComponent: failed to persist API key', error);
+      this.logger.error('LoginPageComponent: failed to persist API key', error);
       this.errorMessage.set('We could not save your API key. Please try again.');
     } finally {
       this.isSubmitting.set(false);

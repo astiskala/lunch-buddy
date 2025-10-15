@@ -16,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
+import { LoggerService } from '../../core/services/logger.service';
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -26,6 +27,7 @@ import { PushNotificationService } from '../../shared/services/push-notification
 })
 export class CategoryPreferencesDialogComponent implements OnInit {
   private readonly pushNotificationService = inject(PushNotificationService);
+  private readonly logger = inject(LoggerService);
 
   readonly open = input.required<boolean>();
   readonly items = input.required<BudgetProgress[]>();
@@ -149,7 +151,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
         target.checked = false;
       }
     } catch (error) {
-      console.error('Failed to enable push notifications', error);
+      this.logger.error('Failed to enable push notifications', error);
       this.notificationsEnabled.set(false);
       target.checked = false;
     }

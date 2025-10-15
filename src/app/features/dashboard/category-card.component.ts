@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { BudgetProgress, RecurringInstance, Transaction } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { formatCurrency } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
 import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
@@ -25,6 +26,7 @@ interface ActivityEntry {
 })
 export class CategoryCardComponent {
   private lunchMoneyService = inject(LunchMoneyService);
+  private logger = inject(LoggerService);
 
   readonly item = input.required<BudgetProgress>();
   readonly defaultCurrency = input.required<string>();
@@ -210,7 +212,7 @@ export class CategoryCardComponent {
           this.isLoadingTransactions.set(false);
         },
         error: (error) => {
-          console.error('Failed to load transactions', error);
+          this.logger.error('Failed to load transactions', error);
           this.isLoadingTransactions.set(false);
         },
       });

@@ -13,6 +13,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { Router } from '@angular/router';
 import { BudgetService, CategoryPreferences } from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryProgressListComponent } from './category-progress-list.component';
 import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
@@ -79,19 +80,18 @@ export class DashboardPageComponent {
     this.activeTab() === 'expenses' ? this.hiddenExpenses() : this.hiddenIncomes(),
   );
 
-  protected readonly filteredVisibleItems = computed(() => {
-    const items = this.activeItems();
-    const filter = this.statusFilter();
-    if (filter === 'all') return items;
-    return items.filter((item) => item.status === filter);
-  });
+  private filterItemsByStatus = (items: BudgetProgress[], statusFilter: StatusFilter): BudgetProgress[] => {
+    if (statusFilter === 'all') return items;
+    return items.filter((item) => item.status === statusFilter);
+  };
 
-  protected readonly filteredHiddenItems = computed(() => {
-    const items = this.hiddenItems();
-    const filter = this.statusFilter();
-    if (filter === 'all') return items;
-    return items.filter((item) => item.status === filter);
-  });
+  protected readonly filteredVisibleItems = computed(() =>
+    this.filterItemsByStatus(this.activeItems(), this.statusFilter()),
+  );
+
+  protected readonly filteredHiddenItems = computed(() =>
+    this.filterItemsByStatus(this.hiddenItems(), this.statusFilter()),
+  );
 
   protected readonly totalExpenseSpent = computed(() =>
     [...this.expenses(), ...this.hiddenExpenses()].reduce((sum, item) => sum + item.spent, 0),
