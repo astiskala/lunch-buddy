@@ -3,12 +3,23 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { routes } from './app.routes';
+import { AuthService } from './core/services/auth.service';
 
 describe('App', () => {
+  let authServiceStub: jasmine.SpyObj<AuthService>;
+
   beforeEach(async () => {
+    authServiceStub = jasmine.createSpyObj<AuthService>('AuthService', ['ready', 'hasApiKey']);
+    authServiceStub.ready.and.resolveTo(undefined);
+    authServiceStub.hasApiKey.and.returnValue(false);
+
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideZonelessChangeDetection(), provideRouter(routes)],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter(routes),
+        { provide: AuthService, useValue: authServiceStub },
+      ],
     }).compileComponents();
   });
 

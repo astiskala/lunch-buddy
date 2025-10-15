@@ -23,6 +23,7 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "crossOrigin": "anonymous",
             "assets": [
               {
                 "glob": "**/*",
