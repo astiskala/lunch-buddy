@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lunch Buddy – Offline</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --color-primary: #44958c;
+        --color-primary-dark: #357872;
+        --color-primary-light: #6bb3ab;
+        --color-secondary: #f0b800;
+        --color-secondary-dark: #d99d00;
+        --color-secondary-light: #ffde9f;
+        --color-bg-primary: #f7fefd;
+        --color-surface: #ffffff;
+        --color-surface-muted: #ecf9f6;
+        --color-text-primary: #1a202c;
+        --color-text-secondary: #4a5568;
+        --color-border: #dce6e4;
+        --shadow-md: 0 12px 32px rgb(15 31 30 / 12%);
+        --surface-accent: rgba(68, 149, 140, 0.08);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --color-primary: #6bb3ab;
+          --color-primary-dark: #44958c;
+          --color-primary-light: #8ad0c8;
+          --color-secondary: #f0b800;
+          --color-secondary-dark: #c48c00;
+          --color-secondary-light: #ffd54f;
+          --color-bg-primary: #0e1617;
+          --color-surface: #162021;
+          --color-surface-muted: #1f2c2d;
+          --color-text-primary: #f1fcfa;
+          --color-text-secondary: #c2d7d4;
+          --color-border: #233031;
+          --shadow-md: 0 18px 44px rgb(0 0 0 / 35%);
+          --surface-accent: rgba(107, 179, 171, 0.12);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        background: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        padding: 2rem;
+      }
+
+      main {
+        max-width: 28rem;
+        width: min(100%, 32rem);
+        text-align: center;
+        background: var(--color-surface);
+        border-radius: 20px;
+        padding: clamp(2rem, 4vw, 2.75rem);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--color-border);
+        display: grid;
+        gap: 1.75rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      main::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        background:
+          radial-gradient(circle at top left, var(--surface-accent), transparent 65%),
+          radial-gradient(circle at bottom right, var(--surface-accent), transparent 60%);
+        mix-blend-mode: screen;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        main::before {
+          mix-blend-mode: normal;
+        }
+      }
+
+      .logo {
+        width: clamp(64px, 20vw, 88px);
+        height: auto;
+        justify-self: center;
+        filter: drop-shadow(0 8px 18px rgb(15 31 30 / 12%));
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .logo {
+          filter: drop-shadow(0 10px 22px rgb(0 0 0 / 45%));
+        }
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.85rem, 4vw, 2.4rem);
+        line-height: 1.2;
+        color: var(--color-primary-dark);
+      }
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.65;
+        color: var(--color-text-secondary);
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 999px;
+        padding: 0.9rem 2.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #1f1500;
+        background: #f0b800;
+        transition:
+          transform 120ms ease,
+          background-color 160ms ease,
+          box-shadow 160ms ease;
+        box-shadow: 0 8px 18px rgb(217 157 0 / 24%);
+      }
+
+      button:focus-visible {
+        outline: 3px solid rgb(240 184 0 / 45%);
+        outline-offset: 4px;
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button:hover {
+        background: #ffde9f;
+        box-shadow: 0 10px 22px rgb(217 157 0 / 30%);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img
+        class="logo"
+        src="/icons/lunch-buddy.svg"
+        alt="Lunch Buddy logo"
+        width="88"
+        height="88"
+      />
+      <h1>Looks like you’re offline</h1>
+      <p>
+        Lunch Buddy needs a connection to sync your budget. We’ll keep retrying in the background, or you can try again
+        once you’re back online.
+      </p>
+      <button type="button" onclick="window.location.reload()">Retry</button>
+    </main>
+  </body>
+</html>
