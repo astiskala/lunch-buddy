@@ -24,10 +24,12 @@ export class SecureStorageService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly encoder = new TextEncoder();
   private readonly decoder = new TextDecoder();
+  private readonly dbOpenTimeoutMs = 1500;
 
   private dbPromise: Promise<IDBDatabase> | null = null;
   private keyPromise: Promise<CryptoKey | null> | null = null;
   private encryptionSupported: boolean | null = null;
+  private loggedFallback = false;
 
   async setItem(key: string, value: string): Promise<void> {
     if (!this.isEncryptionSupported()) {
@@ -172,6 +174,7 @@ export class SecureStorageService {
       return cryptoApi.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
     } catch (error) {
       console.error('SecureStorageService: failed to create encryption key', error);
+      this.disableEncryptionForSession(error);
       return null;
     }
   }
@@ -191,6 +194,7 @@ export class SecureStorageService {
       return cryptoApi.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
     } catch (error) {
       console.error('SecureStorageService: failed to load encryption key', error);
+      this.disableEncryptionForSession(error);
       return null;
     }
   }
@@ -210,15 +214,52 @@ export class SecureStorageService {
       return this.dbPromise;
     }
 
-    this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+    const openPromise = new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(ENCRYPTION_KEY_DB_NAME, 1);
+      const globalObj = globalThis as typeof globalThis & {
+        setTimeout?: typeof setTimeout;
+        clearTimeout?: typeof clearTimeout;
+      };
+
+      const cleanup = (): void => {
+        if (timeoutId !== null && typeof globalObj.clearTimeout === 'function') {
+          globalObj.clearTimeout(timeoutId);
+        }
+        request.onupgradeneeded = null;
+        request.onsuccess = null;
+        request.onerror = null;
+        request.onblocked = null;
+      };
+
+      const timeoutId =
+        typeof globalObj.setTimeout === 'function'
+          ? globalObj.setTimeout(() => {
+              cleanup();
+              reject(new Error('Secure storage database open timed out'));
+            }, this.dbOpenTimeoutMs)
+          : null;
 
       request.onupgradeneeded = () => {
         request.result.createObjectStore(ENCRYPTION_KEY_STORE);
       };
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error('Failed to open secure storage database'));
+      request.onsuccess = () => {
+        cleanup();
+        resolve(request.result);
+      };
+      request.onerror = () => {
+        cleanup();
+        reject(request.error ?? new Error('Failed to open secure storage database'));
+      };
+      request.onblocked = () => {
+        cleanup();
+        reject(new Error('Secure storage database open was blocked'));
+      };
+    });
+
+    this.dbPromise = openPromise.catch((error) => {
+      this.disableEncryptionForSession(error);
+      throw error;
     });
 
     return this.dbPromise;
@@ -288,5 +329,15 @@ export class SecureStorageService {
       bytes[i] = binary.charCodeAt(i);
     }
     return bytes.buffer;
+  }
+
+  private disableEncryptionForSession(reason: unknown): void {
+    if (!this.loggedFallback) {
+      console.error('SecureStorageService: falling back to plaintext storage', reason);
+      this.loggedFallback = true;
+    }
+    this.encryptionSupported = false;
+    this.dbPromise = null;
+    this.keyPromise = null;
   }
 }
