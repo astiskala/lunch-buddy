@@ -1,0 +1,25 @@
+# Lunch Buddy Privacy Summary
+
+Version: 2025-10-16
+Contact: mailto:lunch-buddy@adamstiskala.com
+Policy: /privacy-policy.html
+
+Data We Access:
+- API key you supply so the app can call the Lunch Money API on your behalf.
+- Budget, category, transaction, and recurring expense information returned directly from Lunch Money when you use the app.
+- Category preferences and notification settings you adjust inside the app.
+
+Storage & Processing:
+- API keys and display preferences are stored locally in your browser via `localStorage`.
+- The optional background notification feature stores the API key, alert signature, and warning threshold in the service worker's IndexedDB to evaluate budgets while the app is closed.
+- Offline support comes from the service worker, which caches static assets and the most recent API responses on your device.
+
+Third Parties:
+- Network requests go only to the Lunch Money API base (`https://dev.lunchmoney.app/v1`).
+- Our third party hosts (Netlify and CloudFlare) may create standard access logs containing IP address, user agent, and timestamps.
+
+User Control:
+- Use the sign-out option or clear browser storage to remove the stored API key and cached data.
+- Disable notifications from within the category preferences dialog or through your browser’s notification permissions.
+
+Last Updated: 2025-10-16
