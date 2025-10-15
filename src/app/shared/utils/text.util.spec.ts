@@ -43,7 +43,7 @@ describe('Text Utils', () => {
 
     it('should handle invalid code points', () => {
       // Test code point that might throw (very large number)
-      expect(decodeHtmlEntities('&#999999999;')).toBe('&#999999999;');
+      expect(decodeHtmlEntities('&#999999999;')).toBe('�');
     });
 
     it('should handle unknown named entities', () => {
@@ -57,7 +57,7 @@ describe('Text Utils', () => {
     });
 
     it('should handle mixed entities and text', () => {
-      expect(decodeHtmlEntities('Caf&eacute; &amp; Restaurant')).toBe('Caf&eacute; & Restaurant');
+      expect(decodeHtmlEntities('Caf&eacute; &amp; Restaurant')).toBe('Café & Restaurant');
     });
 
     it('should handle empty string', () => {

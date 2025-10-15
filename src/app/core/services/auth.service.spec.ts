@@ -1,24 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
-import { SecureStorageService } from './secure-storage.service';
+import { BackgroundSyncService } from './background-sync.service';
 
-class InsecureTestSecureStorageService {
-  async getItem(key: string): Promise<string | null> {
-    return localStorage.getItem(key);
-  }
-
-  async setItem(key: string, value: string): Promise<void> {
-    localStorage.setItem(key, value);
-  }
-
-  async removeItem(key: string): Promise<void> {
-    localStorage.removeItem(key);
-  }
+class MockBackgroundSyncService {
+  updateApiCredentials = jasmine.createSpy('updateApiCredentials').and.resolveTo(undefined);
 }
 
 describe('AuthService', () => {
   let service: AuthService;
+  let backgroundSync: MockBackgroundSyncService;
   const TEST_API_KEY = 'test-api-key-12345';
 
   beforeEach(() => {
@@ -27,10 +18,11 @@ describe('AuthService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        { provide: SecureStorageService, useClass: InsecureTestSecureStorageService },
+        { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
       ],
     });
     service = TestBed.inject(AuthService);
+    backgroundSync = TestBed.inject(BackgroundSyncService) as unknown as MockBackgroundSyncService;
   });
 
   afterEach(() => {
@@ -68,7 +60,7 @@ describe('AuthService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        { provide: SecureStorageService, useClass: InsecureTestSecureStorageService },
+        { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
       ],
     });
     const newService = TestBed.inject(AuthService);
@@ -81,5 +73,13 @@ describe('AuthService', () => {
     await service.clearApiKey();
 
     expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
+  });
+
+  it('should notify background sync when credentials change', async () => {
+    await service.setApiKey(TEST_API_KEY);
+    expect(backgroundSync.updateApiCredentials).toHaveBeenCalledWith(TEST_API_KEY);
+
+    await service.clearApiKey();
+    expect(backgroundSync.updateApiCredentials).toHaveBeenCalledWith(null);
   });
 });

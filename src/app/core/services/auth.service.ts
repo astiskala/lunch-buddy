@@ -1,5 +1,5 @@
-import { Injectable, signal, inject } from '@angular/core';
-import { SecureStorageService } from './secure-storage.service';
+import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BackgroundSyncService } from './background-sync.service';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
@@ -8,7 +8,7 @@ const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly secureStorage = inject(SecureStorageService);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly backgroundSync = inject(BackgroundSyncService);
   private readonly apiKey = signal<string | null>(null);
   private readonly readyPromise: Promise<void>;
@@ -28,7 +28,7 @@ export class AuthService {
    * Set and persist the API key
    */
   async setApiKey(key: string): Promise<void> {
-    await this.secureStorage.setItem(API_KEY_STORAGE_KEY, key);
+    this.storeApiKey(key);
     this.apiKey.set(key);
     await this.backgroundSync.updateApiCredentials(key);
   }
@@ -37,7 +37,7 @@ export class AuthService {
    * Clear the API key (logout)
    */
   async clearApiKey(): Promise<void> {
-    await this.secureStorage.removeItem(API_KEY_STORAGE_KEY);
+    this.removeApiKey();
     this.apiKey.set(null);
     await this.backgroundSync.updateApiCredentials(null);
   }
@@ -58,12 +58,65 @@ export class AuthService {
 
   private async initialize(): Promise<void> {
     try {
-      const stored = await this.secureStorage.getItem(API_KEY_STORAGE_KEY);
+      const stored = this.readStoredApiKey();
       this.apiKey.set(stored);
       await this.backgroundSync.updateApiCredentials(stored);
     } catch (error) {
       console.error('AuthService: failed to load stored API key', error);
       this.apiKey.set(null);
+      await this.backgroundSync.updateApiCredentials(null);
+    }
+  }
+
+  private storeApiKey(value: string): void {
+    if (!this.canUseLocalStorage()) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(API_KEY_STORAGE_KEY, value);
+    } catch (error) {
+      console.error('AuthService: failed to persist API key', error);
+    }
+  }
+
+  private removeApiKey(): void {
+    if (!this.canUseLocalStorage()) {
+      return;
+    }
+
+    try {
+      localStorage.removeItem(API_KEY_STORAGE_KEY);
+    } catch (error) {
+      console.error('AuthService: failed to clear API key', error);
+    }
+  }
+
+  private readStoredApiKey(): string | null {
+    if (!this.canUseLocalStorage()) {
+      return null;
+    }
+
+    try {
+      return localStorage.getItem(API_KEY_STORAGE_KEY);
+    } catch (error) {
+      console.error('AuthService: failed to read stored API key', error);
+      return null;
+    }
+  }
+
+  private canUseLocalStorage(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+
+    try {
+      const testKey = '__auth_service_storage_test__';
+      localStorage.setItem(testKey, '1');
+      localStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
     }
   }
 }

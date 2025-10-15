@@ -10,7 +10,7 @@ export function decodeHtmlEntities(value: string | null | undefined): string | n
     return null;
   }
 
-  // Use DOMParser instead of innerHTML to avoid Trusted Types violations
+  // Use DOMParser with text/html to properly decode entities
   const doc = new DOMParser().parseFromString(value, 'text/html');
   return doc.documentElement.textContent || '';
 }
