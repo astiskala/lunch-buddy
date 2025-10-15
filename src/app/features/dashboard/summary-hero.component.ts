@@ -8,7 +8,6 @@ import { formatCurrency } from '../../shared/utils/currency.util';
   selector: 'summary-hero',
   imports: [CommonModule, MatIconModule, MatButtonModule],
   templateUrl: './summary-hero.component.html',
-  styleUrls: ['./summary-hero.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryHeroComponent {

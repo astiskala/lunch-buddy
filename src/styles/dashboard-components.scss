@@ -303,6 +303,8 @@ summary-hero {
 
 // Category Card Component Styles
 category-card {
+  display: contents;
+
   .category-card {
     background: var(--color-surface);
     border-radius: 12px;

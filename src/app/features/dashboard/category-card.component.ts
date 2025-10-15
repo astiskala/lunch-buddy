@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal, input, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 import { BudgetProgress, RecurringInstance, Transaction } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { formatCurrency } from '../../shared/utils/currency.util';
@@ -18,9 +19,8 @@ interface ActivityEntry {
 
 @Component({
   selector: 'category-card',
-  imports: [CommonModule],
+  imports: [CommonModule, MatIconModule],
   templateUrl: './category-card.component.html',
-  styleUrls: ['./category-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryCardComponent {
