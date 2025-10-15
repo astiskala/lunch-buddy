@@ -10,8 +10,7 @@ export function decodeHtmlEntities(value: string | null | undefined): string | n
     return null;
   }
 
-  // Use the browser's native HTML parser to decode entities
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = value;
-  return textarea.value;
+  // Use DOMParser instead of innerHTML to avoid Trusted Types violations
+  const doc = new DOMParser().parseFromString(value, 'text/html');
+  return doc.documentElement.textContent || '';
 }
