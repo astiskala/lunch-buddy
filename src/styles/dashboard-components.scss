@@ -650,9 +650,11 @@ category-card {
     box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
 
     .segmented-option {
-      &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
-        background: rgb(68 149 140 / 26%);
-        color: #e8f7f5;
+      @media (hover: hover) and (pointer: fine) {
+        &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
+          background: rgb(68 149 140 / 26%);
+          color: #e8f7f5;
+        }
       }
 
       &.mat-button-toggle-checked .mat-button-toggle-button {
@@ -759,9 +761,11 @@ dashboard-page {
           box-shadow 0.2s ease;
       }
 
-      &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
-        background: rgb(68 149 140 / 12%);
-        color: var(--color-primary-dark);
+      @media (hover: hover) and (pointer: fine) {
+        &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
+          background: rgb(68 149 140 / 12%);
+          color: var(--color-primary-dark);
+        }
       }
 
       &.mat-button-toggle-checked .mat-button-toggle-button {

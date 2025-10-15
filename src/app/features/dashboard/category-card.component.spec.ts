@@ -117,6 +117,29 @@ describe('CategoryCardComponent', () => {
     expect(component['showDetails']()).toBeTrue();
   });
 
+  it('should collapse when clicking details on expanded card', () => {
+    fixture.componentRef.setInput('item', mockItem);
+    fixture.componentRef.setInput('startDate', '2025-10-01');
+    fixture.componentRef.setInput('endDate', '2025-10-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput('recurringExpenses', []);
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('.category-card') as HTMLElement;
+    card.click();
+    fixture.detectChanges();
+
+    const details = fixture.nativeElement.querySelector('.details') as HTMLElement | null;
+    expect(details).not.toBeNull();
+
+    details!.click();
+    fixture.detectChanges();
+
+    expect(component['showDetails']()).toBeFalse();
+  });
+
   it('should exclude cleared recurring instances from upcoming totals', () => {
     fixture.componentRef.setInput('item', mockItem);
     fixture.componentRef.setInput('startDate', '2025-10-01');
