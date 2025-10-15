@@ -9,3 +9,9 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.lunchmoney.app; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; trusted-types angular angular#unsafe-bypass angular#bundler; require-trusted-types-for 'script'; upgrade-insecure-requests;"
+    Cross-Origin-Opener-Policy = "same-origin"
