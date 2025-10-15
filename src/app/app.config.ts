@@ -17,7 +17,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([lunchmoneyInterceptor])),
-    provideServiceWorker('ngsw-worker.js', {
+    provideServiceWorker('custom-service-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),

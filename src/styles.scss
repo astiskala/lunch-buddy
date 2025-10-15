@@ -172,11 +172,7 @@ body {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
-  -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   transition:
     background-color 0.3s ease,
@@ -187,9 +183,6 @@ input,
 textarea,
 [contenteditable]:not([contenteditable='false']),
 select {
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
   user-select: text;
 }
 

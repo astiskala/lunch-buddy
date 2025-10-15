@@ -3,7 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { Observable, of, Subject } from 'rxjs';
 import { BudgetSummaryItem, RecurringExpense } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
-import { PushNotificationService } from './push-notification.service';
+import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
@@ -27,48 +27,31 @@ class MockLunchMoneyService {
   }
 }
 
-const createSummary = (monthKey: string, options: { [key: string]: unknown }): BudgetSummaryItem => {
-  const {
-    categoryId,
-    categoryName,
-    isIncome = false,
-    budgetAmount,
-    spent,
-    budgetCurrency = 'USD',
-  } = options as {
-    categoryId: number;
-    categoryName: string;
-    isIncome?: boolean;
-    budgetAmount: number;
-    spent: number;
-    budgetCurrency?: string;
-  };
-
-  return {
-    category_id: categoryId,
-    category_name: categoryName,
-    category_group_name: null,
-    group_id: null,
-    is_group: false,
-    is_income: isIncome,
-    exclude_from_budget: false,
-    exclude_from_totals: false,
-    order: 0,
-    archived: false,
-    data: {
-      [monthKey]: {
-        num_transactions: 1,
-        spending_to_base: spent,
-        budget_to_base: budgetAmount,
-        budget_amount: budgetAmount,
-        budget_currency: budgetCurrency,
-        is_automated: false,
-      },
+const createSummary = (monthKey: string, overrides: Partial<BudgetSummaryItem>): BudgetSummaryItem => ({
+  category_id: 1,
+  category_name: 'Dining Out',
+  category_group_name: null,
+  group_id: null,
+  is_group: false,
+  is_income: false,
+  exclude_from_budget: false,
+  exclude_from_totals: false,
+  order: 0,
+  archived: false,
+  data: {
+    [monthKey]: {
+      num_transactions: 1,
+      spending_to_base: 150,
+      budget_to_base: 100,
+      budget_amount: 100,
+      budget_currency: 'USD',
+      is_automated: false,
     },
-    config: null,
-    recurring: { data: [] },
-  };
-};
+  },
+  config: null,
+  recurring: { data: [] },
+  ...overrides,
+});
 
 const storePreferences = (prefs: Partial<CategoryPreferences>) => {
   localStorage.setItem(
@@ -80,15 +63,19 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
   );
 };
 
-describe('BudgetService notifications', () => {
+describe('BudgetService background sync', () => {
   let lunchMoney: MockLunchMoneyService;
-  let notifySpy: jasmine.Spy;
+  let backgroundSync: jasmine.SpyObj<BackgroundSyncService>;
   let service: BudgetService;
 
   beforeEach(() => {
     localStorage.clear();
     lunchMoney = new MockLunchMoneyService();
-    notifySpy = jasmine.createSpy('notifyBudgetAlerts').and.returnValue(Promise.resolve());
+    backgroundSync = jasmine.createSpyObj<BackgroundSyncService>('BackgroundSyncService', [
+      'updateBudgetPreferences',
+    ]);
+
+    backgroundSync.updateBudgetPreferences.and.resolveTo();
   });
 
   const initService = () => {
@@ -97,70 +84,64 @@ describe('BudgetService notifications', () => {
         provideZonelessChangeDetection(),
         BudgetService,
         { provide: LunchMoneyService, useValue: lunchMoney },
-        {
-          provide: PushNotificationService,
-          useValue: {
-            notifyBudgetAlerts: notifySpy,
-          },
-        },
+        { provide: BackgroundSyncService, useValue: backgroundSync },
       ],
     });
 
     service = TestBed.inject(BudgetService);
   };
 
-  it('dispatches notifications when alerts are present and enabled', () => {
+  it('syncs stored preferences on initialization', () => {
+    storePreferences({
+      notificationsEnabled: true,
+      hiddenCategoryIds: [5],
+      warnAtRatio: 0.9,
+    });
+
+    initService();
+
+    expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
+    const [payload] = backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
+    expect(payload).toEqual(
+      jasmine.objectContaining({
+        hiddenCategoryIds: [5],
+        notificationsEnabled: true,
+        warnAtRatio: 0.9,
+      }),
+    );
+  });
+
+  it('updates background sync when preferences change', () => {
+    initService();
+    backgroundSync.updateBudgetPreferences.calls.reset();
+
+    service.updatePreferences((current) => ({
+      ...current,
+      notificationsEnabled: true,
+      hiddenCategoryIds: [1, 2],
+      warnAtRatio: 0.92,
+    }));
+
+    expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalledTimes(1);
+    const [payload] = backgroundSync.updateBudgetPreferences.calls.argsFor(0);
+    expect(payload).toEqual({
+      hiddenCategoryIds: [1, 2],
+      notificationsEnabled: true,
+      warnAtRatio: 0.92,
+      currency: null,
+    });
+  });
+
+  it('provides currency information after loading budget data', () => {
     storePreferences({ notificationsEnabled: true });
     initService();
+    backgroundSync.updateBudgetPreferences.calls.reset();
 
     const monthKey = (service as unknown as { monthKey: string }).monthKey;
-    const summary = createSummary(monthKey, {
-      categoryId: 1,
-      categoryName: 'Dining Out',
-      budgetAmount: 100,
-      spent: 150,
-    });
+    lunchMoney.budgetSummary$.next([createSummary(monthKey, {})]);
 
-    lunchMoney.budgetSummary$.next([summary]);
-
-    expect(notifySpy).toHaveBeenCalledTimes(1);
-    const [alerts, context] = notifySpy.calls.argsFor(0);
-    expect(alerts.length).toBe(1);
-    expect(alerts[0]).toEqual(jasmine.objectContaining({ categoryId: 1, status: 'over' }));
-    expect(context).toEqual({ currency: 'USD' });
-  });
-
-  it('does not dispatch notifications when disabled in preferences', () => {
-    storePreferences({ notificationsEnabled: false });
-    initService();
-
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
-    const summary = createSummary(monthKey, {
-      categoryId: 2,
-      categoryName: 'Groceries',
-      budgetAmount: 120,
-      spent: 140,
-    });
-
-    lunchMoney.budgetSummary$.next([summary]);
-
-    expect(notifySpy).not.toHaveBeenCalled();
-  });
-
-  it('ignores alerts for hidden categories', () => {
-    storePreferences({ notificationsEnabled: true, hiddenCategoryIds: [3] });
-    initService();
-
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
-    const summary = createSummary(monthKey, {
-      categoryId: 3,
-      categoryName: 'Travel',
-      budgetAmount: 300,
-      spent: 350,
-    });
-
-    lunchMoney.budgetSummary$.next([summary]);
-
-    expect(notifySpy).not.toHaveBeenCalled();
+    expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
+    const [payload] = backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
+    expect(payload.currency).toBe('USD');
   });
 });

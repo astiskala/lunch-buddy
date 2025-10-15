@@ -14,7 +14,7 @@ import {
   toIsoDate,
 } from '../utils/date.util';
 import { getRecurringDate } from '../utils/recurring.util';
-import { PushNotificationService } from './push-notification.service';
+import { BackgroundSyncService } from '../../core/services/background-sync.service';
 
 export interface CategoryPreferences {
   customOrder: number[];
@@ -37,7 +37,7 @@ const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 })
 export class BudgetService {
   private lunchMoneyService = inject(LunchMoneyService);
-  private pushNotificationService = inject(PushNotificationService);
+  private backgroundSyncService = inject(BackgroundSyncService);
 
   // Month information
   private monthRange = getCurrentMonthRange();
@@ -152,23 +152,7 @@ export class BudgetService {
   constructor() {
     this.loadBudgetData();
     this.loadRecurringExpenses();
-  }
-
-  private maybeDispatchNotifications(progress: BudgetProgress[]): void {
-    const preferences = this.preferences();
-    if (!preferences.notificationsEnabled) {
-      return;
-    }
-
-    const alerts = filterAlerts(progress, preferences.hiddenCategoryIds);
-    if (!alerts.length) {
-      return;
-    }
-
-    const currency = this.currency();
-    this.pushNotificationService
-      .notifyBudgetAlerts(alerts, { currency })
-      .catch((error) => console.error('Failed to deliver budget notifications', error));
+    this.syncBackgroundPreferences();
   }
 
   private loadPreferences(): CategoryPreferences {
@@ -195,6 +179,7 @@ export class BudgetService {
     const updated = updater(this.preferences());
     this.preferences.set(updated);
     this.savePreferences(updated);
+    this.syncBackgroundPreferences();
   }
 
   loadBudgetData(): void {
@@ -215,8 +200,7 @@ export class BudgetService {
 
         this.budgetData.set(progress);
         this.isLoading.set(false);
-
-        this.maybeDispatchNotifications(progress);
+        this.syncBackgroundPreferences();
 
         if (canUseNavigator() ? navigator.onLine : true) {
           const timestamp = new Date();
@@ -266,6 +250,20 @@ export class BudgetService {
   getRecurringByCategory = this.recurringByCategory;
   getLastRefresh = this.lastRefresh;
   getReferenceDate = this.referenceDate;
+
+  private syncBackgroundPreferences(): void {
+    const prefs = this.preferences();
+    const currency = this.currency();
+
+    this.backgroundSyncService
+      .updateBudgetPreferences({
+        hiddenCategoryIds: prefs.hiddenCategoryIds,
+        notificationsEnabled: prefs.notificationsEnabled,
+        warnAtRatio: prefs.warnAtRatio,
+        currency,
+      })
+      .catch((error) => console.error('Failed to sync background preferences', error));
+  }
 }
 
 const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
@@ -301,14 +299,4 @@ function persistLastRefresh(timestamp: Date): void {
 
 function canUseNavigator(): boolean {
   return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
-}
-
-function filterAlerts(progress: BudgetProgress[], hiddenCategoryIds: number[]): BudgetProgress[] {
-  const hidden = new Set(hiddenCategoryIds);
-  return progress.filter(
-    (item) =>
-      !hidden.has(item.categoryId) &&
-      !item.isIncome &&
-      (item.status === 'over' || item.status === 'at-risk'),
-  );
 }
