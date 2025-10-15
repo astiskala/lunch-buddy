@@ -1,0 +1,4 @@
+# humans.txt
+Team: Lunch Buddy
+Maintainer: Adam Stiskala
+Contact: lunch-buddy@adamstiskala.com
