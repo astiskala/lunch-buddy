@@ -16,7 +16,7 @@ Storage & Processing:
 
 Third Parties:
 - Network requests go only to the Lunch Money API base (`https://dev.lunchmoney.app/v1`).
-- Our third party hosts (Netlify and CloudFlare) may create standard access logs containing IP address, user agent, and timestamps.
+- Our third party hosts (Vercel and CloudFlare) may create standard access logs containing IP address, user agent, and timestamps.
 
 User Control:
 - Use the sign-out option or clear browser storage to remove the stored API key and cached data.

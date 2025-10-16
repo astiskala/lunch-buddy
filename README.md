@@ -114,21 +114,22 @@ This project includes a GitHub Actions workflow in `.github/workflows/ci.yml` th
 
 Once pushed, the GitHub Actions workflow will start running automatically.
 
-## Netlify Deployment
+## Vercel Deployment
 
-This repository ships with a `netlify.toml` that instructs Netlify to:
+This repository ships with a `vercel.json` that prepares Vercel to:
 
-- Build with `npm run build`.
-- Serve the SPA from `dist/lunch-buddy/browser`.
-- Use Node.js 20 (`NODE_VERSION=20`).
-- Redirect all routes to `index.html` for Angular router support.
+- Build with `npm run build` and publish the static bundle in `dist/lunch-buddy/browser`.
+- Serve the Angular SPA via a catch-all rewrite to `index.html`.
+- Apply the strict security headers previously served from Netlify.
+
+The `package.json` `engines.node` field requests Node.js 20 so the build environment matches local development. You can confirm or adjust this under **Project Settings → Build & Development Settings**.
 
 To enable automatic deployments:
 
-1. Sign in to [Netlify](https://app.netlify.com/) and choose **Add new site → Import an existing project**.
+1. Sign in to [Vercel](https://vercel.com/) and choose **New Project → Import Git Repository**.
 2. Connect your GitHub account and select the repository you pushed above.
-3. Accept the detected build settings (command `npm run build`, publish directory `dist/lunch-buddy/browser`), or adjust to match `netlify.toml`.
-4. In **Site settings → Environment variables**, add `NG_APP_LUNCHMONEY_API_KEY` with your Lunch Money API token so builds have access to the credential.
-5. Trigger the initial deploy; subsequent pushes to `main` will rebuild and deploy automatically.
+3. Accept the detected settings, or explicitly set **Framework Preset** to `Angular`, **Build Command** to `npm run build`, and **Output Directory** to `dist/lunch-buddy/browser`. Vercel reads rewrites and headers from `vercel.json`.
+4. In **Settings → Environment Variables**, add `NG_APP_LUNCHMONEY_API_KEY` with your Lunch Money API token so builds have access to the credential. Add any other `NG_APP_*` variables your deployment needs.
+5. Trigger the initial deploy; subsequent pushes to `main` will build and deploy automatically.
 
-Optional: enable Netlify deploy previews for pull requests to review changes before merging.
+Optional: enable Vercel preview deployments for pull requests to review changes before merging.
