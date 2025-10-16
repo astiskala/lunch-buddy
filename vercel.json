@@ -4,11 +4,20 @@
   "outputDirectory": "dist/lunch-buddy/browser",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
@@ -23,10 +32,6 @@
         {
           "key": "Cross-Origin-Resource-Policy",
           "value": "same-origin"
-        },
-        {
-          "key": "Permissions-Policy",
-          "value": "accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(), cross-origin-isolated=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), usb=(), web-share=(), xr-spatial-tracking=(), notifications=(self)"
         },
         {
           "key": "Referrer-Policy",
