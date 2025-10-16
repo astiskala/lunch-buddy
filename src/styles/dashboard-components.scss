@@ -539,6 +539,55 @@ category-card {
         font-size: 14px;
       }
 
+      .error-message {
+        text-align: center;
+        padding: 24px;
+        color: var(--color-text-secondary);
+        font-size: 14px;
+        background: var(--color-error-bg);
+        border-radius: 8px;
+        border: 1px solid rgba(244, 67, 54, 0.2);
+
+        p {
+          margin: 0 0 8px;
+          font-weight: 500;
+          color: var(--color-error);
+        }
+
+        .error-hint {
+          margin: 0;
+          font-size: 13px;
+          color: var(--color-text-secondary);
+          font-weight: 400;
+
+          span {
+            display: block;
+            margin-top: 4px;
+          }
+        }
+
+        .retry-button {
+          margin-top: 16px;
+          padding: 8px 16px;
+          background: var(--color-error);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s ease;
+
+          &:hover {
+            background: #d32f2f;
+          }
+
+          &:active {
+            transform: scale(0.98);
+          }
+        }
+      }
+
       .activity-list {
         display: flex;
         flex-direction: column;

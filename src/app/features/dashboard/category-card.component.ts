@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { BudgetProgress, RecurringInstance, Transaction } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { LoggerService } from '../../core/services/logger.service';
+import { OfflineService } from '../../core/services/offline.service';
 import { formatCurrency } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
 import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
@@ -27,6 +28,7 @@ interface ActivityEntry {
 export class CategoryCardComponent {
   private lunchMoneyService = inject(LunchMoneyService);
   private logger = inject(LoggerService);
+  private offlineService = inject(OfflineService);
 
   readonly item = input.required<BudgetProgress>();
   readonly defaultCurrency = input.required<string>();
@@ -39,6 +41,9 @@ export class CategoryCardComponent {
   readonly showDetails = signal(false);
   readonly transactions = signal<Transaction[]>([]);
   readonly isLoadingTransactions = signal(false);
+  readonly transactionsLoadError = signal(false);
+  
+  protected readonly isOffline = this.offlineService.getOfflineStatus();
 
   readonly budgetLabel = computed(() =>
     formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
@@ -196,13 +201,18 @@ export class CategoryCardComponent {
     const newState = !this.showDetails();
     this.showDetails.set(newState);
 
-    if (newState && this.transactions().length === 0) {
+    if (newState && this.transactions().length === 0 && !this.transactionsLoadError()) {
       this.loadTransactions();
     }
   }
 
+  retryLoadTransactions(): void {
+    this.loadTransactions();
+  }
+
   private loadTransactions(): void {
     this.isLoadingTransactions.set(true);
+    this.transactionsLoadError.set(false);
 
     this.lunchMoneyService
       .getCategoryTransactions(this.item().categoryId, this.startDate(), this.endDate())
@@ -210,10 +220,12 @@ export class CategoryCardComponent {
         next: (response) => {
           this.transactions.set(response.transactions);
           this.isLoadingTransactions.set(false);
+          this.transactionsLoadError.set(false);
         },
         error: (error) => {
           this.logger.error('Failed to load transactions', error);
           this.isLoadingTransactions.set(false);
+          this.transactionsLoadError.set(true);
         },
       });
   }

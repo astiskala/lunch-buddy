@@ -98,6 +98,26 @@
       <h4>This month's activity</h4>
       @if (isLoadingTransactions()) {
         <div class="loading">Loading transactions...</div>
+      } @else if (transactionsLoadError()) {
+        <div class="error-message">
+          <p>Unable to load transactions.</p>
+          <p class="error-hint">
+            @if (isOffline()) {
+              <span>You're offline and this data hasn't been cached yet.</span>
+            } @else {
+              <span>Please check your connection and try again.</span>
+            }
+          </p>
+          @if (!isOffline()) {
+            <button 
+              class="retry-button"
+              (click)="retryLoadTransactions(); $event.stopPropagation()"
+              type="button"
+            >
+              Retry
+            </button>
+          }
+        </div>
       } @else if (activityEntries().length === 0) {
         <p class="empty">
           No transactions or upcoming recurring charges recorded for this category this month.
