@@ -4,17 +4,17 @@ Lunch Buddy is a browser-based Progressive Web App that connects to the Lunch Mo
 
 ## Supported Versions
 
-| Branch / Version | Supported          | Notes                                  |
-| ---------------- | ------------------ | -------------------------------------- |
+| Branch / Version | Supported          | Notes                                               |
+| ---------------- | ------------------ | --------------------------------------------------- |
 | `main`           | :white_check_mark: | Actively developed; security fixes land here first. |
 
 When a security fix is merged into `main`, publish a fresh production build (for Vercel this happens automatically on push). Older builds are considered unsupported.
 
 ## Reporting a Vulnerability
 
-- **Preferred channel:** Open a private report through GitHub Security Advisories (Security → Advisories → Report a vulnerability).  
-- **Alternative:** Email `lunch-buddy@adamstiskala.com` with a clear subject such as “Security report – Lunch Buddy”.  
-- **Response window:** I aim to acknowledge new reports within 3 days and provide a remediation plan or status update within 10 days.  
+- **Preferred channel:** Open a private report through GitHub Security Advisories (Security → Advisories → Report a vulnerability).
+- **Alternative:** Email `lunch-buddy@adamstiskala.com` with a clear subject such as “Security report – Lunch Buddy”.
+- **Response window:** I aim to acknowledge new reports within 3 days and provide a remediation plan or status update within 10 days.
 - **Disclosure:** Please do not create public issues for suspected vulnerabilities until I publish a fix. If I cannot reproduce a report I will request additional detail; if a report is out-of-scope I will explain why.
 
 When reporting, include:
@@ -35,7 +35,7 @@ I appreciate proof-of-concept code, but please avoid exfiltrating or modifying r
 
 ## Secure Development Practices
 
-- Run `npm run lint`, `npm run lint:styles:ci`, and `npm test` before submitting pull requests. CI blocks merges on lint/test failures.
+- Run `npm run lint:ci`, `npm run lint:styles:ci`, and `npm test` before submitting pull requests. CI blocks merges on lint/test failures.
 - Never commit real Lunch Money API keys. Use the `NG_APP_` environment variables and the generated `src/environments/runtime-env.generated.ts` (regenerated via `npm run generate:env`) to keep secrets out of VCS.
 - When adding third-party libraries, prefer well-maintained packages with clear security guidance; document any new network destinations in the CSP.
 
