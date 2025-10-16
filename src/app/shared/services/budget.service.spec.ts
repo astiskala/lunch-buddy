@@ -5,6 +5,7 @@ import { BudgetSummaryItem, RecurringExpense } from '../../core/models/lunchmone
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
+import { getCurrentMonthRange, toIsoDate } from '../utils/date.util';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 
@@ -90,6 +91,44 @@ describe('BudgetService background sync', () => {
 
     service = TestBed.inject(BudgetService);
   };
+
+  it('restores cached budget data before network response', () => {
+    const monthRange = getCurrentMonthRange();
+    const monthStart = toIsoDate(monthRange.start);
+    const monthEnd = toIsoDate(monthRange.end);
+    const cacheKey = `lunchbuddy.cache.budget:${monthStart}:${monthEnd}`;
+    const summary = createSummary(monthStart, {});
+    localStorage.setItem(
+      cacheKey,
+      JSON.stringify({
+        monthKey: monthStart,
+        timestamp: new Date().toISOString(),
+        summaries: [summary],
+      }),
+    );
+
+    initService();
+
+    expect(service.getIsLoading()).toBeFalse();
+    expect(service.getExpenses().length).toBe(1);
+  });
+
+  it('stores fresh budget data in cache after successful fetch', () => {
+    initService();
+    const startDate = service.getStartDate();
+    const endDate = service.getEndDate();
+    const cacheKey = `lunchbuddy.cache.budget:${startDate}:${endDate}`;
+    const summary = createSummary(startDate, {});
+
+    lunchMoney.budgetSummary$.next([summary]);
+
+    const rawCache = localStorage.getItem(cacheKey);
+    expect(rawCache).toBeTruthy();
+    const parsed = JSON.parse(String(rawCache));
+    expect(parsed.monthKey).toBe(startDate);
+    expect(Array.isArray(parsed.summaries)).toBeTrue();
+    expect(parsed.summaries.length).toBe(1);
+  });
 
   it('syncs stored preferences on initialization', () => {
     storePreferences({

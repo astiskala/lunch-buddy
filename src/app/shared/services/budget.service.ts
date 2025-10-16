@@ -33,6 +33,20 @@ const defaultCategoryPreferences: CategoryPreferences = {
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
+const BUDGET_CACHE_PREFIX = 'lunchbuddy.cache.budget';
+const RECURRING_CACHE_PREFIX = 'lunchbuddy.cache.recurring';
+
+interface BudgetCacheEntry {
+  monthKey: string;
+  timestamp: string;
+  summaries: BudgetSummaryItem[];
+}
+
+interface RecurringCacheEntry {
+  monthStart: string;
+  timestamp: string;
+  expenses: RecurringExpense[];
+}
 
 @Injectable({
   providedIn: 'root',
@@ -153,6 +167,8 @@ export class BudgetService {
   });
 
   constructor() {
+    this.restoreCachedBudgetData();
+    this.restoreCachedRecurringExpenses();
     this.loadBudgetData();
     this.loadRecurringExpenses();
     this.syncBackgroundPreferences();
@@ -186,21 +202,14 @@ export class BudgetService {
   }
 
   loadBudgetData(): void {
-    this.isLoading.set(true);
+    const hasCachedData = this.budgetData().length > 0;
+    this.isLoading.set(!hasCachedData);
     this.errors.set([]);
 
     this.lunchMoneyService.getBudgetSummary(this.startDate(), this.endDate()).subscribe({
       next: (summaries: BudgetSummaryItem[]) => {
-        const monthKey = this.monthKey;
-        const monthProgress = this.monthProgressRatio();
-        const warnAtRatio = this.preferences().warnAtRatio;
-
-        const progress = summaries
-          .map((summary: BudgetSummaryItem) =>
-            buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio),
-          )
-          .filter((item: BudgetProgress) => !item.excludeFromBudget && !item.isGroup);
-
+        this.persistBudgetCache(summaries);
+        const progress = this.buildBudgetProgressFromSummaries(summaries);
         this.budgetData.set(progress);
         this.isLoading.set(false);
         this.syncBackgroundPreferences();
@@ -212,18 +221,22 @@ export class BudgetService {
         }
       },
       error: (error: Error) => {
-        this.errors.set([error]);
+        this.logger.error('Failed to refresh budget data', error);
+        const hasExistingData = this.budgetData().length > 0;
+        this.errors.set(hasExistingData ? [] : [error]);
         this.isLoading.set(false);
       },
     });
   }
 
   loadRecurringExpenses(): void {
-    this.isRecurringLoading.set(true);
+    const hasCachedRecurring = this.recurringExpenses().length > 0;
+    this.isRecurringLoading.set(!hasCachedRecurring);
 
     this.lunchMoneyService.getRecurringExpenses(this.startDate()).subscribe({
       next: (expenses: RecurringExpense[]) => {
         this.recurringExpenses.set(expenses);
+        this.persistRecurringCache(expenses);
         this.isRecurringLoading.set(false);
       },
       error: (error: Error) => {
@@ -253,6 +266,106 @@ export class BudgetService {
   getRecurringByCategory = this.recurringByCategory;
   getLastRefresh = this.lastRefresh;
   getReferenceDate = this.referenceDate;
+
+  private buildBudgetProgressFromSummaries(
+    summaries: BudgetSummaryItem[],
+  ): BudgetProgress[] {
+    const monthKey = this.monthKey;
+    const monthProgress = this.monthProgressRatio();
+    const warnAtRatio = this.preferences().warnAtRatio;
+
+    return summaries
+      .map((summary: BudgetSummaryItem) =>
+        buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio),
+      )
+      .filter((item: BudgetProgress) => !item.excludeFromBudget && !item.isGroup);
+  }
+
+  private restoreCachedBudgetData(): void {
+    const cacheKey = this.getBudgetCacheKey();
+    const entry = this.readCache<BudgetCacheEntry>(cacheKey);
+    if (!entry || entry.monthKey !== this.monthKey || !Array.isArray(entry.summaries)) {
+      return;
+    }
+
+    const progress = this.buildBudgetProgressFromSummaries(entry.summaries);
+    if (!progress.length) {
+      return;
+    }
+
+    this.budgetData.set(progress);
+    this.isLoading.set(false);
+  }
+
+  private restoreCachedRecurringExpenses(): void {
+    const cacheKey = this.getRecurringCacheKey();
+    const entry = this.readCache<RecurringCacheEntry>(cacheKey);
+    if (!entry || entry.monthStart !== this.startDate() || !Array.isArray(entry.expenses)) {
+      return;
+    }
+
+    if (!entry.expenses.length) {
+      return;
+    }
+
+    this.recurringExpenses.set(entry.expenses);
+    this.isRecurringLoading.set(false);
+  }
+
+  private persistBudgetCache(summaries: BudgetSummaryItem[]): void {
+    const cacheKey = this.getBudgetCacheKey();
+    const payload: BudgetCacheEntry = {
+      monthKey: this.monthKey,
+      timestamp: new Date().toISOString(),
+      summaries,
+    };
+    this.writeCache(cacheKey, payload);
+  }
+
+  private persistRecurringCache(expenses: RecurringExpense[]): void {
+    const cacheKey = this.getRecurringCacheKey();
+    const payload: RecurringCacheEntry = {
+      monthStart: this.startDate(),
+      timestamp: new Date().toISOString(),
+      expenses,
+    };
+    this.writeCache(cacheKey, payload);
+  }
+
+  private getBudgetCacheKey(): string {
+    return `${BUDGET_CACHE_PREFIX}:${this.startDate()}:${this.endDate()}`;
+  }
+
+  private getRecurringCacheKey(): string {
+    return `${RECURRING_CACHE_PREFIX}:${this.startDate()}`;
+  }
+
+  private readCache<T>(key: string): T | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) {
+        return null;
+      }
+      return JSON.parse(raw) as T;
+    } catch (error) {
+      this.logger.error(`Failed to read cache for ${key}`, error as Error);
+      return null;
+    }
+  }
+
+  private writeCache<T>(key: string, value: T): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      this.logger.error(`Failed to write cache for ${key}`, error as Error);
+    }
+  }
 
   private syncBackgroundPreferences(): void {
     const prefs = this.preferences();
