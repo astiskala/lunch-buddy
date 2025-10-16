@@ -36,7 +36,7 @@ jobs:
         uses: browser-actions/setup-chrome@v1
 
       - name: Run unit tests
-        run: npm run test -- --watch=false --browsers=ChromeHeadless --progress=false
+        run: npm run test -- --watch=false --browsers=ChromeHeadlessNoSandbox --progress=false
         env:
           CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
 
