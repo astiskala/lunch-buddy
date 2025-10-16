@@ -4,7 +4,6 @@ import {
   signal,
   computed,
   inject,
-  DestroyRef,
 } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -45,7 +44,6 @@ export class DashboardPageComponent {
   private budgetService = inject(BudgetService);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
   private readonly locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
 
   // Local state
@@ -53,7 +51,6 @@ export class DashboardPageComponent {
   protected readonly statusFilter = signal<StatusFilter>('all');
   protected readonly showHidden = signal(false);
   protected readonly showPreferencesDialog = signal(false);
-  protected readonly isOffline = signal<boolean>(!isNavigatorOnline());
 
   // Signals from service
   protected readonly isLoading = this.budgetService.getIsLoading;
@@ -249,19 +246,6 @@ export class DashboardPageComponent {
     return `Last updated ${formatter.format(timestamp)}`;
   });
 
-  constructor() {
-    if (typeof window !== 'undefined') {
-      const handleOnline = () => this.isOffline.set(false);
-      const handleOffline = () => this.isOffline.set(true);
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
-      this.destroyRef.onDestroy(() => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      });
-    }
-  }
-
   private getFilterDescription(): string | null {
     switch (this.statusFilter()) {
       case 'over':
@@ -317,8 +301,4 @@ export class DashboardPageComponent {
       await this.router.navigate(['/login']);
     }
   }
-}
-
-function isNavigatorOnline(): boolean {
-  return typeof navigator !== 'undefined' ? navigator.onLine : true;
 }

@@ -10,6 +10,8 @@ const CONFIG_KEY = 'config';
 const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://dev.lunchmoney.app/v1';
+const API_CACHE_NAME = 'lunchbuddy-api-cache-v1';
+const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const defaultConfig = () => ({
   apiKey: null,
@@ -26,6 +28,93 @@ const defaultState = () => ({
   lastRunMs: 0,
   lastAlertSignature: null,
 });
+
+// Install event - prepare cache
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+// Activate event - cleanup old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const cacheNames = await caches.keys();
+      const cachesToDelete = cacheNames.filter(
+        (name) => name.startsWith('lunchbuddy-api-cache-') && name !== API_CACHE_NAME,
+      );
+      await Promise.all(cachesToDelete.map((name) => caches.delete(name)));
+      await self.clients.claim();
+    })(),
+  );
+});
+
+// Fetch event handler for offline support
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Only handle API requests - let Angular SW handle everything else
+  if (isApiRequest(url)) {
+    event.respondWith(handleApiRequest(request));
+  }
+  // For all other requests, let the default handler (ngsw-worker) handle them
+});
+
+function isApiRequest(url) {
+  return (
+    url.hostname === 'dev.lunchmoney.app' ||
+    (url.hostname === 'localhost' && url.port === '3000')
+  );
+}
+
+async function handleApiRequest(request) {
+  try {
+    // Try network first with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const networkResponse = await fetch(request.clone(), {
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (networkResponse.ok) {
+      // Cache successful responses
+      const cache = await caches.open(API_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+
+    // If network response not OK, try cache
+    return getCachedResponse(request);
+  } catch (error) {
+    // Network error or timeout - use cache
+    return getCachedResponse(request);
+  }
+}
+
+async function getCachedResponse(request) {
+  const cache = await caches.open(API_CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  // No cache available - return error response
+  return new Response(
+    JSON.stringify({
+      error: 'offline',
+      message: 'No cached data available',
+    }),
+    {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'application/json' },
+    },
+  );
+}
 
 self.addEventListener('message', (event) => {
   const data = event.data;

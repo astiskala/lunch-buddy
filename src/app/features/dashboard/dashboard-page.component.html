@@ -39,11 +39,6 @@
             <mat-icon [class.spin]="isRefreshing()">refresh</mat-icon>
           </button>
         </div>
-        @if (isOffline()) {
-          <span class="offline-note" aria-live="polite"
-            >Offline mode &mdash; showing cached data</span
-          >
-        }
       </div>
     </div>
 

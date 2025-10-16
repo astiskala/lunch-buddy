@@ -189,3 +189,10 @@ select {
 * {
   box-sizing: border-box;
 }
+
+// Offline mode - add padding when banner is visible
+app-root.offline-mode {
+  padding-top: 2.5rem;
+  display: block;
+  min-height: 100vh;
+}

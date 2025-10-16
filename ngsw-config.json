@@ -26,5 +26,26 @@
       }
     }
   ],
-  "dataGroups": []
+  "dataGroups": [
+    {
+      "name": "lunchmoney-api",
+      "urls": [
+        "https://dev.lunchmoney.app/v1/**",
+        "http://localhost:3000/api/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "24h",
+        "timeout": "10s",
+        "strategy": "freshness"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**"
+  ],
+  "navigationRequestStrategy": "freshness"
 }

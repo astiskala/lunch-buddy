@@ -1,0 +1,18 @@
+@if (isOffline()) {
+  <div class="offline-banner" role="alert" aria-live="polite">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M8 1.5C4.41 1.5 1.5 4.41 1.5 8C1.5 11.59 4.41 14.5 8 14.5C11.59 14.5 14.5 11.59 14.5 8C14.5 4.41 11.59 1.5 8 1.5ZM8 13C5.24 13 3 10.76 3 8C3 5.24 5.24 3 8 3C10.76 3 13 5.24 13 8C13 10.76 10.76 13 8 13ZM8.75 4.5H7.25V8.75H8.75V4.5ZM8.75 10.25H7.25V11.75H8.75V10.25Z"
+        fill="currentColor"
+      />
+    </svg>
+    <span>You're offline. Showing cached data.</span>
+  </div>
+}
