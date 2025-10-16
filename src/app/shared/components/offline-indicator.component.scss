@@ -17,8 +17,8 @@
   color: #78350f;
   font-size: 0.875rem;
   font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  animation: slide-down 0.3s ease-out;
 
   svg {
     flex-shrink: 0;
@@ -29,11 +29,12 @@
   }
 }
 
-@keyframes slideDown {
+@keyframes slide-down {
   from {
     transform: translateY(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
