@@ -1,6 +1,4 @@
 /* eslint-disable no-restricted-globals */
-importScripts('./ngsw-worker.js');
-
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const DB_NAME = 'lunchbuddy-background';
 const DB_VERSION = 1;
@@ -29,6 +27,39 @@ const defaultState = () => ({
   lastAlertSignature: null,
 });
 
+// Handle Lunch Money API requests before delegating other traffic to the Angular worker.
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch (_error) {
+    return;
+  }
+
+  if (!isApiRequest(url)) {
+    return;
+  }
+
+  if (typeof event.stopImmediatePropagation === 'function') {
+    event.stopImmediatePropagation();
+  }
+
+  try {
+    event.respondWith(handleApiRequest(request));
+  } catch (error) {
+    // Fallback to the default handling if respondWith throws for any reason.
+    console.warn('[WARN] custom-service-worker: failed to respond with cached API data', error);
+  }
+});
+
+importScripts('./ngsw-worker.js');
+
 // Install event - prepare cache
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -46,18 +77,6 @@ self.addEventListener('activate', (event) => {
       await self.clients.claim();
     })(),
   );
-});
-
-// Fetch event handler for offline support
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Only handle API requests - let Angular SW handle everything else
-  if (isApiRequest(url)) {
-    event.respondWith(handleApiRequest(request));
-  }
-  // For all other requests, let the default handler (ngsw-worker) handle them
 });
 
 function isApiRequest(url) {

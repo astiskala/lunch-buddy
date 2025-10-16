@@ -11,7 +11,7 @@
     "prewatch": "npm run generate:env",
     "watch": "ng build --watch --configuration development",
     "pretest": "npm run generate:env",
-    "test": "ng test",
+    "test": "ng test --no-watch",
     "lint": "ng lint --fix",
     "lint:ci": "ng lint",
     "lint:styles": "stylelint \"**/*.scss\" --fix",
