@@ -50,6 +50,24 @@
           </div>
         </div>
 
+        <!-- Transactions Filter -->
+        <div class="setting-section">
+          <div class="setting-header">
+            <label class="toggle-container">
+              <input
+                type="checkbox"
+                [checked]="includeAllTransactions()"
+                (change)="handleIncludeAllTransactionsChange($event)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <div class="setting-info">
+              <h3>Include pending transactions</h3>
+              <p>Show uncleared transactions when viewing category activity.</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Notifications -->
         <div class="setting-section">
           <div class="setting-header">

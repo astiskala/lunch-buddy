@@ -111,6 +111,7 @@
       [monthProgressRatio]="monthProgressRatio()"
       [emptyMessage]="visibleEmptyMessage()"
       [referenceDate]="referenceDate()"
+      [includeAllTransactions]="preferences().includeAllTransactions"
     />
 
     @if (filteredHiddenItems().length > 0) {
@@ -138,6 +139,7 @@
             [monthProgressRatio]="monthProgressRatio()"
             [emptyMessage]="hiddenEmptyMessage()"
             [referenceDate]="referenceDate()"
+            [includeAllTransactions]="preferences().includeAllTransactions"
           />
         }
       </div>

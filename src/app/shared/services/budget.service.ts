@@ -22,6 +22,7 @@ export interface CategoryPreferences {
   hiddenCategoryIds: number[];
   warnAtRatio: number;
   notificationsEnabled: boolean;
+  includeAllTransactions: boolean;
 }
 
 const defaultCategoryPreferences: CategoryPreferences = {
@@ -29,6 +30,7 @@ const defaultCategoryPreferences: CategoryPreferences = {
   hiddenCategoryIds: [],
   warnAtRatio: 0.85,
   notificationsEnabled: false,
+  includeAllTransactions: true,
 };
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';

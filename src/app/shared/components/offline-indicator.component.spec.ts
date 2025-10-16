@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { OfflineIndicatorComponent } from './offline-indicator.component';
 import { OfflineService } from '../../core/services/offline.service';
 
@@ -9,7 +10,7 @@ describe('OfflineIndicatorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OfflineIndicatorComponent],
-      providers: [OfflineService],
+      providers: [OfflineService, provideZonelessChangeDetection()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(OfflineIndicatorComponent);

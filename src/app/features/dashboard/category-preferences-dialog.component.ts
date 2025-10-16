@@ -41,6 +41,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly hiddenIds = signal<Set<number>>(new Set());
   readonly warnAtRatio = signal(0.85);
   readonly notificationsEnabled = signal(false);
+  readonly includeAllTransactions = signal(true);
 
   readonly allCategories = computed(() => [...this.items(), ...this.hiddenItems()]);
 
@@ -68,6 +69,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
     this.warnAtRatio.set(prefs.warnAtRatio);
     this.notificationsEnabled.set(prefs.notificationsEnabled);
+    this.includeAllTransactions.set(prefs.includeAllTransactions ?? true);
   }
 
   private ensureOrderContains(current: number[]): number[] {
@@ -114,6 +116,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.hiddenIds.set(new Set());
     this.warnAtRatio.set(0.85);
     this.notificationsEnabled.set(false);
+    this.includeAllTransactions.set(true);
   }
 
   handleSave(): void {
@@ -122,6 +125,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
       hiddenCategoryIds: Array.from(this.hiddenIds()),
       warnAtRatio: Math.min(0.95, Math.max(0.5, this.warnAtRatio())),
       notificationsEnabled: this.notificationsEnabled(),
+      includeAllTransactions: this.includeAllTransactions(),
     };
 
     this.preferencesChange.emit(newPreferences);
@@ -155,6 +159,11 @@ export class CategoryPreferencesDialogComponent implements OnInit {
       this.notificationsEnabled.set(false);
       target.checked = false;
     }
+  }
+
+  handleIncludeAllTransactionsChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.includeAllTransactions.set(target.checked);
   }
 
   canMoveUp(index: number): boolean {

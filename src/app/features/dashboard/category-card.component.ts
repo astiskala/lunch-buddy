@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal, input, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, input, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { BudgetProgress, RecurringInstance, Transaction } from '../../core/models/lunchmoney.types';
@@ -37,13 +37,32 @@ export class CategoryCardComponent {
   readonly endDate = input.required<string>();
   readonly monthProgressRatio = input<number>(0);
   readonly referenceDate = input.required<Date>();
+  readonly includeAllTransactions = input(true);
 
   readonly showDetails = signal(false);
   readonly transactions = signal<Transaction[]>([]);
   readonly isLoadingTransactions = signal(false);
   readonly transactionsLoadError = signal(false);
-  
+
   protected readonly isOffline = this.offlineService.getOfflineStatus();
+  private lastIncludeAllTransactions: boolean | null = null;
+
+  private readonly refreshTransactionsEffect = effect(() => {
+    if (!this.showDetails()) {
+      return;
+    }
+
+    const includeAll = this.includeAllTransactions();
+    if (this.lastIncludeAllTransactions === includeAll) {
+      return;
+    }
+
+    if (this.isLoadingTransactions()) {
+      return;
+    }
+
+    this.loadTransactions();
+  });
 
   readonly budgetLabel = computed(() =>
     formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
@@ -200,10 +219,6 @@ export class CategoryCardComponent {
   toggleDetails(): void {
     const newState = !this.showDetails();
     this.showDetails.set(newState);
-
-    if (newState && this.transactions().length === 0 && !this.transactionsLoadError()) {
-      this.loadTransactions();
-    }
   }
 
   retryLoadTransactions(): void {
@@ -211,11 +226,16 @@ export class CategoryCardComponent {
   }
 
   private loadTransactions(): void {
+    const includeAll = this.includeAllTransactions();
+    this.lastIncludeAllTransactions = includeAll;
+
     this.isLoadingTransactions.set(true);
     this.transactionsLoadError.set(false);
 
     this.lunchMoneyService
-      .getCategoryTransactions(this.item().categoryId, this.startDate(), this.endDate())
+      .getCategoryTransactions(this.item().categoryId, this.startDate(), this.endDate(), {
+        includeAllTransactions: includeAll,
+      })
       .subscribe({
         next: (response) => {
           this.transactions.set(response.transactions);

@@ -5,7 +5,6 @@ import { BudgetSummaryItem, RecurringExpense } from '../../core/models/lunchmone
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
-import { getCurrentMonthRange, toIsoDate } from '../utils/date.util';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 
@@ -14,6 +13,7 @@ const defaultPreferences: CategoryPreferences = {
   hiddenCategoryIds: [],
   warnAtRatio: 0.85,
   notificationsEnabled: false,
+  includeAllTransactions: true,
 };
 
 class MockLunchMoneyService {

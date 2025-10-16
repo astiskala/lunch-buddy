@@ -1,11 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { OfflineService } from './offline.service';
 
 describe('OfflineService', () => {
   let service: OfflineService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection()],
+    });
     service = TestBed.inject(OfflineService);
   });
 

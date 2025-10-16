@@ -93,13 +93,18 @@ export class LunchMoneyService {
     categoryId: number,
     startDate: string,
     endDate: string,
+    options?: { includeAllTransactions?: boolean },
   ): Observable<TransactionsResponse> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('category_id', categoryId.toString())
       .set('start_date', startDate)
       .set('end_date', endDate)
-      .set('debit_as_negative', 'true')
-      .set('status', 'cleared');
+      .set('debit_as_negative', 'true');
+
+    const includeAll = options?.includeAllTransactions ?? true;
+    if (!includeAll) {
+      params = params.set('status', 'cleared');
+    }
 
     return this.http.get<TransactionsResponse>(
       `${LUNCH_MONEY_API_BASE}/transactions`,
