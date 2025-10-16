@@ -26,23 +26,5 @@
       }
     }
   ],
-  "dataGroups": [
-    {
-      "name": "lunchmoney-api",
-      "urls": [
-        "https://**/budgets",
-        "https://**/budgets?*",
-        "https://**/recurring_expenses",
-        "https://**/recurring_expenses?*",
-        "https://**/transactions",
-        "https://**/transactions?*"
-      ],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxAge": "24h",
-        "maxSize": 50,
-        "timeout": "5s"
-      }
-    }
-  ]
+  "dataGroups": []
 }

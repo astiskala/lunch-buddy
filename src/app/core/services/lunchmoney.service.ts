@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
@@ -22,12 +22,28 @@ const LUNCH_MONEY_API_BASE = normalizeBaseUrl(
 })
 export class LunchMoneyService {
   private http = inject(HttpClient);
+  private readonly noCacheHeaders = new HttpHeaders({
+    'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+    'If-Modified-Since': '0',
+  });
+
+  private createRequestOptions(params?: HttpParams) {
+    return {
+      headers: this.noCacheHeaders,
+      params,
+    };
+  }
 
   /**
    * Get user information
    */
   getUser(): Observable<LunchMoneyUser> {
-    return this.http.get<LunchMoneyUser>(`${LUNCH_MONEY_API_BASE}/me`);
+    return this.http.get<LunchMoneyUser>(
+      `${LUNCH_MONEY_API_BASE}/me`,
+      this.createRequestOptions(),
+    );
   }
 
   /**
@@ -35,7 +51,10 @@ export class LunchMoneyService {
    */
   getCategories(): Observable<LunchMoneyCategory[]> {
     return this.http
-      .get<{ categories: LunchMoneyCategory[] }>(`${LUNCH_MONEY_API_BASE}/categories`)
+      .get<{ categories: LunchMoneyCategory[] }>(
+        `${LUNCH_MONEY_API_BASE}/categories`,
+        this.createRequestOptions(),
+      )
       .pipe(map((response) => response.categories));
   }
 
@@ -45,9 +64,10 @@ export class LunchMoneyService {
   getBudgetSummary(startDate: string, endDate: string): Observable<BudgetSummaryItem[]> {
     const params = new HttpParams().set('start_date', startDate).set('end_date', endDate);
 
-    return this.http.get<BudgetSummaryItem[]>(`${LUNCH_MONEY_API_BASE}/budgets`, {
-      params,
-    });
+    return this.http.get<BudgetSummaryItem[]>(
+      `${LUNCH_MONEY_API_BASE}/budgets`,
+      this.createRequestOptions(params),
+    );
   }
 
   /**
@@ -59,7 +79,10 @@ export class LunchMoneyService {
     return this.http
       .get<{
         recurring_expenses: RecurringExpense[];
-      }>(`${LUNCH_MONEY_API_BASE}/recurring_expenses`, { params })
+      }>(
+        `${LUNCH_MONEY_API_BASE}/recurring_expenses`,
+        this.createRequestOptions(params),
+      )
       .pipe(map((response) => response.recurring_expenses));
   }
 
@@ -78,6 +101,9 @@ export class LunchMoneyService {
       .set('debit_as_negative', 'true')
       .set('status', 'cleared');
 
-    return this.http.get<TransactionsResponse>(`${LUNCH_MONEY_API_BASE}/transactions`, { params });
+    return this.http.get<TransactionsResponse>(
+      `${LUNCH_MONEY_API_BASE}/transactions`,
+      this.createRequestOptions(params),
+    );
   }
 }

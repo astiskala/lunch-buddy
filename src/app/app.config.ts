@@ -19,7 +19,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([lunchmoneyInterceptor])),
     provideServiceWorker('custom-service-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerImmediate',
+      registrationStrategy: 'registerImmediately',
     }),
   ],
 };
