@@ -8,10 +8,13 @@ This implementation adds comprehensive offline support to the Lunch Buddy PWA, a
 ### 1. Service Worker Configuration (`ngsw-config.json`)
 - **Added `dataGroups`**: Configured caching for LunchMoney API endpoints
   - Strategy: `freshness` (network first, cache fallback)
-  - Cache duration: 1 hour
+  - Cache duration: 24 hours
   - Timeout: 10 seconds
   - Max cache size: 100 responses
-- **Added `navigationRequestStrategy`**: Set to `freshness` to ensure app loads offline using cached HTML/CSS/JS
+- **Set `navigationRequestStrategy`**: Changed to `performance` (cache-first) to ensure app loads offline
+  - This allows the app to load immediately from cache when offline
+  - Updates are fetched in the background when online
+- **Updated asset groups**: Ensured all static assets are prefetched and cached
 
 ### 2. Custom Service Worker (`public/custom-service-worker.js`)
 - **Added install and activate events**: Proper service worker lifecycle management
@@ -59,21 +62,80 @@ This implementation adds comprehensive offline support to the Lunch Buddy PWA, a
 
 ## Cache Strategy
 
-- **Static Assets** (HTML/CSS/JS): Prefetched and cached on install
+- **Static Assets** (HTML/CSS/JS): **Cache-first** - Prefetched on install, served from cache for instant loads
+- **Navigation Requests**: **Cache-first** (`performance` strategy) - App shell loads instantly from cache
 - **Images**: Lazy loaded and cached on first use
-- **API Responses**: Network-first with cache fallback (1 hour max age)
+- **API Responses**: **Network-first** with cache fallback (`freshness` strategy, 24 hour max age)
+  - When online: Always fetch fresh data, update cache
+  - When offline: Serve from cache (up to 24 hours old)
+  - 10-second timeout on network requests before falling back to cache
 
 ## Testing Offline Mode
 
-### Chrome DevTools
-1. Open DevTools → Application tab → Service Workers
-2. Check "Offline" checkbox
-3. Reload the page
+### Important: Service Worker Only Works in Production Build
+The service worker is **disabled in development mode**. You must build and serve a production build to test offline functionality.
 
-### Real Network Disconnection
-1. Turn off WiFi/Ethernet
-2. Open the app
-3. Verify cached data loads and offline banner appears
+### Step 1: Build for Production
+```bash
+npm run build
+```
+
+### Step 2: Serve the Production Build
+You can use any static server. For example, with `npx`:
+```bash
+npx http-server dist/lunch-buddy/browser -p 8080
+```
+
+Or install and use `serve`:
+```bash
+npm install -g serve
+serve -s dist/lunch-buddy/browser -p 8080
+```
+
+### Step 3: Visit and Install Service Worker
+1. Open http://localhost:8080 in Chrome
+2. Use the app normally (login, view budget data)
+3. Open DevTools → Application → Service Workers
+4. Verify the service worker is registered and activated
+
+### Step 4: Test Offline Loading
+
+#### Method A: Chrome DevTools (Simulated Offline)
+1. Keep DevTools open → Application tab → Service Workers
+2. Check the "Offline" checkbox
+3. **Close the tab completely**
+4. Open a new tab and navigate to http://localhost:8080
+5. The app should load from cache with the offline banner
+
+#### Method B: Real Network Disconnection
+1. Ensure you've visited the app at least once while online
+2. Completely close all browser tabs for the app
+3. Turn off WiFi/Ethernet
+4. Open a new browser tab
+5. Navigate to http://localhost:8080
+6. The app should load from cache
+
+### Step 5: Verify Cached Data
+- Offline banner should appear at top
+- App logo and UI should be visible
+- Previously loaded budget data should display
+- API calls return cached responses
+
+### Troubleshooting
+
+**Problem: "ERR_INTERNET_DISCONNECTED" when loading offline**
+- Solution: Make sure you visited the app while online first
+- The service worker needs to install and cache assets before offline mode works
+- Check DevTools → Application → Cache Storage to verify files are cached
+
+**Problem: Service worker not registering**
+- Solution: Service workers only work on `localhost` or HTTPS
+- Check the browser console for service worker errors
+- Verify `app.config.ts` has service worker enabled in production
+
+**Problem: Old cached data**
+- Solution: Clear cache in DevTools → Application → Clear Storage
+- Rebuild and reload while online to get fresh cache
 
 ## Benefits
 
