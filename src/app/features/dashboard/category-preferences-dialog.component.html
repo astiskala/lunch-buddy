@@ -173,10 +173,13 @@
       </div>
 
       <div class="dialog-actions">
-        <button mat-stroked-button color="primary" (click)="resetPreferences()">
-          <mat-icon fontIcon="restart_alt"></mat-icon>
-          Reset to defaults
-        </button>
+        <div class="actions-left">
+          <button mat-stroked-button color="primary" (click)="resetPreferences()">
+            <mat-icon fontIcon="restart_alt"></mat-icon>
+            Reset to defaults
+          </button>
+          <span class="version">Version: {{ version }}</span>
+        </div>
         <div class="actions-right">
           <button mat-button type="button" (click)="handleClose()">Cancel</button>
           <button mat-flat-button color="primary" type="button" (click)="handleSave()">

@@ -17,6 +17,7 @@ import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 import { LoggerService } from '../../core/services/logger.service';
+import { VersionService } from '../../core/services/version.service';
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -28,7 +29,9 @@ import { LoggerService } from '../../core/services/logger.service';
 export class CategoryPreferencesDialogComponent implements OnInit {
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly logger = inject(LoggerService);
+  private readonly versionService = inject(VersionService);
 
+  readonly version = this.versionService.getVersion();
   readonly open = input.required<boolean>();
   readonly items = input.required<BudgetProgress[]>();
   readonly hiddenItems = input.required<BudgetProgress[]>();
