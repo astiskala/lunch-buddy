@@ -1,7 +1,6 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { from } from 'rxjs';
-import { switchMap } from 'rxjs';
+import { from, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 
