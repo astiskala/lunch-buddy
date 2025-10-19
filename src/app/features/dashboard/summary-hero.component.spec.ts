@@ -95,8 +95,10 @@ describe('SummaryHeroComponent', () => {
     fixture.componentRef.setInput('totalExpenseBudget', 1000);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('.customize-btn') as HTMLButtonElement;
-    button.click();
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const button = hostElement.querySelector<HTMLButtonElement>('.customize-btn');
+    expect(button).not.toBeNull();
+    button?.click();
 
     expect(emitted).toBeTrue();
   });
@@ -111,8 +113,10 @@ describe('SummaryHeroComponent', () => {
     fixture.componentRef.setInput('totalExpenseBudget', 1000);
     fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('.logout-btn') as HTMLButtonElement;
-    button.click();
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const button = hostElement.querySelector<HTMLButtonElement>('.logout-btn');
+    expect(button).not.toBeNull();
+    button?.click();
 
     expect(emitted).toBeTrue();
   });

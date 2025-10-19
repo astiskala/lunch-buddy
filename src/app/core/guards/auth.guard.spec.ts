@@ -5,12 +5,24 @@ import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
 
 describe('authGuard', () => {
-  let authService: jasmine.SpyObj<AuthService>;
-  let router: jasmine.SpyObj<Router>;
+  type AuthServiceStub = {
+    hasApiKey: () => boolean;
+    ready: () => Promise<void>;
+  };
+
+  type RouterStub = {
+    parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
+  };
+
+  let authService: jasmine.SpyObj<AuthServiceStub>;
+  let router: jasmine.SpyObj<RouterStub>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['hasApiKey', 'ready']);
-    const routerSpy = jasmine.createSpyObj('Router', ['parseUrl']);
+    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>('AuthService', [
+      'hasApiKey',
+      'ready',
+    ]);
+    const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -20,10 +32,10 @@ describe('authGuard', () => {
       ],
     });
 
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    authService = authServiceSpy;
+    router = routerSpy;
 
-    authService.ready.and.returnValue(Promise.resolve());
+    authService.ready.and.resolveTo();
   });
 
   it('should allow activation when user has API key', async () => {

@@ -1,24 +1,36 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { BudgetService } from '../../shared/services/budget.service';
+import { BudgetService, CategoryPreferences } from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 
 describe('DashboardPageComponent - Unit Tests', () => {
-  let mockBudgetService: jasmine.SpyObj<BudgetService>;
-  let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockRouter: jasmine.SpyObj<Router>;
+  type BudgetServiceStub = {
+    refresh: () => void;
+    updatePreferences: (updater: (current: CategoryPreferences) => CategoryPreferences) => void;
+  };
+
+  type AuthServiceStub = {
+    clearApiKey: () => void;
+  };
+
+  type RouterStub = {
+    navigate: (commands: unknown[]) => Promise<boolean>;
+  };
+
+  let mockBudgetService: jasmine.SpyObj<BudgetServiceStub>;
+  let mockAuthService: jasmine.SpyObj<AuthServiceStub>;
+  let mockRouter: jasmine.SpyObj<RouterStub>;
 
   beforeEach(() => {
-    mockBudgetService = jasmine.createSpyObj('BudgetService', [
+    mockBudgetService = jasmine.createSpyObj<BudgetServiceStub>('BudgetService', [
       'refresh',
       'updatePreferences',
     ]);
 
-    mockAuthService = jasmine.createSpyObj('AuthService', ['clearApiKey']);
-    mockAuthService.clearApiKey.and.returnValue(undefined);
+    mockAuthService = jasmine.createSpyObj<AuthServiceStub>('AuthService', ['clearApiKey']);
 
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
-    mockRouter.navigate.and.returnValue(Promise.resolve(true));
+    mockRouter = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
+    mockRouter.navigate.and.resolveTo(true);
   });
 
   it('should create component with mocked dependencies', () => {
