@@ -1,3 +1,20 @@
 :host {
   display: block;
 }
+
+.dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actions-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.version {
+  font-size: 12px;
+  color: #666;
+}
