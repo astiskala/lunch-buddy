@@ -91,7 +91,7 @@ describe('buildBudgetProgress status evaluation', () => {
     config: null,
     recurring: {
       data: recurring.map((amount, index) => ({
-        payee: `Recurring ${index + 1}`,
+        payee: `Recurring ${(index + 1).toString()}`,
         amount,
         currency: 'USD',
         to_base: amount,

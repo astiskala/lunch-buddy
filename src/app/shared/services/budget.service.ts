@@ -205,9 +205,9 @@ export class BudgetService {
           this.persistLastRefresh(timestamp);
         }
       },
-      error: (error: Error) => {
+      error: (error: unknown) => {
         this.logger.error('Failed to refresh budget data', error);
-        this.errors.set([error]);
+        this.errors.set([error as Error]);
         this.isLoading.set(false);
       },
     });
@@ -222,7 +222,7 @@ export class BudgetService {
         this.recomputeBudgetStatuses();
         this.isRecurringLoading.set(false);
       },
-      error: (error: Error) => {
+      error: (error: unknown) => {
         this.logger.error('Failed to load recurring expenses', error);
         this.isRecurringLoading.set(false);
       },

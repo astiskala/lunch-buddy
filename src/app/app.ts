@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { AppUpdateService } from './core/services/app-update.service';
 import { BackgroundSyncService } from './core/services/background-sync.service';
 import { OfflineIndicatorComponent } from './shared/components/offline-indicator.component';
 
@@ -16,7 +15,6 @@ import { OfflineIndicatorComponent } from './shared/components/offline-indicator
   imports: [
     CommonModule,
     RouterOutlet,
-    NgOptimizedImage,
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,

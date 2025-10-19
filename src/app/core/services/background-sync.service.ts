@@ -7,7 +7,6 @@ import { AuthService } from './auth.service';
 
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_API_BASE = 'https://dev.lunchmoney.app/v1';
 
 type PeriodicSyncManager = {
   getTags(): Promise<string[]>;
@@ -39,7 +38,7 @@ export class BackgroundSyncService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
-  private readonly apiBaseUrl = environment.lunchmoneyApiBase ?? DEFAULT_API_BASE;
+  private readonly apiBaseUrl = environment.lunchmoneyApiBase;
 
   private registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
   private authSubscription: Subscription;
@@ -56,7 +55,7 @@ export class BackgroundSyncService implements OnDestroy {
 
   constructor() {
     this.authSubscription = this.authService.apiKey$.subscribe((apiKey) => {
-      this.updateApiCredentials(apiKey);
+      void this.updateApiCredentials(apiKey);
     });
   }
 

@@ -89,9 +89,9 @@ describe('CategoryCardComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const label = compiled.querySelector('.metrics .metric .label')?.textContent?.trim();
+    const label = (compiled.querySelector('.metrics .metric .label')?.textContent || '').trim();
     expect(label).toBe('Received');
-    const value = compiled.querySelector('.metrics .metric .value')?.textContent ?? '';
+    const value = compiled.querySelector('.metrics .metric .value')?.textContent || '';
     expect(value).toContain('$650.00');
   });
 
@@ -178,7 +178,7 @@ describe('CategoryCardComponent', () => {
     const details = fixture.nativeElement.querySelector('.details') as HTMLElement | null;
     expect(details).not.toBeNull();
 
-    details!.click();
+    (details as HTMLElement).click();
     fixture.detectChanges();
 
     expect(component['showDetails']()).toBeFalse();

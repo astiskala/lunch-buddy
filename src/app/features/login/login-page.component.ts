@@ -39,7 +39,7 @@ export class LoginPageComponent {
 
     try {
       // Store the API key (trimmed)
-      await this.authService.setApiKey(trimmedApiKey);
+      this.authService.setApiKey(trimmedApiKey);
 
       // Navigate to dashboard
       await this.router.navigate(['/']);

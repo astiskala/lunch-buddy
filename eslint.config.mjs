@@ -23,7 +23,7 @@ export default tseslint.config(
     },
     languageOptions: {
       parserOptions: {
-        project: true,
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -55,6 +55,18 @@ export default tseslint.config(
       ],
       "@angular-eslint/prefer-standalone": "error",
       "@angular-eslint/use-lifecycle-interface": "error",
+    },
+  },
+
+  // Spec files
+  {
+    files: ["**/*.spec.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/unbound-method": "off",
     },
   },
 

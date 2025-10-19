@@ -19,11 +19,11 @@ export class AppUpdateService {
     this.subscribeToUpdates();
     void this.swUpdate
       .checkForUpdate()
-      .catch((error) => { this.logger.warn('AppUpdateService: checkForUpdate failed', error); });
+      .catch((error: unknown) => { this.logger.warn('AppUpdateService: checkForUpdate failed', error); });
   }
 
   private subscribeToUpdates(): void {
-    this.swUpdate!.versionUpdates.subscribe((event) => {
+    this.swUpdate?.versionUpdates.subscribe((event) => {
       if (event.type === 'VERSION_READY') {
         this.logger.info('AppUpdateService: new version ready, activating');
         void this.activateAndReload();
@@ -33,7 +33,7 @@ export class AppUpdateService {
 
   private async activateAndReload(): Promise<void> {
     try {
-      await this.swUpdate!.activateUpdate();
+      await this.swUpdate?.activateUpdate();
     } catch (error) {
       this.logger.warn('AppUpdateService: activateUpdate failed', error);
     } finally {

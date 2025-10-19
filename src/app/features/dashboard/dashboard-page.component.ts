@@ -260,10 +260,6 @@ export class DashboardPageComponent {
   }
 
   handleTabChange(tab: TabType): void {
-    if (tab !== 'expenses' && tab !== 'income') {
-      return;
-    }
-
     this.activeTab.set(tab);
     this.showHidden.set(false);
     this.statusFilter.set('all');
@@ -296,7 +292,7 @@ export class DashboardPageComponent {
 
   async logout(): Promise<void> {
     try {
-      await this.authService.clearApiKey();
+      this.authService.clearApiKey();
     } finally {
       await this.router.navigate(['/login']);
     }

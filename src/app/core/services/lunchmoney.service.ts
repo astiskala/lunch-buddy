@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, map } from 'rxjs';
 import {
   LunchMoneyUser,
   LunchMoneyCategory,
@@ -14,7 +13,7 @@ import { environment } from '../../../environments/environment';
 const normalizeBaseUrl = (baseUrl: string): string => baseUrl.replace(/\/+$/, '');
 
 const LUNCH_MONEY_API_BASE = normalizeBaseUrl(
-  environment.lunchmoneyApiBase ?? 'https://dev.lunchmoney.app/v1',
+  environment.lunchmoneyApiBase,
 );
 
 @Injectable({

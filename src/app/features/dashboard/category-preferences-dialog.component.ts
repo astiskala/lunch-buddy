@@ -72,7 +72,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
     this.warnAtRatio.set(prefs.warnAtRatio);
     this.notificationsEnabled.set(prefs.notificationsEnabled);
-    this.includeAllTransactions.set(prefs.includeAllTransactions ?? true);
+    this.includeAllTransactions.set(prefs.includeAllTransactions);
   }
 
   private ensureOrderContains(current: number[]): number[] {
