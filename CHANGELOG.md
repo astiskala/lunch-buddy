@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/astiskala/lunch-buddy/compare/v1.2.0...v1.3.0) (2025-10-19)
+
+
+### Features
+
+* Refactor codebase to use modern TypeScript features ([59e7c64](https://github.com/astiskala/lunch-buddy/commit/59e7c644e350cc3c92ebbc9a12522bee257613de))
+* update TypeScript code for improved type safety and consistency ([b7159c2](https://github.com/astiskala/lunch-buddy/commit/b7159c2e730646c0f24d0d29a56714de91f4c6b1))
+
 # [1.2.0](https://github.com/astiskala/lunch-buddy/compare/v1.1.0...v1.2.0) (2025-10-19)
 
 
