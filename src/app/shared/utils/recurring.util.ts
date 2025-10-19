@@ -150,6 +150,112 @@ const startOfDay = (date: Date): Date => {
   return result;
 };
 
+interface AdjustmentResult {
+  candidate: Date;
+  adjusted: boolean;
+}
+
+const projectForwardWithCadence = (
+  candidate: Date,
+  cadenceDuration: Duration,
+  targetDate: Date,
+  windowStart?: Date,
+  windowEnd?: Date,
+): Date | null => {
+  let projected = candidate;
+  let iterations = 0;
+  const MAX_ITERATIONS = 60;
+
+  while (isBefore(projected, targetDate) && iterations < MAX_ITERATIONS) {
+    projected = addDuration(projected, cadenceDuration);
+    iterations += 1;
+  }
+
+  if (windowStart && windowEnd && !clampToWindow(projected, windowStart, windowEnd)) {
+    return null;
+  }
+
+  return projected;
+};
+
+const adjustCandidateToWindow = (
+  candidate: Date,
+  windowStart: Date,
+  windowEnd: Date,
+  cadenceDuration: Duration | null,
+): AdjustmentResult => {
+  if (isAfter(candidate, windowEnd)) {
+    return { candidate, adjusted: false };
+  }
+
+  if (!isBefore(candidate, windowStart)) {
+    return { candidate, adjusted: false };
+  }
+
+  let adjustedCandidate = candidate;
+  let wasAdjusted = false;
+
+  if (cadenceDuration) {
+    const projected = projectForwardWithCadence(candidate, cadenceDuration, windowStart, windowStart, windowEnd);
+    if (projected && clampToWindow(projected, windowStart, windowEnd)) {
+      adjustedCandidate = projected;
+      wasAdjusted = true;
+    }
+  }
+
+  if (!clampToWindow(adjustedCandidate, windowStart, windowEnd)) {
+    const aligned = alignToWindowMonth(candidate, windowStart);
+    if (clampToWindow(aligned, windowStart, windowEnd)) {
+      adjustedCandidate = aligned;
+      wasAdjusted = true;
+    }
+  }
+
+  return { candidate: adjustedCandidate, adjusted: wasAdjusted };
+};
+
+const adjustCandidateToReference = (
+  candidate: Date,
+  reference: Date,
+  cadenceDuration: Duration | null,
+  candidateAdjustedByWindow: boolean,
+  windowStart?: Date,
+  windowEnd?: Date,
+): Date | null => {
+  const candidateStart = startOfDay(candidate);
+  if (!isBefore(candidateStart, reference)) {
+    return candidate;
+  }
+
+  if (!cadenceDuration) {
+    return candidateAdjustedByWindow ? candidate : null;
+  }
+
+  let projected = candidate;
+  let iterations = 0;
+  const MAX_ITERATIONS = 60;
+
+  while (isBefore(startOfDay(projected), reference) && iterations < MAX_ITERATIONS) {
+    const nextProjection = addDuration(projected, cadenceDuration);
+    iterations += 1;
+
+    if (windowStart && windowEnd && isAfter(nextProjection, windowEnd)) {
+      break;
+    }
+
+    projected = nextProjection;
+
+    const isWithinWindow = !windowStart || !windowEnd || clampToWindow(projected, windowStart, windowEnd);
+    const isNotBeforeReference = !isBefore(startOfDay(projected), reference);
+
+    if (isWithinWindow && isNotBeforeReference) {
+      return projected;
+    }
+  }
+
+  return candidateAdjustedByWindow ? candidate : null;
+};
+
 /**
  * Returns the expected date for a recurring expense within a given window.
  */
@@ -171,42 +277,21 @@ export const getRecurringDate = (
     return null;
   }
 
-  let candidateAdjustedByWindow = false;
   const windowStart = parseWindowDate(options?.windowStart, 'start');
   const windowEnd = parseWindowDate(options?.windowEnd, 'end');
   const cadenceDuration = getCadenceDuration(expense.cadence);
   const reference = options?.referenceDate ? startOfDay(options.referenceDate) : null;
+
+  let candidateAdjustedByWindow = false;
 
   if (windowStart && windowEnd) {
     if (isAfter(candidate, windowEnd)) {
       return null;
     }
 
-    if (isBefore(candidate, windowStart)) {
-      if (cadenceDuration) {
-        let projected = candidate;
-        let iterations = 0;
-        while (isBefore(projected, windowStart) && iterations < 60) {
-          projected = addDuration(projected, cadenceDuration);
-          iterations += 1;
-        }
-
-        if (clampToWindow(projected, windowStart, windowEnd)) {
-          candidate = projected;
-          candidateAdjustedByWindow = true;
-        }
-      }
-
-      if (!clampToWindow(candidate, windowStart, windowEnd)) {
-        const aligned = alignToWindowMonth(candidate, windowStart);
-        if (clampToWindow(aligned, windowStart, windowEnd)) {
-          candidate = aligned;
-          candidateAdjustedByWindow = true;
-        } else {
-          return null;
-        }
-      }
-    }
+    const adjustment = adjustCandidateToWindow(candidate, windowStart, windowEnd, cadenceDuration);
+    candidate = adjustment.candidate;
+    candidateAdjustedByWindow = adjustment.adjusted;
 
     if (!clampToWindow(candidate, windowStart, windowEnd)) {
       return null;
@@ -214,43 +299,18 @@ export const getRecurringDate = (
   }
 
   if (reference) {
-    const candidateStart = startOfDay(candidate);
-    if (isBefore(candidateStart, reference)) {
-      if (!cadenceDuration) {
-        if (!candidateAdjustedByWindow) {
-          return null;
-        }
-      } else {
-        let projected = candidate;
-        let iterations = 0;
-        let foundValidProjection = false;
-
-        while (isBefore(startOfDay(projected), reference) && iterations < 60) {
-          const nextProjection = addDuration(projected, cadenceDuration);
-          iterations += 1;
-
-          if (windowStart && windowEnd && isAfter(nextProjection, windowEnd)) {
-            break;
-          }
-
-          projected = nextProjection;
-
-          if (!windowStart || !windowEnd || clampToWindow(projected, windowStart, windowEnd)) {
-            if (!isBefore(startOfDay(projected), reference)) {
-              candidate = projected;
-              foundValidProjection = true;
-              break;
-            }
-          }
-        }
-
-        if (!foundValidProjection) {
-          if (!candidateAdjustedByWindow) {
-            return null;
-          }
-        }
-      }
+    const adjusted = adjustCandidateToReference(
+      candidate,
+      reference,
+      cadenceDuration,
+      candidateAdjustedByWindow,
+      windowStart ?? undefined,
+      windowEnd ?? undefined,
+    );
+    if (!adjusted) {
+      return null;
     }
+    candidate = adjusted;
   }
 
   return candidate;

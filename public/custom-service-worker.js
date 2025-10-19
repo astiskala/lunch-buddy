@@ -28,7 +28,7 @@ const defaultState = () => ({
 });
 
 // Handle Lunch Money API requests before delegating other traffic to the Angular worker.
-self.addEventListener('fetch', (event) => {
+globalThis.addEventListener('fetch', (event) => {
   const { request } = event;
 
   if (request.method !== 'GET') {
@@ -55,12 +55,12 @@ self.addEventListener('fetch', (event) => {
 importScripts('./ngsw-worker.js');
 
 // Install event - prepare cache
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
+globalThis.addEventListener('install', (event) => {
+  globalThis.skipWaiting();
 });
 
 // Activate event - cleanup old caches
-self.addEventListener('activate', (event) => {
+globalThis.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const cacheNames = await caches.keys();
@@ -68,7 +68,7 @@ self.addEventListener('activate', (event) => {
         (name) => name.startsWith('lunchbuddy-api-cache-') && name !== API_CACHE_NAME,
       );
       await Promise.all(cachesToDelete.map((name) => caches.delete(name)));
-      await self.clients.claim();
+      await globalThis.clients.claim();
     })(),
   );
 });
@@ -103,6 +103,7 @@ async function handleApiRequest(request) {
     return getCachedResponse(request);
   } catch (error) {
     // Network error or timeout - use cache
+    console.warn('[WARN] custom-service-worker: network request failed, falling back to cache', error);
     return getCachedResponse(request);
   }
 }
@@ -129,7 +130,7 @@ async function getCachedResponse(request) {
   );
 }
 
-self.addEventListener('message', (event) => {
+globalThis.addEventListener('message', (event) => {
   const data = event.data;
   if (!data || typeof data !== 'object') {
     return;
@@ -140,13 +141,13 @@ self.addEventListener('message', (event) => {
   }
 });
 
-self.addEventListener('periodicsync', (event) => {
+globalThis.addEventListener('periodicsync', (event) => {
   if (event.tag === PERIODIC_SYNC_TAG) {
     event.waitUntil(handleBudgetSync('periodic'));
   }
 });
 
-self.addEventListener('sync', (event) => {
+globalThis.addEventListener('sync', (event) => {
   if (event.tag === PERIODIC_SYNC_TAG) {
     event.waitUntil(handleBudgetSync('sync'));
   }
@@ -231,7 +232,7 @@ async function handleBudgetSync(trigger) {
     }
 
     const payload = buildNotificationPayload(alerts, config.preferences.currency);
-    await self.registration.showNotification(payload.title, {
+    await globalThis.registration.showNotification(payload.title, {
       body: payload.body,
       tag: 'lunch-buddy-budget-alerts',
       data: {
@@ -280,7 +281,7 @@ function buildBudgetsUrl(baseUrl, startIso, endIso) {
 
 async function isAnyClientVisible() {
   try {
-    const clientList = await self.clients.matchAll({
+    const clientList = await globalThis.clients.matchAll({
       type: 'window',
       includeUncontrolled: true,
     });
@@ -443,7 +444,7 @@ function differenceInCalendarDays(left, right) {
 }
 
 async function openDb() {
-  if (!self.indexedDB) {
+  if (!globalThis.indexedDB) {
     return null;
   }
 
