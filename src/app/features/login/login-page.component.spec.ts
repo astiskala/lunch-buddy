@@ -54,6 +54,12 @@ describe('LoginPageComponent', () => {
     expect(component['errorMessage']()).toBe('API key appears to be invalid');
   });
 
+  it('should show error when API key contains invalid characters', async () => {
+    component['onApiKeyChange']('a'.repeat(29) + '!');
+    await component['onSubmit']();
+    expect(component['errorMessage']()).toBe('API key appears to be invalid');
+  });
+
   it('should accept valid API key and navigate to dashboard', async () => {
     const validKey = 'a'.repeat(30);
     component['onApiKeyChange'](validKey);

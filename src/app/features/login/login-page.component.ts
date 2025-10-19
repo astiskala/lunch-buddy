@@ -22,13 +22,14 @@ export class LoginPageComponent {
   protected readonly isSubmitting = signal(false);
 
   protected async onSubmit(): Promise<void> {
-    if (!this.apiKey().trim()) {
+    const trimmedApiKey = this.apiKey().trim();
+    if (!trimmedApiKey) {
       this.errorMessage.set('Please enter your API key');
       return;
     }
 
     // Basic validation - API keys are typically alphanumeric
-    if (this.apiKey().length < 20) {
+    if (trimmedApiKey.length < 20 || !/^[a-zA-Z0-9]+$/.test(trimmedApiKey)) {
       this.errorMessage.set('API key appears to be invalid');
       return;
     }
@@ -38,7 +39,7 @@ export class LoginPageComponent {
 
     try {
       // Store the API key (trimmed)
-      await this.authService.setApiKey(this.apiKey().trim());
+      await this.authService.setApiKey(trimmedApiKey);
 
       // Navigate to dashboard
       await this.router.navigate(['/']);
