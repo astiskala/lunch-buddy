@@ -71,6 +71,50 @@ describe('CategoryCardComponent', () => {
     expect(compiled.querySelector('.progress-bar')).toBeTruthy();
   });
 
+  it('should show received label for income categories', () => {
+    const incomeItem: BudgetProgress = {
+      ...mockItem,
+      isIncome: true,
+      spent: -650,
+      budgetAmount: 1000,
+    };
+
+    fixture.componentRef.setInput('item', incomeItem);
+    fixture.componentRef.setInput('startDate', '2025-10-01');
+    fixture.componentRef.setInput('endDate', '2025-10-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput('recurringExpenses', []);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const label = compiled.querySelector('.metrics .metric .label')?.textContent?.trim();
+    expect(label).toBe('Received');
+    const value = compiled.querySelector('.metrics .metric .value')?.textContent ?? '';
+    expect(value).toContain('$650.00');
+  });
+
+  it('should compute remaining using absolute values for income categories', () => {
+    const incomeItem: BudgetProgress = {
+      ...mockItem,
+      isIncome: true,
+      spent: -400,
+      budgetAmount: 1000,
+    };
+
+    fixture.componentRef.setInput('item', incomeItem);
+    fixture.componentRef.setInput('startDate', '2025-10-01');
+    fixture.componentRef.setInput('endDate', '2025-10-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput('recurringExpenses', []);
+    fixture.detectChanges();
+
+    expect(component.remainingAfterUpcoming()).toBeCloseTo(600, 5);
+  });
+
   it('should show correct status class', () => {
     fixture.componentRef.setInput('item', mockItem);
     fixture.componentRef.setInput('startDate', '2025-10-01');

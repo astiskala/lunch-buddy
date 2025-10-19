@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prebuild": "node tools/write-version.js && node tools/write-pwa-version.js",
     "build": "ng build",
     "generate:env": "node tools/write-runtime-env.mjs",
     "lint": "ng lint --fix",

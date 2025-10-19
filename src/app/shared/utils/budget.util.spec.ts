@@ -57,13 +57,21 @@ describe('Budget Utils', () => {
 
 describe('buildBudgetProgress status evaluation', () => {
   const monthKey = '2025-10';
-  const createSummary = (spent: number, budget: number): BudgetSummaryItem => ({
+  const createSummary = ({
+    spent,
+    budget,
+    isIncome = false,
+  }: {
+    spent: number;
+    budget: number;
+    isIncome?: boolean;
+  }): BudgetSummaryItem => ({
     category_name: 'Test',
     category_id: 1,
     category_group_name: null,
     group_id: null,
     is_group: false,
-    is_income: false,
+    is_income: isIncome,
     exclude_from_budget: false,
     exclude_from_totals: false,
     order: 0,
@@ -83,30 +91,48 @@ describe('buildBudgetProgress status evaluation', () => {
   });
 
   it('treats equal spending and budget as on track', () => {
-    const summary = createSummary(1000, 1000);
+    const summary = createSummary({ spent: 1000, budget: 1000 });
     const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
 
     expect(result.status).toBe('on-track');
   });
 
   it('treats minor rounding differences as on track', () => {
-    const summary = createSummary(1005, 1000);
+    const summary = createSummary({ spent: 1005, budget: 1000 });
     const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
 
     expect(result.status).toBe('on-track');
   });
 
   it('marks meaningfully overspent categories as over', () => {
-    const summary = createSummary(1055, 1000);
+    const summary = createSummary({ spent: 1055, budget: 1000 });
     const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
 
     expect(result.status).toBe('over');
   });
 
   it('marks high spending versus progress as at risk', () => {
-    const summary = createSummary(650, 1000);
+    const summary = createSummary({ spent: 650, budget: 1000 });
     const result = buildBudgetProgress(summary, monthKey, 0.4, 0.7);
 
     expect(result.status).toBe('at-risk');
+  });
+
+  it('marks income categories on track when received meets the budget', () => {
+    const summary = createSummary({ spent: -1000, budget: 1000, isIncome: true });
+    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+
+    expect(result.status).toBe('on-track');
+    expect(result.progressRatio).toBe(1);
+    expect(result.remaining).toBeCloseTo(0, 5);
+  });
+
+  it('marks income categories at risk when received is below the budget', () => {
+    const summary = createSummary({ spent: -450, budget: 1000, isIncome: true });
+    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+
+    expect(result.status).toBe('at-risk');
+    expect(result.progressRatio).toBeCloseTo(0.45, 5);
+    expect(result.remaining).toBeCloseTo(550, 5);
   });
 });

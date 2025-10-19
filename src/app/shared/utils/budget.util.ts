@@ -14,13 +14,23 @@ const calculateStatus = (
   budget: number,
   monthProgress: number,
   warnAtRatio: number,
+  isIncome: boolean,
 ): BudgetProgress['status'] => {
   if (budget <= 0) {
     return 'on-track';
   }
 
-  const spendingRatio = spent / budget;
   const epsilon = 0.005;
+
+  if (isIncome) {
+    const received = Math.max(0, Math.abs(spent));
+    if (received >= budget * (1 - epsilon)) {
+      return 'on-track';
+    }
+    return 'at-risk';
+  }
+
+  const spendingRatio = spent / budget;
 
   if (spendingRatio > 1 + epsilon) {
     return 'over';
@@ -52,7 +62,8 @@ export const buildBudgetProgress = (
   const monthData = pickMonthData(summary, monthKey);
   const budgetAmount = parseBudgetAmount(monthData);
   const spent = parseSpentAmount(monthData);
-  const remaining = budgetAmount - spent;
+  const actualValue = summary.is_income ? Math.abs(spent) : spent;
+  const remaining = budgetAmount - actualValue;
   const numTransactions = monthData?.num_transactions ?? 0;
   const isAutomated = Boolean(monthData?.is_automated);
   const recurringItems: BudgetRecurringItem[] = summary.recurring?.data ?? [];
@@ -60,7 +71,8 @@ export const buildBudgetProgress = (
     const amount = item.to_base ?? item.amount ?? 0;
     return total + amount;
   }, 0);
-  const progressRatio = budgetAmount > 0 ? Math.min(1, Math.max(0, spent / budgetAmount)) : 0;
+  const progressRatio =
+    budgetAmount > 0 ? Math.min(1, Math.max(0, actualValue / budgetAmount)) : 0;
   const budgetCurrency = monthData?.budget_currency ?? summary.config?.currency ?? null;
 
   return {
@@ -80,7 +92,7 @@ export const buildBudgetProgress = (
     isAutomated,
     recurringTotal,
     recurringItems,
-    status: calculateStatus(spent, budgetAmount, monthProgress, warnAtRatio),
+    status: calculateStatus(spent, budgetAmount, monthProgress, warnAtRatio, summary.is_income),
     progressRatio,
   };
 };

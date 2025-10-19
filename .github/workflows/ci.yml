@@ -6,9 +6,37 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.github/**'
+      - 'angular.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'vercel.json'
+      - 'ngsw-config.json'
+      - 'ngsw-config.template.json'
+      - '.releaserc.json'
+      - 'tools/**'
+      - 'src/**'
+      - 'public/**'
+      - 'mock-server/**'
   pull_request:
     branches:
       - main
+    paths:
+      - '.github/**'
+      - 'angular.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'vercel.json'
+      - 'ngsw-config.json'
+      - 'ngsw-config.template.json'
+      - '.releaserc.json'
+      - 'tools/**'
+      - 'src/**'
+      - 'public/**'
+      - 'mock-server/**'
 
 jobs:
   build-and-test:

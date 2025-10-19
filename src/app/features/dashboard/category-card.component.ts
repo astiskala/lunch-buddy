@@ -70,11 +70,15 @@ export class CategoryCardComponent {
     }),
   );
 
-  readonly spentLabel = computed(() =>
-    formatCurrency(this.item().spent, this.item().budgetCurrency, {
+  readonly spentLabelText = computed(() => (this.item().isIncome ? 'Received' : 'Spent'));
+
+  readonly spentLabel = computed(() => {
+    const item = this.item();
+    const amount = item.isIncome ? Math.abs(item.spent) : item.spent;
+    return formatCurrency(amount, item.budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    }),
-  );
+    });
+  });
 
   readonly progressValue = computed(() =>
     Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100))),
@@ -196,8 +200,9 @@ export class CategoryCardComponent {
   readonly remainingAfterUpcoming = computed(() => {
     const item = this.item();
     const upcoming = this.upcomingRecurringTotal();
+    const actualSpent = item.isIncome ? Math.abs(item.spent) : item.spent;
     return item.budgetAmount
-      ? item.budgetAmount - item.spent - upcoming
+      ? item.budgetAmount - actualSpent - upcoming
       : item.remaining - upcoming;
   });
 
