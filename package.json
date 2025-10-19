@@ -1,25 +1,26 @@
 {
   "name": "lunch-buddy",
   "version": "0.0.0",
+  "private": true,
   "scripts": {
-    "ng": "ng",
-    "generate:env": "node tools/write-runtime-env.mjs",
-    "prestart": "npm run generate:env",
-    "start": "ng serve",
     "prebuild": "node tools/write-version.js && node tools/write-pwa-version.js",
     "build": "ng build",
-    "prewatch": "node tools/write-version.js && node tools/write-pwa-version.js",
-    "watch": "ng build --watch --configuration development",
-    "pretest": "npm run generate:env",
-    "test": "ng test --no-watch",
-    "version": "git-semver",
-    "postversion": "node tools/write-version.js && node tools/write-pwa-version.js && git push --follow-tags",
-    "release": "semantic-release",
+    "generate:env": "node tools/write-runtime-env.mjs",
     "lint": "ng lint --fix",
     "lint:ci": "ng lint",
     "lint:styles": "stylelint \"**/*.scss\" --fix",
     "lint:styles:ci": "stylelint \"**/*.scss\" --max-warnings=0",
-    "mock:server": "node mock-server/server.js"
+    "mock:server": "node mock-server/server.js",
+    "ng": "ng",
+    "release": "semantic-release",
+    "prestart": "npm run generate:env",
+    "start": "ng serve",
+    "pretest": "npm run generate:env",
+    "test": "ng test --no-watch",
+    "version": "git-semver",
+    "postversion": "node tools/write-version.js && node tools/write-pwa-version.js && git push --follow-tags",
+    "prewatch": "node tools/write-version.js && node tools/write-pwa-version.js",
+    "watch": "ng build --watch --configuration development"
   },
   "prettier": {
     "printWidth": 100,
@@ -32,10 +33,6 @@
         }
       }
     ]
-  },
-  "private": true,
-  "engines": {
-    "node": ">=22.x"
   },
   "dependencies": {
     "@angular/cdk": "^20.2.9",
@@ -60,14 +57,12 @@
     "@angular/cli": "^20.3.6",
     "@angular/compiler-cli": "^20.3.6",
     "@moodboom/git-semver": "^5.0.4",
-    "@types/jasmine": "^5.1.12",
-    "@angular/compiler-cli": "^20.3.5",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.0",
     "@semantic-release/release-notes-generator": "^14.1.0",
-    "@types/jasmine": "^5.1.11",
+    "@types/jasmine": "^5.1.12",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "cors": "^2.8.5",
@@ -86,5 +81,8 @@
     "stylelint-config-standard": "^39.0.1",
     "stylelint-config-standard-scss": "^16.0.0",
     "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=22.x"
   }
 }
