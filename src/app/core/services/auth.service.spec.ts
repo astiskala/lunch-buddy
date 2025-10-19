@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
+import { skip } from 'rxjs/operators';
 import { BackgroundSyncService } from './background-sync.service';
 
 class MockBackgroundSyncService {
@@ -74,7 +75,7 @@ describe('AuthService', () => {
   });
 
   it('should emit the current API key to subscribers', (done) => {
-    service.apiKey$.subscribe((apiKey) => {
+    service.apiKey$.pipe(skip(1)).subscribe((apiKey) => {
       expect(apiKey).toBe(TEST_API_KEY);
       done();
     });
