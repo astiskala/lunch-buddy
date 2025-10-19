@@ -4,5 +4,5 @@
  */
 
 export const runtimeEnv: Record<string, string | undefined> = {
-
+  NG_APP_LUNCHMONEY_API_BASE: "http://localhost:4600/v1",
 };
