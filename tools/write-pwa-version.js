@@ -2,9 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const { version } = require('../package.json');
 
-const configPath = path.join(__dirname, '..', 'ngsw-config.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+const templatePath = path.join(__dirname, '..', 'ngsw-config.template.json');
+const config = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
 
 config.version = version;
 
-fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+const outputPath = path.join(__dirname, '..', 'ngsw-config.json');
+fs.writeFileSync(outputPath, JSON.stringify(config, null, 2));
