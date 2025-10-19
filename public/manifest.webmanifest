@@ -9,10 +9,10 @@
   "lang": "en",
   "dir": "ltr",
   "display_override": [
-    "fullscreen",
-    "minimal-ui"
+    "minimal-ui",
+    "standalone"
   ],
-  "display": "standalone",
+  "display": "fullscreen",
   "scope": "/",
   "start_url": "/",
   "theme_color": "#fbb700",
