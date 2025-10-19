@@ -41,3 +41,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Generated files
+/src/environments/version.ts
+/ngsw-config.json
