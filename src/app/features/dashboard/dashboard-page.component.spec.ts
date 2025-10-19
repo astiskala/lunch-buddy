@@ -15,7 +15,7 @@ describe('DashboardPageComponent - Unit Tests', () => {
     ]);
 
     mockAuthService = jasmine.createSpyObj('AuthService', ['clearApiKey']);
-    mockAuthService.clearApiKey.and.returnValue(Promise.resolve());
+    mockAuthService.clearApiKey.and.returnValue(undefined);
 
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockRouter.navigate.and.returnValue(Promise.resolve(true));
