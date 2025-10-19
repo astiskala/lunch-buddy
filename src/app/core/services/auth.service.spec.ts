@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
+import { skip } from 'rxjs/operators';
 import { BackgroundSyncService } from './background-sync.service';
 
 class MockBackgroundSyncService {
@@ -9,7 +10,6 @@ class MockBackgroundSyncService {
 
 describe('AuthService', () => {
   let service: AuthService;
-  let backgroundSync: MockBackgroundSyncService;
   const TEST_API_KEY = 'test-api-key-12345';
 
   beforeEach(() => {
@@ -22,7 +22,6 @@ describe('AuthService', () => {
       ],
     });
     service = TestBed.inject(AuthService);
-    backgroundSync = TestBed.inject(BackgroundSyncService) as unknown as MockBackgroundSyncService;
   });
 
   afterEach(() => {
@@ -43,14 +42,14 @@ describe('AuthService', () => {
     expect(service.hasApiKey()).toBeFalse();
   });
 
-  it('should store and retrieve API key', async () => {
-    await service.setApiKey(TEST_API_KEY);
+  it('should store and retrieve API key', () => {
+    service.setApiKey(TEST_API_KEY);
     expect(service.getApiKey()).toBe(TEST_API_KEY);
     expect(service.hasApiKey()).toBeTrue();
   });
 
-  it('should persist API key to localStorage', async () => {
-    await service.setApiKey(TEST_API_KEY);
+  it('should persist API key to localStorage', () => {
+    service.setApiKey(TEST_API_KEY);
     expect(localStorage.getItem('lunchbuddy_api_key')).toBe(TEST_API_KEY);
   });
 
@@ -68,18 +67,19 @@ describe('AuthService', () => {
     expect(newService.getApiKey()).toBe(TEST_API_KEY);
   });
 
-  it('should remove API key from localStorage when cleared', async () => {
-    await service.setApiKey(TEST_API_KEY);
-    await service.clearApiKey();
+  it('should remove API key from localStorage when cleared', () => {
+    service.setApiKey(TEST_API_KEY);
+    service.clearApiKey();
 
     expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
   });
 
-  it('should notify background sync when credentials change', async () => {
-    await service.setApiKey(TEST_API_KEY);
-    expect(backgroundSync.updateApiCredentials).toHaveBeenCalledWith(TEST_API_KEY);
+  it('should emit the current API key to subscribers', (done) => {
+    service.apiKey$.pipe(skip(1)).subscribe((apiKey) => {
+      expect(apiKey).toBe(TEST_API_KEY);
+      done();
+    });
 
-    await service.clearApiKey();
-    expect(backgroundSync.updateApiCredentials).toHaveBeenCalledWith(null);
+    service.setApiKey(TEST_API_KEY);
   });
 });

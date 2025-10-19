@@ -1,6 +1,6 @@
-import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { BackgroundSyncService } from './background-sync.service';
+import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
@@ -10,45 +10,45 @@ const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 })
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly backgroundSync = inject(BackgroundSyncService);
   private readonly logger = inject(LoggerService);
-  private readonly apiKey = signal<string | null>(null);
+  private readonly apiKey = new BehaviorSubject<string | null>(null);
   private readonly readyPromise: Promise<void>;
 
+  public readonly apiKey$ = this.apiKey.asObservable();
+
   constructor() {
-    this.readyPromise = this.initialize();
+    this.readyPromise = Promise.resolve();
+    this.initialize();
   }
 
   /**
    * Get the current API key
    */
   getApiKey(): string | null {
-    return this.apiKey();
+    return this.apiKey.getValue();
   }
 
   /**
    * Set and persist the API key
    */
-  async setApiKey(key: string): Promise<void> {
+  setApiKey(key: string): void {
     this.storeApiKey(key);
-    this.apiKey.set(key);
-    await this.backgroundSync.updateApiCredentials(key);
+    this.apiKey.next(key);
   }
 
   /**
    * Clear the API key (logout)
    */
-  async clearApiKey(): Promise<void> {
+  clearApiKey(): void {
     this.removeApiKey();
-    this.apiKey.set(null);
-    await this.backgroundSync.updateApiCredentials(null);
+    this.apiKey.next(null);
   }
 
   /**
    * Check if user has an API key
    */
   hasApiKey(): boolean {
-    return this.apiKey() !== null;
+    return this.apiKey.getValue() !== null;
   }
 
   /**
@@ -58,15 +58,13 @@ export class AuthService {
     await this.readyPromise;
   }
 
-  private async initialize(): Promise<void> {
+  private initialize(): void {
     try {
       const stored = this.readStoredApiKey();
-      this.apiKey.set(stored);
-      await this.backgroundSync.updateApiCredentials(stored);
+      this.apiKey.next(stored);
     } catch (error) {
       this.logger.error('AuthService: failed to load stored API key', error);
-      this.apiKey.set(null);
-      await this.backgroundSync.updateApiCredentials(null);
+      this.apiKey.next(null);
     }
   }
 

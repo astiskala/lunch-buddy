@@ -1,7 +1,9 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, OnDestroy } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoggerService } from './logger.service';
+import { AuthService } from './auth.service';
 
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -33,12 +35,14 @@ interface BackgroundConfigPayload {
 @Injectable({
   providedIn: 'root',
 })
-export class BackgroundSyncService {
+export class BackgroundSyncService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
+  private readonly authService = inject(AuthService);
   private readonly apiBaseUrl = environment.lunchmoneyApiBase ?? DEFAULT_API_BASE;
 
   private registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
+  private authSubscription: Subscription;
   private currentConfig: BackgroundConfigPayload = {
     apiKey: null,
     apiBaseUrl: this.apiBaseUrl,
@@ -50,7 +54,17 @@ export class BackgroundSyncService {
     },
   };
 
-  async updateApiCredentials(apiKey: string | null): Promise<void> {
+  constructor() {
+    this.authSubscription = this.authService.apiKey$.subscribe((apiKey) => {
+      this.updateApiCredentials(apiKey);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.authSubscription.unsubscribe();
+  }
+
+  private async updateApiCredentials(apiKey: string | null): Promise<void> {
     this.currentConfig = {
       ...this.currentConfig,
       apiKey,
