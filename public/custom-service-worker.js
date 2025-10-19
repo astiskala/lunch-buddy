@@ -35,13 +35,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  let url;
-  try {
-    url = new URL(request.url);
-  } catch (_error) {
-    return;
-  }
-
+  const url = new URL(request.url);
   if (!isApiRequest(url)) {
     return;
   }

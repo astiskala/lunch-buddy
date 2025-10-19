@@ -41,7 +41,7 @@ export class BackgroundSyncService implements OnDestroy {
   private readonly apiBaseUrl = environment.lunchmoneyApiBase;
 
   private registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
-  private authSubscription: Subscription;
+  private readonly authSubscription: Subscription;
   private currentConfig: BackgroundConfigPayload = {
     apiKey: null,
     apiBaseUrl: this.apiBaseUrl,

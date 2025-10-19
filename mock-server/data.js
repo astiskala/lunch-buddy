@@ -764,22 +764,22 @@ const buildTransactions = ({ categoryId, startDate, endDate }) => {
 
   const transactions = [];
 
-  months.forEach((monthStart) => {
+  for (const monthStart of months) {
     const snapshot = generateMonthSnapshot(category, monthStart, now);
-    snapshot.transactions.forEach((transaction) => {
+    for (const transaction of snapshot.transactions) {
       const transactionDate = toDate(transaction.date);
       if (!transactionDate) {
-        return;
+        continue;
       }
       if (transactionDate.getTime() < rangeStart.getTime()) {
-        return;
+        continue;
       }
       if (transactionDate.getTime() > rangeEnd.getTime()) {
-        return;
+        continue;
       }
       transactions.push(transaction);
-    });
-  });
+    }
+  }
 
   return transactions.sort((a, b) => {
     if (a.date === b.date) {

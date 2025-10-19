@@ -20,7 +20,7 @@ const LUNCH_MONEY_API_BASE = normalizeBaseUrl(
   providedIn: 'root',
 })
 export class LunchMoneyService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
   private readonly noCacheHeaders = new HttpHeaders({
     'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
     Pragma: 'no-cache',

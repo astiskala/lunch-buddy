@@ -12,12 +12,11 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
   private readonly apiKey = new BehaviorSubject<string | null>(null);
-  private readonly readyPromise: Promise<void>;
+  private initialized = false;
 
   public readonly apiKey$ = this.apiKey.asObservable();
 
   constructor() {
-    this.readyPromise = Promise.resolve();
     this.initialize();
   }
 
@@ -54,8 +53,11 @@ export class AuthService {
   /**
    * Wait for the storage to initialize (needed before reading the API key)
    */
-  async ready(): Promise<void> {
-    await this.readyPromise;
+  ready(): Promise<void> {
+    if (!this.initialized) {
+      this.initialized = true;
+    }
+    return Promise.resolve();
   }
 
   private initialize(): void {

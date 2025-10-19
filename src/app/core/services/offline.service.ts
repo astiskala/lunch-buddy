@@ -11,9 +11,9 @@ export class OfflineService {
   protected readonly isOffline = signal(!navigator.onLine);
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => { this.updateOnlineStatus(true); });
-      window.addEventListener('offline', () => { this.updateOnlineStatus(false); });
+    if (typeof globalThis.window !== 'undefined') {
+      globalThis.window.addEventListener('online', () => { this.updateOnlineStatus(true); });
+      globalThis.window.addEventListener('offline', () => { this.updateOnlineStatus(false); });
     }
   }
 
