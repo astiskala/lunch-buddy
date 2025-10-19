@@ -7,14 +7,22 @@ import { AuthService } from '../../core/services/auth.service';
 describe('LoginPageComponent', () => {
   let component: LoginPageComponent;
   let fixture: ComponentFixture<LoginPageComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
-  let router: jasmine.SpyObj<Router>;
+  type AuthServiceStub = {
+    setApiKey: (key: string) => void;
+  };
+
+  type RouterStub = {
+    navigate: (commands: unknown[]) => Promise<boolean>;
+  };
+
+  let authService: jasmine.SpyObj<AuthServiceStub>;
+  let router: jasmine.SpyObj<RouterStub>;
 
   beforeEach(async () => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['setApiKey']);
-    authServiceSpy.setApiKey.and.returnValue(Promise.resolve());
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    routerSpy.navigate.and.returnValue(Promise.resolve(true));
+    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>('AuthService', ['setApiKey']);
+    authServiceSpy.setApiKey.and.stub();
+    const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
+    routerSpy.navigate.and.resolveTo(true);
 
     await TestBed.configureTestingModule({
       imports: [LoginPageComponent],
@@ -25,8 +33,8 @@ describe('LoginPageComponent', () => {
       ],
     }).compileComponents();
 
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    authService = authServiceSpy;
+    router = routerSpy;
 
     fixture = TestBed.createComponent(LoginPageComponent);
     component = fixture.componentInstance;

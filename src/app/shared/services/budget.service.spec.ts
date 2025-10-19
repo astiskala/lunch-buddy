@@ -66,13 +66,24 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
 
 describe('BudgetService background sync', () => {
   let lunchMoney: MockLunchMoneyService;
-  let backgroundSync: jasmine.SpyObj<BackgroundSyncService>;
+  type BackgroundPreferencesPayload = {
+    hiddenCategoryIds: number[];
+    notificationsEnabled: boolean;
+    warnAtRatio: number;
+    currency: string | null;
+  };
+
+  type BackgroundSyncStub = {
+    updateBudgetPreferences: (payload: BackgroundPreferencesPayload) => Promise<void>;
+  };
+
+  let backgroundSync: jasmine.SpyObj<BackgroundSyncStub>;
   let service: BudgetService;
 
   beforeEach(() => {
     localStorage.clear();
     lunchMoney = new MockLunchMoneyService();
-    backgroundSync = jasmine.createSpyObj<BackgroundSyncService>('BackgroundSyncService', [
+    backgroundSync = jasmine.createSpyObj<BackgroundSyncStub>('BackgroundSyncService', [
       'updateBudgetPreferences',
     ]);
 

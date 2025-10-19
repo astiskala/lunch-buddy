@@ -47,22 +47,24 @@ export class CategoryCardComponent {
   protected readonly isOffline = this.offlineService.getOfflineStatus();
   private lastIncludeAllTransactions: boolean | null = null;
 
-  private readonly refreshTransactionsEffect = effect(() => {
-    if (!this.showDetails()) {
-      return;
-    }
+  constructor() {
+    effect(() => {
+      if (!this.showDetails()) {
+        return;
+      }
 
-    const includeAll = this.includeAllTransactions();
-    if (this.lastIncludeAllTransactions === includeAll) {
-      return;
-    }
+      const includeAll = this.includeAllTransactions();
+      if (this.lastIncludeAllTransactions === includeAll) {
+        return;
+      }
 
-    if (this.isLoadingTransactions()) {
-      return;
-    }
+      if (this.isLoadingTransactions()) {
+        return;
+      }
 
-    this.loadTransactions();
-  });
+      this.loadTransactions();
+    });
+  }
 
   readonly budgetLabel = computed(() =>
     formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
@@ -84,7 +86,7 @@ export class CategoryCardComponent {
     Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100))),
   );
 
-  readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount ?? 0) > 0);
+  readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount || 0) > 0);
 
   readonly monthProgressPercent = computed(() => Math.round(this.monthProgressRatio() * 100));
 
@@ -108,18 +110,18 @@ export class CategoryCardComponent {
       const date = new Date(transaction.date);
       const label =
         decodeHtmlEntities(
-          transaction.display_name ?? transaction.payee ?? 'Unnamed transaction',
-        ) ?? 'Unnamed transaction';
+          transaction.display_name || transaction.payee || 'Unnamed transaction',
+        );
       const notes = decodeHtmlEntities(transaction.notes);
 
       entries.push({
-        id: `txn-${transaction.id}`,
+        id: `txn-${transaction.id.toString()}`,
         kind: 'transaction',
         date: isNaN(date.getTime()) ? null : date,
         label,
         notes,
         amount,
-        currency: transaction.currency ?? item.budgetCurrency,
+        currency: transaction.currency || item.budgetCurrency,
       });
     }
 
@@ -141,17 +143,17 @@ export class CategoryCardComponent {
       }
 
       const amount = parseFloat(instance.expense.amount);
-      const label = decodeHtmlEntities(instance.expense.payee) ?? 'Recurring expense';
+      const label = decodeHtmlEntities(instance.expense.payee) || 'Recurring expense';
       const notes = decodeHtmlEntities(instance.expense.description);
 
       entries.push({
-        id: `recurring-${instance.expense.id}`,
+        id: `recurring-${instance.expense.id.toString()}`,
         kind: 'upcoming',
         date: instance.occurrenceDate,
         label,
         notes,
         amount,
-        currency: instance.expense.currency ?? item.budgetCurrency,
+        currency: instance.expense.currency || item.budgetCurrency,
       });
     }
 
@@ -247,7 +249,7 @@ export class CategoryCardComponent {
           this.isLoadingTransactions.set(false);
           this.transactionsLoadError.set(false);
         },
-        error: (error) => {
+        error: (error: unknown) => {
           this.logger.error('Failed to load transactions', error);
           this.isLoadingTransactions.set(false);
           this.transactionsLoadError.set(true);
@@ -278,7 +280,7 @@ export class CategoryCardComponent {
       'Nov',
       'Dec',
     ];
-    return `${months[entry.date.getMonth()]} ${entry.date.getDate()}`;
+    return `${months[entry.date.getMonth()]} ${entry.date.getDate().toString()}`;
   }
 
   getAmountColor(entry: ActivityEntry): string {

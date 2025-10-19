@@ -5,12 +5,24 @@ import { loginRedirectGuard } from './login-redirect.guard';
 import { AuthService } from '../services/auth.service';
 
 describe('loginRedirectGuard', () => {
-  let authService: jasmine.SpyObj<AuthService>;
-  let router: jasmine.SpyObj<Router>;
+  type AuthServiceStub = {
+    hasApiKey: () => boolean;
+    ready: () => Promise<void>;
+  };
+
+  type RouterStub = {
+    parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
+  };
+
+  let authService: jasmine.SpyObj<AuthServiceStub>;
+  let router: jasmine.SpyObj<RouterStub>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['ready', 'hasApiKey']);
-    const routerSpy = jasmine.createSpyObj('Router', ['parseUrl']);
+    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>('AuthService', [
+      'ready',
+      'hasApiKey',
+    ]);
+    const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -20,9 +32,9 @@ describe('loginRedirectGuard', () => {
       ],
     });
 
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
-    authService.ready.and.returnValue(Promise.resolve());
+    authService = authServiceSpy;
+    router = routerSpy;
+    authService.ready.and.resolveTo();
   });
 
   it('should redirect to dashboard when user already has an API key', async () => {

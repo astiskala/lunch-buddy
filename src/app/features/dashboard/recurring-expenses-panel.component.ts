@@ -175,7 +175,7 @@ export class RecurringExpensesPanelComponent {
   });
 
   getPayee(entry: RecurringInstance): string {
-    return decodeHtmlEntities(entry.expense.payee) ?? 'Unnamed recurring expense';
+    return decodeHtmlEntities(entry.expense.payee) || 'Unnamed recurring expense';
   }
 
   getDescription(entry: RecurringInstance): string | null {
@@ -184,7 +184,7 @@ export class RecurringExpensesPanelComponent {
 
   getFormattedAmount(entry: RecurringInstance): string {
     const value = Math.abs(parseFloat(entry.expense.amount));
-    return formatCurrency(value, entry.expense.currency ?? this.currency(), {
+    return formatCurrency(value, entry.expense.currency || this.currency(), {
       fallbackCurrency: this.defaultCurrency(),
     });
   }
@@ -205,6 +205,6 @@ export class RecurringExpensesPanelComponent {
       'Dec',
     ];
     const date = entry.occurrenceDate;
-    return `${months[date.getMonth()]} ${date.getDate()}`;
+    return `${months[date.getMonth()]} ${date.getDate().toString()}`;
   }
 }

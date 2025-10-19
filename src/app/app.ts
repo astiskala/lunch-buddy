@@ -1,21 +1,27 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-
-import { AppUpdateService } from './core/services/app-update.service';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { BackgroundSyncService } from './core/services/background-sync.service';
 import { OfflineIndicatorComponent } from './shared/components/offline-indicator.component';
-import { OfflineService } from './core/services/offline.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, OfflineIndicatorComponent],
   templateUrl: './app.html',
-  host: {
-    '[class.offline-mode]': 'isOffline()',
-  },
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    MatToolbarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    OfflineIndicatorComponent,
+  ],
 })
 export class App {
-  private readonly _appUpdateService = inject(AppUpdateService);
-  private readonly offlineService = inject(OfflineService);
-  
-  protected readonly isOffline = this.offlineService.getOfflineStatus();
+  protected readonly _backgroundSyncService = inject(BackgroundSyncService);
 }

@@ -37,7 +37,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly hiddenItems = input.required<BudgetProgress[]>();
   readonly preferences = input.required<CategoryPreferences>();
 
-  readonly dialogClose = output<void>();
+  readonly dialogClose = output();
   readonly preferencesChange = output<CategoryPreferences>();
 
   readonly orderedIds = signal<number[]>([]);
@@ -72,7 +72,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
     this.warnAtRatio.set(prefs.warnAtRatio);
     this.notificationsEnabled.set(prefs.notificationsEnabled);
-    this.includeAllTransactions.set(prefs.includeAllTransactions ?? true);
+    this.includeAllTransactions.set(prefs.includeAllTransactions);
   }
 
   private ensureOrderContains(current: number[]): number[] {
@@ -97,7 +97,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
 
       const copy = [...order];
       const [removed] = copy.splice(index, 1);
-      copy.splice(nextIndex, 0, removed!);
+      copy.splice(nextIndex, 0, removed);
       return copy;
     });
   }

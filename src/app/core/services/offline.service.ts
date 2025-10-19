@@ -12,8 +12,8 @@ export class OfflineService {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => this.updateOnlineStatus(true));
-      window.addEventListener('offline', () => this.updateOnlineStatus(false));
+      window.addEventListener('online', () => { this.updateOnlineStatus(true); });
+      window.addEventListener('offline', () => { this.updateOnlineStatus(false); });
     }
   }
 

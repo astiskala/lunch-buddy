@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
-import { skip } from 'rxjs/operators';
+import { skip } from 'rxjs';
 import { BackgroundSyncService } from './background-sync.service';
 
 class MockBackgroundSyncService {

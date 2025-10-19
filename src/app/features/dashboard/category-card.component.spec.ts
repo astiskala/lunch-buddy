@@ -89,9 +89,9 @@ describe('CategoryCardComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const label = compiled.querySelector('.metrics .metric .label')?.textContent?.trim();
+    const label = (compiled.querySelector('.metrics .metric .label')?.textContent || '').trim();
     expect(label).toBe('Received');
-    const value = compiled.querySelector('.metrics .metric .value')?.textContent ?? '';
+    const value = compiled.querySelector('.metrics .metric .value')?.textContent || '';
     expect(value).toContain('$650.00');
   });
 
@@ -154,8 +154,10 @@ describe('CategoryCardComponent', () => {
 
     expect(component['showDetails']()).toBeFalse();
 
-    const card = fixture.nativeElement.querySelector('.category-card') as HTMLElement;
-    card.click();
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const card = hostElement.querySelector<HTMLElement>('.category-card');
+    expect(card).not.toBeNull();
+    card?.click();
     fixture.detectChanges();
 
     expect(component['showDetails']()).toBeTrue();
@@ -171,14 +173,15 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
-    const card = fixture.nativeElement.querySelector('.category-card') as HTMLElement;
-    card.click();
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const card = hostElement.querySelector<HTMLElement>('.category-card');
+    expect(card).not.toBeNull();
+    card?.click();
     fixture.detectChanges();
 
-    const details = fixture.nativeElement.querySelector('.details') as HTMLElement | null;
+    const details = hostElement.querySelector<HTMLElement>('.details');
     expect(details).not.toBeNull();
-
-    details!.click();
+    details?.click();
     fixture.detectChanges();
 
     expect(component['showDetails']()).toBeFalse();

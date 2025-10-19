@@ -39,11 +39,11 @@ export class LoginPageComponent {
 
     try {
       // Store the API key (trimmed)
-      await this.authService.setApiKey(trimmedApiKey);
+      this.authService.setApiKey(trimmedApiKey);
 
       // Navigate to dashboard
       await this.router.navigate(['/']);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('LoginPageComponent: failed to persist API key', error);
       this.errorMessage.set('We could not save your API key. Please try again.');
     } finally {

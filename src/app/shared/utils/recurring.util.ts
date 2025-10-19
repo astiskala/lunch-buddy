@@ -254,7 +254,7 @@ export const isRecurringInstancePending = (
   instance: RecurringInstance,
   options?: RecurringPendingOptions,
 ): boolean => {
-  const type = instance.expense.type?.toLowerCase().trim() ?? '';
+  const type = instance.expense.type.toLowerCase().trim();
   if (type === 'cleared') {
     const reference = startOfDay(options?.referenceDate ?? new Date());
     return instance.occurrenceDate.getTime() > reference.getTime();

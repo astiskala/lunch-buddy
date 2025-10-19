@@ -21,8 +21,8 @@ export class SummaryHeroComponent {
   readonly totalIncomeUpcoming = input<number>(0);
   readonly currency = input<string | null>(null);
 
-  readonly customize = output<void>();
-  readonly logout = output<void>();
+  readonly customize = output();
+  readonly logout = output();
 
   readonly monthProgressPercent = computed(() => Math.round(this.monthProgressRatio() * 100));
 
