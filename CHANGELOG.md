@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/astiskala/lunch-buddy/compare/v1.0.0...v1.1.0) (2025-10-19)
+
+
+### Features
+
+* enhance budget tracking for income categories and update CI paths ([25a130a](https://github.com/astiskala/lunch-buddy/commit/25a130a2b4c8936adbfe3cc02dc73747280b88a7))
+
 # 1.0.0 (2025-10-19)
 
 
