@@ -164,9 +164,9 @@ export class BudgetService {
     try {
       const stored = localStorage.getItem(PREFERENCES_KEY);
       if (stored) {
-        return { ...defaultCategoryPreferences, ...JSON.parse(stored) };
+        return { ...defaultCategoryPreferences, ...JSON.parse(stored) as Partial<CategoryPreferences> };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to load preferences', error);
     }
     return defaultCategoryPreferences;
@@ -175,7 +175,7 @@ export class BudgetService {
   private savePreferences(prefs: CategoryPreferences): void {
     try {
       localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to save preferences', error);
     }
   }
@@ -275,7 +275,7 @@ export class BudgetService {
         warnAtRatio: prefs.warnAtRatio,
         currency,
       })
-      .catch((error) => this.logger.error('Failed to sync background preferences', error));
+      .catch((error: unknown) => { this.logger.error('Failed to sync background preferences', error); });
   }
 
   private recomputeBudgetStatuses(): void {
@@ -332,7 +332,7 @@ export class BudgetService {
 
       const parsed = new Date(rawValue);
       return Number.isNaN(parsed.getTime()) ? null : parsed;
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to read last refresh timestamp', error);
       return null;
     }
@@ -344,7 +344,7 @@ export class BudgetService {
     }
     try {
       localStorage.setItem(LAST_REFRESH_KEY, timestamp.toISOString());
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Failed to store last refresh timestamp', error);
     }
   }

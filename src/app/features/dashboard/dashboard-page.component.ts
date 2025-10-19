@@ -259,7 +259,7 @@ export class DashboardPageComponent {
     }
   }
 
-  handleTabChange(tab: TabType | string): void {
+  handleTabChange(tab: TabType): void {
     if (tab !== 'expenses' && tab !== 'income') {
       return;
     }

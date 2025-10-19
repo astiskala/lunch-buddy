@@ -47,22 +47,24 @@ export class CategoryCardComponent {
   protected readonly isOffline = this.offlineService.getOfflineStatus();
   private lastIncludeAllTransactions: boolean | null = null;
 
-  private readonly refreshTransactionsEffect = effect(() => {
-    if (!this.showDetails()) {
-      return;
-    }
+  constructor() {
+    effect(() => {
+      if (!this.showDetails()) {
+        return;
+      }
 
-    const includeAll = this.includeAllTransactions();
-    if (this.lastIncludeAllTransactions === includeAll) {
-      return;
-    }
+      const includeAll = this.includeAllTransactions();
+      if (this.lastIncludeAllTransactions === includeAll) {
+        return;
+      }
 
-    if (this.isLoadingTransactions()) {
-      return;
-    }
+      if (this.isLoadingTransactions()) {
+        return;
+      }
 
-    this.loadTransactions();
-  });
+      this.loadTransactions();
+    });
+  }
 
   readonly budgetLabel = computed(() =>
     formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
@@ -247,7 +249,7 @@ export class CategoryCardComponent {
           this.isLoadingTransactions.set(false);
           this.transactionsLoadError.set(false);
         },
-        error: (error) => {
+        error: (error: unknown) => {
           this.logger.error('Failed to load transactions', error);
           this.isLoadingTransactions.set(false);
           this.transactionsLoadError.set(true);

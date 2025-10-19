@@ -43,7 +43,7 @@ export class LoginPageComponent {
 
       // Navigate to dashboard
       await this.router.navigate(['/']);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('LoginPageComponent: failed to persist API key', error);
       this.errorMessage.set('We could not save your API key. Please try again.');
     } finally {
