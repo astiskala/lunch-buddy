@@ -56,6 +56,32 @@ interface Duration {
   days?: number;
 }
 
+const getMonthDuration = (normalized: string, magnitude: number, hasNumber: boolean): Duration | null => {
+  if (!hasNumber) {
+    if (normalized.includes('other') || normalized.includes('bi')) {
+      return { months: 2 };
+    }
+    if (normalized.includes('semi') || normalized.includes('twice')) {
+      return { days: 15 };
+    }
+  }
+  return { months: magnitude };
+};
+
+const getWeekDuration = (normalized: string, magnitude: number, hasNumber: boolean): Duration => {
+  if (!hasNumber && normalized.includes('bi')) {
+    return { weeks: 2 };
+  }
+  return { weeks: magnitude };
+};
+
+const getDayDuration = (normalized: string, magnitude: number, hasNumber: boolean): Duration => {
+  if (!hasNumber && normalized.includes('bi')) {
+    return { days: 2 };
+  }
+  return { days: magnitude };
+};
+
 const getCadenceDuration = (cadence: string | null | undefined): Duration | null => {
   if (!cadence) {
     return null;
@@ -68,6 +94,7 @@ const getCadenceDuration = (cadence: string | null | undefined): Duration | null
 
   const numberMatch = normalized.match(/(\d+)/);
   const magnitude = numberMatch ? parseInt(numberMatch[1], 10) || 1 : 1;
+  const hasNumber = !!numberMatch;
 
   if (normalized.includes('quarter')) {
     return { months: magnitude * 3 };
@@ -78,32 +105,15 @@ const getCadenceDuration = (cadence: string | null | undefined): Duration | null
   }
 
   if (normalized.includes('month')) {
-    if (!numberMatch) {
-      if (normalized.includes('other')) {
-        return { months: 2 };
-      }
-      if (normalized.includes('bi')) {
-        return { months: 2 };
-      }
-      if (normalized.includes('semi') || normalized.includes('twice')) {
-        return { days: 15 };
-      }
-    }
-    return { months: magnitude };
+    return getMonthDuration(normalized, magnitude, hasNumber);
   }
 
   if (normalized.includes('week')) {
-    if (!numberMatch && normalized.includes('bi')) {
-      return { weeks: 2 };
-    }
-    return { weeks: magnitude };
+    return getWeekDuration(normalized, magnitude, hasNumber);
   }
 
   if (normalized.includes('day')) {
-    if (!numberMatch && normalized.includes('bi')) {
-      return { days: 2 };
-    }
-    return { days: magnitude };
+    return getDayDuration(normalized, magnitude, hasNumber);
   }
 
   return null;

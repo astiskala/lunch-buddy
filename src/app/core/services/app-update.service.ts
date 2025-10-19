@@ -17,7 +17,7 @@ export class AppUpdateService {
     }
 
     this.subscribeToUpdates();
-    void this.swUpdate
+    this.swUpdate
       .checkForUpdate()
       .catch((error: unknown) => { this.logger.warn('AppUpdateService: checkForUpdate failed', error); });
   }
