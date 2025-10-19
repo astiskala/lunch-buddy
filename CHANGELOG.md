@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/astiskala/lunch-buddy/compare/v1.1.0...v1.2.0) (2025-10-19)
+
+
+### Bug Fixes
+
+* swap @semantic-release/exec and @semantic-release/npm configurations in .releaserc.json ([f524388](https://github.com/astiskala/lunch-buddy/commit/f524388181665c743c423eceee1b317abf3178dc))
+
+
+### Features
+
+* enhance budget status calculations and add recurring income handling ([655a09c](https://github.com/astiskala/lunch-buddy/commit/655a09c2e9f555a707053161bb85c1f4e5b2a1d1))
+
 # [1.1.0](https://github.com/astiskala/lunch-buddy/compare/v1.0.0...v1.1.0) (2025-10-19)
 
 
