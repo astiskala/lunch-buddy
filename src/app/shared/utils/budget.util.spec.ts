@@ -61,10 +61,12 @@ describe('buildBudgetProgress status evaluation', () => {
     spent,
     budget,
     isIncome = false,
+    recurring = [],
   }: {
     spent: number;
     budget: number;
     isIncome?: boolean;
+    recurring?: number[];
   }): BudgetSummaryItem => ({
     category_name: 'Test',
     category_id: 1,
@@ -87,7 +89,14 @@ describe('buildBudgetProgress status evaluation', () => {
       },
     },
     config: null,
-    recurring: { data: [] },
+    recurring: {
+      data: recurring.map((amount, index) => ({
+        payee: `Recurring ${index + 1}`,
+        amount,
+        currency: 'USD',
+        to_base: amount,
+      })),
+    },
   });
 
   it('treats equal spending and budget as on track', () => {
@@ -134,5 +143,20 @@ describe('buildBudgetProgress status evaluation', () => {
     expect(result.status).toBe('at-risk');
     expect(result.progressRatio).toBeCloseTo(0.45, 5);
     expect(result.remaining).toBeCloseTo(550, 5);
+  });
+
+  it('keeps income on track when upcoming payments close the shortfall', () => {
+    const summary = createSummary({ spent: -200, budget: 1000, isIncome: true, recurring: [800] });
+    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.9);
+
+    expect(result.status).toBe('on-track');
+    expect(result.remaining).toBeCloseTo(800, 5);
+  });
+
+  it('marks income at risk when projected total stays below the threshold', () => {
+    const summary = createSummary({ spent: -600, budget: 1000, isIncome: true, recurring: [120] });
+    const result = buildBudgetProgress(summary, monthKey, 0.6, 0.9);
+
+    expect(result.status).toBe('at-risk');
   });
 });

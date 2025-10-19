@@ -6,14 +6,14 @@ import {
   RecurringExpense,
   RecurringInstance,
 } from '../../core/models/lunchmoney.types';
-import { buildBudgetProgress, rankBudgetProgress } from '../utils/budget.util';
+import { buildBudgetProgress, calculateBudgetStatus, rankBudgetProgress } from '../utils/budget.util';
 import {
   deriveReferenceDate,
   getCurrentMonthRange,
   getMonthProgress,
   toIsoDate,
 } from '../utils/date.util';
-import { getRecurringDate } from '../utils/recurring.util';
+import { getRecurringDate, isRecurringInstancePending } from '../utils/recurring.util';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
 
@@ -195,6 +195,7 @@ export class BudgetService {
       next: (summaries: BudgetSummaryItem[]) => {
         const progress = this.buildBudgetProgressFromSummaries(summaries);
         this.budgetData.set(progress);
+        this.recomputeBudgetStatuses();
         this.isLoading.set(false);
         this.syncBackgroundPreferences();
 
@@ -218,6 +219,7 @@ export class BudgetService {
     this.lunchMoneyService.getRecurringExpenses(this.startDate()).subscribe({
       next: (expenses: RecurringExpense[]) => {
         this.recurringExpenses.set(expenses);
+        this.recomputeBudgetStatuses();
         this.isRecurringLoading.set(false);
       },
       error: (error: Error) => {
@@ -274,6 +276,48 @@ export class BudgetService {
         currency,
       })
       .catch((error) => this.logger.error('Failed to sync background preferences', error));
+  }
+
+  private recomputeBudgetStatuses(): void {
+    const items = this.budgetData();
+    if (items.length === 0) {
+      return;
+    }
+
+    const { assigned } = this.recurringByCategory();
+    const referenceDate = this.referenceDate();
+    const monthProgress = this.monthProgressRatio();
+    const warnAtRatio = this.preferences().warnAtRatio;
+
+    const updated = items.map((item) => {
+      const instances = assigned.get(item.categoryId) ?? [];
+      const upcomingTotal = instances
+        .filter((instance) => isRecurringInstancePending(instance, { referenceDate }))
+        .reduce((total, instance) => {
+          const amount = Number.parseFloat(instance.expense.amount);
+          if (Number.isNaN(amount)) {
+            return total;
+          }
+          return total + Math.abs(amount);
+        }, 0);
+
+      const recurringTotal = upcomingTotal > 0 ? upcomingTotal : item.recurringTotal;
+
+      return {
+        ...item,
+        recurringTotal,
+        status: calculateBudgetStatus(
+          item.spent,
+          item.budgetAmount,
+          monthProgress,
+          warnAtRatio,
+          item.isIncome,
+          recurringTotal,
+        ),
+      };
+    });
+
+    this.budgetData.set(updated);
   }
 
   private loadLastRefresh(): Date | null {

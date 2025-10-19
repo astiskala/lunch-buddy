@@ -1,20 +1,21 @@
 import {
   BudgetMonthData,
-  BudgetSummaryItem,
   BudgetProgress,
   BudgetRecurringItem,
+  BudgetSummaryItem,
 } from '../../core/models/lunchmoney.types';
 import { decodeHtmlEntities } from './text.util';
 
 const pickMonthData = (summary: BudgetSummaryItem, monthKey: string): BudgetMonthData | null =>
   summary.data[monthKey] ?? null;
 
-const calculateStatus = (
+export const calculateBudgetStatus = (
   spent: number,
   budget: number,
   monthProgress: number,
   warnAtRatio: number,
   isIncome: boolean,
+  recurringTotal: number,
 ): BudgetProgress['status'] => {
   if (budget <= 0) {
     return 'on-track';
@@ -23,11 +24,27 @@ const calculateStatus = (
   const epsilon = 0.005;
 
   if (isIncome) {
+    const normalizedProgress = Math.min(Math.max(monthProgress, 0), 1);
+    const normalizedWarnAt = Math.min(Math.max(warnAtRatio, 0), 1);
+    const tolerance = epsilon + (1 - normalizedProgress) * 0.05;
+
     const received = Math.max(0, Math.abs(spent));
-    if (received >= budget * (1 - epsilon)) {
+    const upcoming = Math.max(0, recurringTotal);
+    const projected = received + upcoming;
+    const projectedRatio = budget > 0 ? projected / budget : 1;
+
+    if (projectedRatio >= 1 - tolerance) {
       return 'on-track';
     }
-    return 'at-risk';
+
+    const projectedShortfallRatio = Math.max(0, 1 - projectedRatio);
+    const warnShortfallRatio = Math.max(0, 1 - normalizedWarnAt);
+
+    if (projectedShortfallRatio > warnShortfallRatio + tolerance) {
+      return 'at-risk';
+    }
+
+    return 'on-track';
   }
 
   const spendingRatio = spent / budget;
@@ -62,15 +79,15 @@ export const buildBudgetProgress = (
   const monthData = pickMonthData(summary, monthKey);
   const budgetAmount = parseBudgetAmount(monthData);
   const spent = parseSpentAmount(monthData);
-  const actualValue = summary.is_income ? Math.abs(spent) : spent;
-  const remaining = budgetAmount - actualValue;
-  const numTransactions = monthData?.num_transactions ?? 0;
-  const isAutomated = Boolean(monthData?.is_automated);
   const recurringItems: BudgetRecurringItem[] = summary.recurring?.data ?? [];
   const recurringTotal = recurringItems.reduce((total, item) => {
     const amount = item.to_base ?? item.amount ?? 0;
     return total + amount;
   }, 0);
+  const actualValue = summary.is_income ? Math.abs(spent) : spent;
+  const remaining = budgetAmount - actualValue;
+  const numTransactions = monthData?.num_transactions ?? 0;
+  const isAutomated = Boolean(monthData?.is_automated);
   const progressRatio =
     budgetAmount > 0 ? Math.min(1, Math.max(0, actualValue / budgetAmount)) : 0;
   const budgetCurrency = monthData?.budget_currency ?? summary.config?.currency ?? null;
@@ -92,7 +109,14 @@ export const buildBudgetProgress = (
     isAutomated,
     recurringTotal,
     recurringItems,
-    status: calculateStatus(spent, budgetAmount, monthProgress, warnAtRatio, summary.is_income),
+  status: calculateBudgetStatus(
+      spent,
+      budgetAmount,
+      monthProgress,
+      warnAtRatio,
+      summary.is_income,
+      recurringTotal,
+    ),
     progressRatio,
   };
 };
