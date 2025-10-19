@@ -28,7 +28,7 @@ export class LoginPageComponent {
     }
 
     // Basic validation - API keys are typically alphanumeric
-    if (this.apiKey().length < 20) {
+    if (this.apiKey().length < 20 || !/^[a-zA-Z0-9]+$/.test(this.apiKey())) {
       this.errorMessage.set('API key appears to be invalid');
       return;
     }
