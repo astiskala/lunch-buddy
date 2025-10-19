@@ -1,6 +1,7 @@
 {
   "framework": "angular",
   "buildCommand": "npm run build",
+  "ignoreCommand": "if [ \"$VERCEL_ENV\" != \"production\" ]; then exit 1; fi; if git log -1 --pretty=%B | grep -q '^chore(release):'; then exit 1; fi; echo 'Skipping production deploy: non-release commit'; exit 0",
   "outputDirectory": "dist/lunch-buddy/browser",
   "rewrites": [
     {
