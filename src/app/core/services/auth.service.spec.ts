@@ -9,7 +9,6 @@ class MockBackgroundSyncService {
 
 describe('AuthService', () => {
   let service: AuthService;
-  let backgroundSync: MockBackgroundSyncService;
   const TEST_API_KEY = 'test-api-key-12345';
 
   beforeEach(() => {
@@ -22,7 +21,6 @@ describe('AuthService', () => {
       ],
     });
     service = TestBed.inject(AuthService);
-    backgroundSync = TestBed.inject(BackgroundSyncService) as unknown as MockBackgroundSyncService;
   });
 
   afterEach(() => {
