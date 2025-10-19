@@ -5,15 +5,15 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     [
-      "@semantic-release/exec",
-      {
-        "prepareCmd": "node tools/write-version.js && node tools/write-pwa-version.js"
-      }
-    ],
-    [
       "@semantic-release/npm",
       {
         "npmPublish": false
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node tools/write-version.js && node tools/write-pwa-version.js"
       }
     ],
     [
