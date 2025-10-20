@@ -41,7 +41,7 @@ export const deriveReferenceDate = (
       return start;
     }
 
-    const dayAfterEnd = new Date(end.getTime());
+    const dayAfterEnd = new Date(end);
     dayAfterEnd.setDate(dayAfterEnd.getDate() + 1);
 
     if (today.getTime() > end.getTime()) {

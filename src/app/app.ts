@@ -10,11 +10,10 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { SwUpdate } from '@angular/service-worker';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, map } from 'rxjs';
 import { BackgroundSyncService } from './core/services/background-sync.service';
 import { OfflineIndicatorComponent } from './shared/components/offline-indicator.component';
-import { VersionReadyEvent } from '@angular/service-worker';
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
@@ -44,8 +43,10 @@ export class App implements OnInit {
         })),
       )
       .subscribe(() => {
-        void this._swUpdate.activateUpdate().then(() => {
-          window.location.reload();
+        this._swUpdate.activateUpdate().then(() => {
+          globalThis.location.reload();
+        }).catch((error: unknown) => {
+          console.error('Failed to activate update:', error);
         });
       });
   }

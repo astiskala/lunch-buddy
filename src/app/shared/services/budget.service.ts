@@ -40,12 +40,12 @@ const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
   providedIn: 'root',
 })
 export class BudgetService {
-  private lunchMoneyService = inject(LunchMoneyService);
-  private backgroundSyncService = inject(BackgroundSyncService);
-  private logger = inject(LoggerService);
+  readonly lunchMoneyService = inject(LunchMoneyService);
+  readonly backgroundSyncService = inject(BackgroundSyncService);
+  readonly logger = inject(LoggerService);
 
   // Month information
-  private monthRange = getCurrentMonthRange();
+  readonly monthRange = getCurrentMonthRange();
   protected readonly monthKey = toIsoDate(this.monthRange.start);
   protected readonly startDate = signal(this.monthKey);
   protected readonly endDate = signal(toIsoDate(this.monthRange.end));

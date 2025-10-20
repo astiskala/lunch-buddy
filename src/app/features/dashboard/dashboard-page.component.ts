@@ -41,10 +41,10 @@ type TabType = 'expenses' | 'income';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPageComponent {
-  private budgetService = inject(BudgetService);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private readonly locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
+  readonly budgetService = inject(BudgetService);
+  readonly authService = inject(AuthService);
+  readonly router = inject(Router);
+  private locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
 
   // Local state
   protected readonly activeTab = signal<TabType>('expenses');

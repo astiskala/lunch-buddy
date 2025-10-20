@@ -78,10 +78,8 @@ export class CategoryPreferencesDialogComponent implements OnInit {
         if (!dialog.open) {
           dialog.showModal();
         }
-      } else {
-        if (dialog.open) {
-          dialog.close();
-        }
+      } else if (dialog.open) {
+        dialog.close();
       }
     });
   }

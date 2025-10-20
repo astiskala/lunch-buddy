@@ -39,7 +39,7 @@ const lastDayOfMonth = (date: Date): Date => {
 };
 
 const alignToWindowMonth = (base: Date, windowStart: Date): Date => {
-  const target = new Date(windowStart.getTime());
+  const target = new Date(windowStart);
   const desiredDay = base.getDate();
   const lastDay = lastDayOfMonth(windowStart).getDate();
 
@@ -92,7 +92,7 @@ const getCadenceDuration = (cadence: string | null | undefined): Duration | null
     return null;
   }
 
-  const numberMatch = normalized.match(/(\d+)/);
+  const numberMatch = /(\d+)/.exec(normalized);
   const magnitude = numberMatch ? Number.parseInt(numberMatch[1], 10) || 1 : 1;
   const hasNumber = !!numberMatch;
 
@@ -145,7 +145,7 @@ const clampToWindow = (candidate: Date, windowStart: Date, windowEnd: Date): boo
   isWithinInterval(candidate, { start: windowStart, end: windowEnd });
 
 const startOfDay = (date: Date): Date => {
-  const result = new Date(date.getTime());
+  const result = new Date(date);
   result.setHours(0, 0, 0, 0);
   return result;
 };
