@@ -2,8 +2,8 @@
 @use '@angular/material' as mat;
 @use 'styles/dashboard-components';
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons&display=swap');
+@import 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap';
+@import 'https://fonts.googleapis.com/icon?family=Material+Icons&display=swap';
 
 // Define custom color palettes
 $lunch-buddy-primary: (
