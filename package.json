@@ -9,6 +9,7 @@
     "lint:ci": "ng lint",
     "lint:styles": "stylelint \"**/*.scss\" --fix",
     "lint:styles:ci": "stylelint \"**/*.scss\" --max-warnings=0",
+    "prettier:check": "prettier \"**/*.{ts,js,scss,html,json,md}\" --check",
     "mock:server": "node mock-server/server.js",
     "ng": "ng",
     "release": "semantic-release",
@@ -17,19 +18,34 @@
     "pretest": "npm run generate:env",
     "test": "ng test --no-watch",
     "prewatch": "node tools/write-version.js && node tools/write-pwa-version.js",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "prepare": "husky"
   },
   "prettier": {
-    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
     "singleQuote": true,
+    "semi": true,
+    "bracketSpacing": true,
+    "arrowParens": "avoid",
+    "trailingComma": "es5",
+    "bracketSameLine": true,
+    "printWidth": 80,
+    "endOfLine": "lf",
     "overrides": [
       {
-        "files": "*.html",
+        "files": [
+          "*.component.html",
+          "*.directive.html"
+        ],
         "options": {
           "parser": "angular"
         }
       }
     ]
+  },
+  "lint-staged": {
+    "*.{ts,js,scss,html,json,md}": "prettier --write"
   },
   "dependencies": {
     "@angular/cdk": "^20.2.9",
@@ -67,20 +83,27 @@
     "angular-eslint": "^20.4.0",
     "cors": "^2.8.5",
     "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-rxjs-x": "^0.7.7",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "express": "^5.1.0",
+    "husky": "^9.1.7",
     "jasmine-core": "~5.12.0",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.1",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "lint-staged": "^16.2.4",
     "prettier": "^3.6.2",
+    "prettier-eslint": "^16.4.2",
     "semantic-release": "^25.0.0",
     "stylelint": "^16.25.0",
     "stylelint-config-prettier-scss": "^1.0.0",
     "stylelint-config-standard": "^39.0.1",
     "stylelint-config-standard-scss": "^16.0.0",
+    "stylelint-scss": "^6.12.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.1"
   },

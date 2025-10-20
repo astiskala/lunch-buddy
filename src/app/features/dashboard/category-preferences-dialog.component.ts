@@ -24,7 +24,13 @@ import { VersionService } from '../../core/services/version.service';
 
 @Component({
   selector: 'category-preferences-dialog',
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   templateUrl: './category-preferences-dialog.component.html',
   styleUrls: ['./category-preferences-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,7 +40,8 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   private readonly logger = inject(LoggerService);
   private readonly versionService = inject(VersionService);
 
-  readonly dialogElement = viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
+  readonly dialogElement =
+    viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
   readonly version = this.versionService.getVersion();
   readonly open = input.required<boolean>();
   readonly items = input.required<BudgetProgress[]>();
@@ -50,7 +57,10 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly notificationsEnabled = signal(false);
   readonly includeAllTransactions = signal(true);
 
-  readonly allCategories = computed(() => [...this.items(), ...this.hiddenItems()]);
+  readonly allCategories = computed(() => [
+    ...this.items(),
+    ...this.hiddenItems(),
+  ]);
 
   readonly visibleCategories = computed(() => {
     const order = this.ensureOrderContains(this.orderedIds());
@@ -58,13 +68,15 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     const all = this.allCategories();
 
     return order
-      .map((id) => all.find((cat) => cat.categoryId === id))
-      .filter((cat): cat is BudgetProgress => !!cat && !hidden.has(cat.categoryId));
+      .map(id => all.find(cat => cat.categoryId === id))
+      .filter(
+        (cat): cat is BudgetProgress => !!cat && !hidden.has(cat.categoryId)
+      );
   });
 
   readonly hiddenCategories = computed(() => {
     const hidden = this.hiddenIds();
-    return this.allCategories().filter((cat) => hidden.has(cat.categoryId));
+    return this.allCategories().filter(cat => hidden.has(cat.categoryId));
   });
 
   readonly warnAtPercent = computed(() => Math.round(this.warnAtRatio() * 100));
@@ -106,7 +118,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   }
 
   moveCategory(categoryId: number | null, direction: -1 | 1): void {
-    this.orderedIds.update((previous) => {
+    this.orderedIds.update(previous => {
       const order = this.ensureOrderContains(previous);
       const index = order.indexOf(categoryId);
       if (index === -1) return order;
@@ -122,7 +134,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   }
 
   toggleVisibility(categoryId: number | null): void {
-    this.hiddenIds.update((previous) => {
+    this.hiddenIds.update(previous => {
       const next = new Set(previous);
       if (next.has(categoryId)) {
         next.delete(categoryId);

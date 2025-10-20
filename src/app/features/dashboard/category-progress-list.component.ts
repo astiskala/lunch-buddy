@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CategoryCardComponent } from './category-card.component';
-import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.types';
+import {
+  BudgetProgress,
+  RecurringInstance,
+} from '../../core/models/lunchmoney.types';
 
 @Component({
   selector: 'category-progress-list',
@@ -15,13 +18,14 @@ import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.
           <category-card
             [item]="item"
             [defaultCurrency]="defaultCurrency()"
-            [recurringExpenses]="recurringByCategory()?.get(item.categoryId) ?? []"
+            [recurringExpenses]="
+              recurringByCategory()?.get(item.categoryId) ?? []
+            "
             [startDate]="startDate()"
             [endDate]="endDate()"
             [monthProgressRatio]="monthProgressRatio()"
             [referenceDate]="referenceDate()"
-            [includeAllTransactions]="includeAllTransactions()"
-          ></category-card>
+            [includeAllTransactions]="includeAllTransactions()"></category-card>
         }
       </div>
     }
@@ -47,9 +51,10 @@ import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.
 export class CategoryProgressListComponent {
   readonly items = input.required<BudgetProgress[]>();
   readonly defaultCurrency = input.required<string>();
-  readonly recurringByCategory = input<Map<number | null, RecurringInstance[]>>();
+  readonly recurringByCategory =
+    input<Map<number | null, RecurringInstance[]>>();
   readonly emptyMessage = input<string>(
-    'No categories available. Adjust your filters or configure your budgets in Lunch Money.',
+    'No categories available. Adjust your filters or configure your budgets in Lunch Money.'
   );
   readonly startDate = input.required<string>();
   readonly endDate = input.required<string>();

@@ -1,6 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import {
+  Router,
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+} from '@angular/router';
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
 
@@ -18,10 +22,10 @@ describe('authGuard', () => {
   let router: jasmine.SpyObj<RouterStub>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>('AuthService', [
-      'hasApiKey',
-      'ready',
-    ]);
+    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
+      'AuthService',
+      ['hasApiKey', 'ready']
+    );
     const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
@@ -41,8 +45,12 @@ describe('authGuard', () => {
   it('should allow activation when user has API key', async () => {
     authService.hasApiKey.and.returnValue(true);
 
-    const result = await TestBed.runInInjectionContext(() =>
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot) as Promise<boolean>,
+    const result = await TestBed.runInInjectionContext(
+      () =>
+        authGuard(
+          {} as ActivatedRouteSnapshot,
+          {} as RouterStateSnapshot
+        ) as Promise<boolean>
     );
 
     expect(result).toBe(true);
@@ -55,7 +63,7 @@ describe('authGuard', () => {
     router.parseUrl.and.returnValue(loginUrl);
 
     const result = await TestBed.runInInjectionContext(() =>
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
     );
 
     expect(result).toBe(loginUrl);

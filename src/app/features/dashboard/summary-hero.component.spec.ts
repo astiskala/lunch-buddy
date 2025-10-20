@@ -4,16 +4,16 @@ import { SummaryHeroComponent } from './summary-hero.component';
 
 describe('SummaryHeroComponent', () => {
   it('should invert sign for income remaining in header', () => {
-  fixture.componentRef.setInput('monthStart', '2025-10-01');
-  fixture.componentRef.setInput('monthProgressRatio', 0.5);
-  fixture.componentRef.setInput('totalExpenseSpent', 0);
-  fixture.componentRef.setInput('totalExpenseBudget', 0);
-  fixture.componentRef.setInput('totalIncomeBudget', 2000);
-  fixture.componentRef.setInput('totalIncomeSpent', 1200);
-  fixture.componentRef.setInput('totalIncomeUpcoming', 300);
-  fixture.detectChanges();
-  // Should invert sign
-  expect(component.incomeRemaining()).toBe(-500);
+    fixture.componentRef.setInput('monthStart', '2025-10-01');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalExpenseSpent', 0);
+    fixture.componentRef.setInput('totalExpenseBudget', 0);
+    fixture.componentRef.setInput('totalIncomeBudget', 2000);
+    fixture.componentRef.setInput('totalIncomeSpent', 1200);
+    fixture.componentRef.setInput('totalIncomeUpcoming', 300);
+    fixture.detectChanges();
+    // Should invert sign
+    expect(component.incomeRemaining()).toBe(-500);
   });
   let component: SummaryHeroComponent;
   let fixture: ComponentFixture<SummaryHeroComponent>;
@@ -84,7 +84,7 @@ describe('SummaryHeroComponent', () => {
     fixture.componentRef.setInput('totalIncomeUpcoming', 300);
     fixture.detectChanges();
 
-  expect(component.incomeRemaining()).toBe(-500);
+    expect(component.incomeRemaining()).toBe(-500);
   });
 
   it('should calculate month progress percent', () => {
@@ -108,7 +108,8 @@ describe('SummaryHeroComponent', () => {
     fixture.detectChanges();
 
     const hostElement = fixture.nativeElement as HTMLElement;
-    const button = hostElement.querySelector<HTMLButtonElement>('.customize-btn');
+    const button =
+      hostElement.querySelector<HTMLButtonElement>('.customize-btn');
     expect(button).not.toBeNull();
     button?.click();
 

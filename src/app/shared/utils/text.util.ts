@@ -4,8 +4,12 @@
  */
 export function decodeHtmlEntities(value: string): string;
 export function decodeHtmlEntities(value: null | undefined): null;
-export function decodeHtmlEntities(value: string | null | undefined): string | null;
-export function decodeHtmlEntities(value: string | null | undefined): string | null {
+export function decodeHtmlEntities(
+  value: string | null | undefined
+): string | null;
+export function decodeHtmlEntities(
+  value: string | null | undefined
+): string | null {
   if (value === null || value === undefined) {
     return null;
   }

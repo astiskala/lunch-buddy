@@ -4,7 +4,10 @@ export interface NotificationChannel {
   isSupported(): boolean;
   getPermission(): NotificationPermission;
   requestPermission(): Promise<NotificationPermission>;
-  showNotification(title: string, options: NotificationOptions): Promise<void> | void;
+  showNotification(
+    title: string,
+    options: NotificationOptions
+  ): Promise<void> | void;
 }
 
 const defaultNotificationChannel: NotificationChannel = {
@@ -18,7 +21,10 @@ const defaultNotificationChannel: NotificationChannel = {
     return Notification.permission;
   },
   requestPermission(): Promise<NotificationPermission> {
-    if (typeof Notification === 'undefined' || typeof Notification.requestPermission !== 'function') {
+    if (
+      typeof Notification === 'undefined' ||
+      typeof Notification.requestPermission !== 'function'
+    ) {
       return Promise.resolve('denied');
     }
 
@@ -28,7 +34,10 @@ const defaultNotificationChannel: NotificationChannel = {
     }
     return Promise.resolve(result);
   },
-  async showNotification(title: string, options: NotificationOptions): Promise<void> {
+  async showNotification(
+    title: string,
+    options: NotificationOptions
+  ): Promise<void> {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
@@ -47,13 +56,11 @@ const defaultNotificationChannel: NotificationChannel = {
   },
 };
 
-export const PUSH_NOTIFICATION_CHANNEL = new InjectionToken<NotificationChannel>(
-  'PUSH_NOTIFICATION_CHANNEL',
-  {
+export const PUSH_NOTIFICATION_CHANNEL =
+  new InjectionToken<NotificationChannel>('PUSH_NOTIFICATION_CHANNEL', {
     providedIn: 'root',
     factory: () => defaultNotificationChannel,
-  },
-);
+  });
 
 @Injectable({
   providedIn: 'root',

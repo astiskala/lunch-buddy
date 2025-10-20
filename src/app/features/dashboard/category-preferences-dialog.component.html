@@ -2,8 +2,7 @@
   #dialogElement
   class="dialog-container"
   (cancel)="handleClose()"
-  aria-labelledby="dialog-title"
->
+  aria-labelledby="dialog-title">
   <div class="dialog-content-wrapper">
     <div class="dialog-header">
       <h2 id="dialog-title">Customize your dashboard</h2>
@@ -18,9 +17,12 @@
         <div class="setting-header">
           <span class="icon warning">⚠</span>
           <div class="setting-info">
-              <h3>Alert threshold</h3>
-              <p>Control when a category is flagged as "at risk" relative to its budget.</p>
-            </div>
+            <h3>Alert threshold</h3>
+            <p>
+              Control when a category is flagged as "at risk" relative to its
+              budget.
+            </p>
+          </div>
         </div>
         <div class="slider-container">
           <input
@@ -31,8 +33,7 @@
             [value]="warnAtPercent()"
             (input)="handleWarnRatioChange($event)"
             class="slider"
-            name="warnAtPercent"
-          />
+            name="warnAtPercent" />
           <div class="slider-labels">
             <span>50%</span>
             <span class="current-value">{{ warnAtPercent() }}%</span>
@@ -44,135 +45,148 @@
       <!-- Transactions Filter -->
       <div class="setting-section">
         <div class="setting-header">
-          <label class="toggle-container" aria-label="Include pending transactions">
-              <input
-                type="checkbox"
-                [checked]="includeAllTransactions()"
-                (change)="handleIncludeAllTransactionsChange($event)"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-            <div class="setting-info">
-              <h3>Include pending transactions</h3>
-              <p>Show uncleared transactions when viewing category activity.</p>
-            </div>
+          <label
+            class="toggle-container"
+            aria-label="Include pending transactions">
+            <input
+              type="checkbox"
+              [checked]="includeAllTransactions()"
+              (change)="handleIncludeAllTransactionsChange($event)" />
+            <span class="toggle-slider"></span>
+          </label>
+          <div class="setting-info">
+            <h3>Include pending transactions</h3>
+            <p>Show uncleared transactions when viewing category activity.</p>
           </div>
         </div>
+      </div>
 
-        <!-- Notifications -->
-        <div class="setting-section">
-          <div class="setting-header">
-            <label class="toggle-container" aria-label="Push notifications">
-              <input
-                type="checkbox"
-                [checked]="notificationsEnabled()"
-                (change)="handleNotificationsChange($event)"
-              />
-              <span class="toggle-slider"></span>
-            </label>
-            <div class="setting-info">
-              <h3>Push notifications</h3>
-              <p>
-                Get notified when a category is at risk or goes over budget (requires browser
-                permission).
-              </p>
-            </div>
+      <!-- Notifications -->
+      <div class="setting-section">
+        <div class="setting-header">
+          <label class="toggle-container" aria-label="Push notifications">
+            <input
+              type="checkbox"
+              [checked]="notificationsEnabled()"
+              (change)="handleNotificationsChange($event)" />
+            <span class="toggle-slider"></span>
+          </label>
+          <div class="setting-info">
+            <h3>Push notifications</h3>
+            <p>
+              Get notified when a category is at risk or goes over budget
+              (requires browser permission).
+            </p>
           </div>
         </div>
+      </div>
 
-        <!-- Visible Categories -->
+      <!-- Visible Categories -->
+      <div class="setting-section">
+        <div class="section-title">
+          <h3>Visible categories</h3>
+          <p>Reorder or hide categories to match what you care about most.</p>
+        </div>
+        <div class="category-list">
+          @for (
+            category of visibleCategories();
+            track category.categoryId;
+            let i = $index
+          ) {
+            <div class="category-item">
+              <div class="category-info">
+                <div class="category-name">{{ category.categoryName }}</div>
+                @if (category.categoryGroupName) {
+                  <div class="category-group">
+                    {{ category.categoryGroupName }}
+                  </div>
+                }
+              </div>
+              <div class="category-actions">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  [disabled]="!canMoveUp(i)"
+                  (click)="moveCategory(category.categoryId, -1)"
+                  matTooltip="Move up"
+                  [attr.aria-label]="'Move ' + category.categoryName + ' up'">
+                  <mat-icon fontIcon="arrow_upward"></mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="primary"
+                  [disabled]="!canMoveDown(i)"
+                  (click)="moveCategory(category.categoryId, 1)"
+                  matTooltip="Move down"
+                  [attr.aria-label]="'Move ' + category.categoryName + ' down'">
+                  <mat-icon fontIcon="arrow_downward"></mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="toggleVisibility(category.categoryId)"
+                  matTooltip="Hide category"
+                  [attr.aria-label]="'Hide ' + category.categoryName">
+                  <mat-icon fontIcon="visibility_off"></mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Hidden Categories -->
+      @if (hiddenCategories().length > 0) {
         <div class="setting-section">
           <div class="section-title">
-            <h3>Visible categories</h3>
-            <p>Reorder or hide categories to match what you care about most.</p>
+            <h3>Hidden categories ({{ hiddenCategories().length }})</h3>
+            <p>Click to show again on your dashboard.</p>
           </div>
           <div class="category-list">
-            @for (category of visibleCategories(); track category.categoryId; let i = $index) {
-              <div class="category-item">
+            @for (category of hiddenCategories(); track category.categoryId) {
+              <div class="category-item hidden">
                 <div class="category-info">
                   <div class="category-name">{{ category.categoryName }}</div>
                   @if (category.categoryGroupName) {
-                    <div class="category-group">{{ category.categoryGroupName }}</div>
+                    <div class="category-group">
+                      {{ category.categoryGroupName }}
+                    </div>
                   }
                 </div>
                 <div class="category-actions">
                   <button
                     mat-icon-button
-                    color="primary"
-                    [disabled]="!canMoveUp(i)"
-                    (click)="moveCategory(category.categoryId, -1)"
-                    matTooltip="Move up"
-                    [attr.aria-label]="'Move ' + category.categoryName + ' up'"
-                  >
-                    <mat-icon fontIcon="arrow_upward"></mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    color="primary"
-                    [disabled]="!canMoveDown(i)"
-                    (click)="moveCategory(category.categoryId, 1)"
-                    matTooltip="Move down"
-                    [attr.aria-label]="'Move ' + category.categoryName + ' down'"
-                  >
-                    <mat-icon fontIcon="arrow_downward"></mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
                     (click)="toggleVisibility(category.categoryId)"
-                    matTooltip="Hide category"
-                    [attr.aria-label]="'Hide ' + category.categoryName"
-                  >
-                    <mat-icon fontIcon="visibility_off"></mat-icon>
+                    matTooltip="Show category"
+                    [attr.aria-label]="'Show ' + category.categoryName">
+                    <mat-icon fontIcon="visibility"></mat-icon>
                   </button>
                 </div>
               </div>
             }
           </div>
         </div>
-
-        <!-- Hidden Categories -->
-        @if (hiddenCategories().length > 0) {
-          <div class="setting-section">
-            <div class="section-title">
-              <h3>Hidden categories ({{ hiddenCategories().length }})</h3>
-              <p>Click to show again on your dashboard.</p>
-            </div>
-            <div class="category-list">
-              @for (category of hiddenCategories(); track category.categoryId) {
-                <div class="category-item hidden">
-                  <div class="category-info">
-                    <div class="category-name">{{ category.categoryName }}</div>
-                    @if (category.categoryGroupName) {
-                      <div class="category-group">{{ category.categoryGroupName }}</div>
-                    }
-                  </div>
-                  <div class="category-actions">
-                    <button
-                      mat-icon-button
-                      (click)="toggleVisibility(category.categoryId)"
-                      matTooltip="Show category"
-                      [attr.aria-label]="'Show ' + category.categoryName"
-                    >
-                      <mat-icon fontIcon="visibility"></mat-icon>
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        }
+      }
 
       <div class="dialog-actions">
         <div class="actions-left">
-          <button mat-stroked-button color="primary" (click)="resetPreferences()">
+          <button
+            mat-stroked-button
+            color="primary"
+            (click)="resetPreferences()">
             <mat-icon fontIcon="restart_alt"></mat-icon>
             Reset to defaults
           </button>
           <span class="version">Version: {{ version }}</span>
         </div>
         <div class="actions-right">
-          <button mat-button type="button" (click)="handleClose()">Cancel</button>
-          <button mat-flat-button color="primary" type="button" (click)="handleSave()">
+          <button mat-button type="button" (click)="handleClose()">
+            Cancel
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            (click)="handleSave()">
             Save
           </button>
         </div>

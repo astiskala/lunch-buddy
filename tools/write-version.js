@@ -7,4 +7,7 @@ const content = `export const version = {
 };
 `;
 
-const a = fs.writeFileSync(path.join(__dirname, '..', 'src', 'environments', 'version.ts'), content);
+const a = fs.writeFileSync(
+  path.join(__dirname, '..', 'src', 'environments', 'version.ts'),
+  content
+);

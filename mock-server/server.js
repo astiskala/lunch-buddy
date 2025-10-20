@@ -11,7 +11,6 @@ const {
 const DEFAULT_PORT = Number(process.env.MOCK_API_PORT) || 4600;
 const API_PREFIX = '/v1';
 
-
 const helmet = require('helmet');
 const app = express();
 
@@ -25,13 +24,13 @@ const corsOptions = {
     if (!origin) {
       return callback(null, true);
     }
-    
+
     // Allow only localhost origins on various ports (common dev server ports)
     const allowedOrigins = [
-      'http://localhost:4200',  // Default Angular dev server
-      'http://127.0.0.1:4200'
+      'http://localhost:4200', // Default Angular dev server
+      'http://127.0.0.1:4200',
     ];
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -69,7 +68,7 @@ app.get(`${API_PREFIX}/me`, (_req, res) => {
 });
 
 app.get(`${API_PREFIX}/categories`, (_req, res) => {
-  res.json({ categories: categories.map((category) => ({ ...category })) });
+  res.json({ categories: categories.map(category => ({ ...category })) });
 });
 
 app.get(`${API_PREFIX}/budgets`, (req, res) => {
@@ -86,7 +85,11 @@ app.get(`${API_PREFIX}/recurring_expenses`, (req, res) => {
 });
 
 app.get(`${API_PREFIX}/transactions`, (req, res) => {
-  const { category_id: categoryIdParam, start_date: startDate, end_date: endDate } = req.query;
+  const {
+    category_id: categoryIdParam,
+    start_date: startDate,
+    end_date: endDate,
+  } = req.query;
   const categoryId = Number(categoryIdParam);
 
   if (!categoryIdParam || Number.isNaN(categoryId)) {
@@ -112,7 +115,7 @@ app.use((req, res) => {
 if (require.main === module) {
   app.listen(DEFAULT_PORT, () => {
     console.info(
-      `Mock Lunch Money API listening on http://localhost:${DEFAULT_PORT}${API_PREFIX}`,
+      `Mock Lunch Money API listening on http://localhost:${DEFAULT_PORT}${API_PREFIX}`
     );
   });
 }

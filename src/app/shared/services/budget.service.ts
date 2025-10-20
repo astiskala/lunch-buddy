@@ -8,16 +8,23 @@ import {
   BudgetSummaryItem,
   RecurringExpense,
   RecurringInstance,
-  TransactionsResponse
+  TransactionsResponse,
 } from '../../core/models/lunchmoney.types';
-import { buildBudgetProgress, calculateBudgetStatus, rankBudgetProgress } from '../utils/budget.util';
+import {
+  buildBudgetProgress,
+  calculateBudgetStatus,
+  rankBudgetProgress,
+} from '../utils/budget.util';
 import {
   deriveReferenceDate,
   getCurrentMonthRange,
   getMonthProgress,
   toIsoDate,
 } from '../utils/date.util';
-import { getRecurringDate, isRecurringInstancePending } from '../utils/recurring.util';
+import {
+  getRecurringDate,
+  isRecurringInstancePending,
+} from '../utils/recurring.util';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
 
@@ -66,14 +73,18 @@ export class BudgetService {
   protected readonly errors = signal<Error[]>([]);
 
   // Preferences
-  protected readonly preferences = signal<CategoryPreferences>(this.loadPreferences());
+  protected readonly preferences = signal<CategoryPreferences>(
+    this.loadPreferences()
+  );
 
   // Computed values
   protected readonly expenses = computed(() => {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter((item) => !item.isIncome && !hiddenIds.has(item.categoryId));
+    const items = data.filter(
+      item => !item.isIncome && !hiddenIds.has(item.categoryId)
+    );
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
@@ -81,7 +92,9 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter((item) => !item.isIncome && hiddenIds.has(item.categoryId));
+    const items = data.filter(
+      item => !item.isIncome && hiddenIds.has(item.categoryId)
+    );
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
@@ -89,7 +102,9 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter((item) => item.isIncome && !hiddenIds.has(item.categoryId));
+    const items = data.filter(
+      item => item.isIncome && !hiddenIds.has(item.categoryId)
+    );
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
@@ -97,22 +112,26 @@ export class BudgetService {
     const data = this.budgetData();
     const prefs = this.preferences();
     const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter((item) => item.isIncome && hiddenIds.has(item.categoryId));
+    const items = data.filter(
+      item => item.isIncome && hiddenIds.has(item.categoryId)
+    );
     return rankBudgetProgress(items, prefs.customOrder);
   });
 
   protected readonly currency = computed(() => {
     const data = this.budgetData();
-    const firstExpense = data.find((item) => !item.isIncome && item.budgetCurrency);
+    const firstExpense = data.find(
+      item => !item.isIncome && item.budgetCurrency
+    );
     if (firstExpense?.budgetCurrency) {
       return firstExpense.budgetCurrency;
     }
-    const firstIncome = data.find((item) => item.isIncome && item.budgetCurrency);
+    const firstIncome = data.find(item => item.isIncome && item.budgetCurrency);
     return firstIncome?.budgetCurrency ?? null;
   });
 
   protected readonly referenceDate = computed(() =>
-    deriveReferenceDate(this.startDate(), this.endDate()),
+    deriveReferenceDate(this.startDate(), this.endDate())
   );
 
   // Recurring expenses by category
@@ -153,9 +172,13 @@ export class BudgetService {
 
     // Sort each list by occurrence date
     for (const list of assigned.values()) {
-      list.sort((a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime());
+      list.sort(
+        (a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime()
+      );
     }
-    unassigned.sort((a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime());
+    unassigned.sort(
+      (a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime()
+    );
 
     return { assigned, unassigned };
   });
@@ -170,7 +193,10 @@ export class BudgetService {
     try {
       const stored = localStorage.getItem(PREFERENCES_KEY);
       if (stored) {
-        return { ...defaultCategoryPreferences, ...JSON.parse(stored) as Partial<CategoryPreferences> };
+        return {
+          ...defaultCategoryPreferences,
+          ...(JSON.parse(stored) as Partial<CategoryPreferences>),
+        };
       }
     } catch (error: unknown) {
       this.logger.error('Failed to load preferences', error);
@@ -186,7 +212,9 @@ export class BudgetService {
     }
   }
 
-  updatePreferences(updater: (current: CategoryPreferences) => CategoryPreferences): void {
+  updatePreferences(
+    updater: (current: CategoryPreferences) => CategoryPreferences
+  ): void {
     const updated = updater(this.preferences());
     this.preferences.set(updated);
     this.savePreferences(updated);
@@ -197,29 +225,32 @@ export class BudgetService {
     this.isLoading.set(true);
     this.errors.set([]);
 
-    this.lunchMoneyService.getBudgetSummary(this.startDate(), this.endDate()).pipe(
-      switchMap((summaries: BudgetSummaryItem[]) =>
-        this.buildBudgetProgressFromSummaries(summaries)
-      ),
-    ).subscribe({
-      next: (progress: BudgetProgress[]) => {
-        this.budgetData.set(progress);
-        this.recomputeBudgetStatuses();
-        this.isLoading.set(false);
-        this.syncBackgroundPreferences();
+    this.lunchMoneyService
+      .getBudgetSummary(this.startDate(), this.endDate())
+      .pipe(
+        switchMap((summaries: BudgetSummaryItem[]) =>
+          this.buildBudgetProgressFromSummaries(summaries)
+        )
+      )
+      .subscribe({
+        next: (progress: BudgetProgress[]) => {
+          this.budgetData.set(progress);
+          this.recomputeBudgetStatuses();
+          this.isLoading.set(false);
+          this.syncBackgroundPreferences();
 
-        if (this.canUseNavigator() ? navigator.onLine : true) {
-          const timestamp = new Date();
-          this.lastRefresh.set(timestamp);
-          this.persistLastRefresh(timestamp);
-        }
-      },
-      error: (error: unknown) => {
-        this.logger.error('Failed to refresh budget data', error);
-        this.errors.set([error as Error]);
-        this.isLoading.set(false);
-      },
-    });
+          if (this.canUseNavigator() ? navigator.onLine : true) {
+            const timestamp = new Date();
+            this.lastRefresh.set(timestamp);
+            this.persistLastRefresh(timestamp);
+          }
+        },
+        error: (error: unknown) => {
+          this.logger.error('Failed to refresh budget data', error);
+          this.errors.set([error as Error]);
+          this.isLoading.set(false);
+        },
+      });
   }
 
   loadRecurringExpenses(): void {
@@ -260,7 +291,7 @@ export class BudgetService {
   getReferenceDate = this.referenceDate;
 
   private buildBudgetProgressFromSummaries(
-    summaries: BudgetSummaryItem[],
+    summaries: BudgetSummaryItem[]
   ): Observable<BudgetProgress[]> {
     const monthKey = this.monthKey;
     const monthProgress = this.monthProgressRatio();
@@ -274,8 +305,7 @@ export class BudgetService {
     const shouldSplitUncategorised = (summary: BudgetSummaryItem): boolean => {
       const normalizedName = summary.category_name.trim().toLowerCase();
       const hasQualifier =
-        normalizedName.includes('income') ||
-        normalizedName.includes('expense');
+        normalizedName.includes('income') || normalizedName.includes('expense');
       const isDefaultName =
         normalizedName === 'uncategorized' ||
         normalizedName === 'uncategorised';
@@ -287,13 +317,20 @@ export class BudgetService {
       if (shouldSplitUncategorised(summary)) {
         uncategorisedSummaries.push(summary);
       } else {
-        const item = buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio);
+        const item = buildBudgetProgress(
+          summary,
+          monthKey,
+          monthProgress,
+          warnAtRatio
+        );
         regularItems.push(item);
       }
     }
 
     if (uncategorisedSummaries.length === 0) {
-      return of(regularItems.filter((item) => !item.excludeFromBudget && !item.isGroup));
+      return of(
+        regularItems.filter(item => !item.excludeFromBudget && !item.isGroup)
+      );
     }
 
     type SplitResult = {
@@ -318,7 +355,9 @@ export class BudgetService {
         uncategorisedSummary.category_id,
         this.startDate(),
         this.endDate(),
-        { includeAllTransactions: includeAll },
+        {
+          includeAllTransactions: includeAll,
+        }
       )
       .pipe(
         map((response: TransactionsResponse): SplitResult => {
@@ -331,9 +370,10 @@ export class BudgetService {
 
           for (const transaction of response.transactions) {
             // Use to_base if present and valid, else fallback to amount
-            const valueRaw = (transaction.to_base !== undefined && transaction.to_base !== null)
-              ? String(transaction.to_base)
-              : transaction.amount;
+            const valueRaw =
+              transaction.to_base !== undefined && transaction.to_base !== null
+                ? String(transaction.to_base)
+                : transaction.amount;
             const value = Number.parseFloat(valueRaw);
             if (Number.isNaN(value)) continue;
             if (value < 0) {
@@ -367,18 +407,31 @@ export class BudgetService {
           }
 
           if (!result.expense && !result.income) {
-            result.fallback = buildBudgetProgress(uncategorisedSummary, monthKey, monthProgress, warnAtRatio);
+            result.fallback = buildBudgetProgress(
+              uncategorisedSummary,
+              monthKey,
+              monthProgress,
+              warnAtRatio
+            );
           }
 
           return result;
         }),
         catchError((error: unknown) => {
-          this.logger.error('Failed to fetch uncategorised transactions', error);
+          this.logger.error(
+            'Failed to fetch uncategorised transactions',
+            error
+          );
           return of({
             summary: uncategorisedSummary,
-            fallback: buildBudgetProgress(uncategorisedSummary, monthKey, monthProgress, warnAtRatio),
+            fallback: buildBudgetProgress(
+              uncategorisedSummary,
+              monthKey,
+              monthProgress,
+              warnAtRatio
+            ),
           } satisfies SplitResult);
-        }),
+        })
       );
 
     return uncategorisedRequest.pipe(
@@ -417,7 +470,9 @@ export class BudgetService {
           );
         }
         const allItems = [...regularItems, ...derivedItems, ...fallbackItems];
-        return of(allItems.filter((item) => !item.excludeFromBudget && !item.isGroup));
+        return of(
+          allItems.filter(item => !item.excludeFromBudget && !item.isGroup)
+        );
       })
     );
   }
@@ -432,27 +487,41 @@ export class BudgetService {
     isIncome: boolean;
     transactionList: Transaction[];
   }): BudgetProgress {
-    const { baseSummary, monthKey, monthProgress, warnAtRatio, amount, transactions, isIncome, transactionList } =
-      options;
+    const {
+      baseSummary,
+      monthKey,
+      monthProgress,
+      warnAtRatio,
+      amount,
+      transactions,
+      isIncome,
+      transactionList,
+    } = options;
 
-    const existingMonthData = baseSummary.data[monthKey] as BudgetMonthData | undefined;
+    const existingMonthData = baseSummary.data[monthKey] as
+      | BudgetMonthData
+      | undefined;
     const monthData = existingMonthData
       ? { ...existingMonthData }
       : {
-        num_transactions: 0,
-        spending_to_base: 0,
-        budget_to_base: 0,
-        budget_amount: 0,
-        budget_currency: baseSummary.config?.currency ?? null,
-        is_automated: false,
-      };
+          num_transactions: 0,
+          spending_to_base: 0,
+          budget_to_base: 0,
+          budget_amount: 0,
+          budget_currency: baseSummary.config?.currency ?? null,
+          is_automated: false,
+        };
 
-    monthData.spending_to_base = isIncome ? -Math.abs(amount) : Math.abs(amount);
+    monthData.spending_to_base = isIncome
+      ? -Math.abs(amount)
+      : Math.abs(amount);
     monthData.num_transactions = transactions;
 
     const summary: BudgetSummaryItem = {
       ...baseSummary,
-      category_name: isIncome ? UNCATEGORISED_INCOME_LABEL : UNCATEGORISED_EXPENSES_LABEL,
+      category_name: isIncome
+        ? UNCATEGORISED_INCOME_LABEL
+        : UNCATEGORISED_EXPENSES_LABEL,
       is_income: isIncome,
       data: {
         ...baseSummary.data,
@@ -461,7 +530,12 @@ export class BudgetService {
     };
 
     // Pass transactionList to BudgetProgress for UI filtering
-    const progress = buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio);
+    const progress = buildBudgetProgress(
+      summary,
+      monthKey,
+      monthProgress,
+      warnAtRatio
+    );
     progress.transactionList = transactionList;
     return progress;
   }
@@ -477,7 +551,9 @@ export class BudgetService {
         warnAtRatio: prefs.warnAtRatio,
         currency,
       })
-      .catch((error: unknown) => { this.logger.error('Failed to sync background preferences', error); });
+      .catch((error: unknown) => {
+        this.logger.error('Failed to sync background preferences', error);
+      });
   }
 
   private recomputeBudgetStatuses(): void {
@@ -491,10 +567,12 @@ export class BudgetService {
     const monthProgress = this.monthProgressRatio();
     const warnAtRatio = this.preferences().warnAtRatio;
 
-    const updated = items.map((item) => {
+    const updated = items.map(item => {
       const instances = assigned.get(item.categoryId) ?? [];
       const upcomingTotal = instances
-        .filter((instance) => isRecurringInstancePending(instance, { referenceDate }))
+        .filter(instance =>
+          isRecurringInstancePending(instance, { referenceDate })
+        )
         .reduce((total, instance) => {
           const amount = Number.parseFloat(instance.expense.amount);
           if (Number.isNaN(amount)) {
@@ -503,7 +581,8 @@ export class BudgetService {
           return total + Math.abs(amount);
         }, 0);
 
-      const recurringTotal = upcomingTotal > 0 ? upcomingTotal : item.recurringTotal;
+      const recurringTotal =
+        upcomingTotal > 0 ? upcomingTotal : item.recurringTotal;
 
       return {
         ...item,
@@ -514,7 +593,7 @@ export class BudgetService {
           monthProgress,
           warnAtRatio,
           item.isIncome,
-          recurringTotal,
+          recurringTotal
         ),
       };
     });
@@ -552,6 +631,8 @@ export class BudgetService {
   }
 
   private canUseNavigator(): boolean {
-    return typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean';
+    return (
+      typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
+    );
   }
 }

@@ -10,7 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { Router } from '@angular/router';
-import { BudgetService, CategoryPreferences } from '../../shared/services/budget.service';
+import {
+  BudgetService,
+  CategoryPreferences,
+} from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryProgressListComponent } from './category-progress-list.component';
@@ -44,7 +47,8 @@ export class DashboardPageComponent {
   readonly budgetService = inject(BudgetService);
   readonly authService = inject(AuthService);
   readonly router = inject(Router);
-  readonly locale = typeof navigator === 'undefined' ? 'en-US' : navigator.language;
+  readonly locale =
+    typeof navigator === 'undefined' ? 'en-US' : navigator.language;
 
   // Local state
   protected readonly activeTab = signal<TabType>('expenses');
@@ -61,8 +65,10 @@ export class DashboardPageComponent {
   protected readonly currency = this.budgetService.getCurrency;
   protected readonly startDate = this.budgetService.getStartDate;
   protected readonly endDate = this.budgetService.getEndDate;
-  protected readonly monthProgressRatio = this.budgetService.getMonthProgressRatio;
-  protected readonly recurringByCategory = this.budgetService.getRecurringByCategory;
+  protected readonly monthProgressRatio =
+    this.budgetService.getMonthProgressRatio;
+  protected readonly recurringByCategory =
+    this.budgetService.getRecurringByCategory;
   protected readonly errors = this.budgetService.getErrors;
   protected readonly preferences = this.budgetService.getPreferences;
   protected readonly lastRefresh = this.budgetService.getLastRefresh;
@@ -70,24 +76,29 @@ export class DashboardPageComponent {
 
   // Computed values
   protected readonly activeItems = computed(() =>
-    this.activeTab() === 'expenses' ? this.expenses() : this.incomes(),
+    this.activeTab() === 'expenses' ? this.expenses() : this.incomes()
   );
 
   protected readonly hiddenItems = computed(() =>
-    this.activeTab() === 'expenses' ? this.hiddenExpenses() : this.hiddenIncomes(),
+    this.activeTab() === 'expenses'
+      ? this.hiddenExpenses()
+      : this.hiddenIncomes()
   );
 
-  readonly filterItemsByStatus = (items: BudgetProgress[], statusFilter: StatusFilter): BudgetProgress[] => {
+  readonly filterItemsByStatus = (
+    items: BudgetProgress[],
+    statusFilter: StatusFilter
+  ): BudgetProgress[] => {
     if (statusFilter === 'all') return items;
-    return items.filter((item) => item.status === statusFilter);
+    return items.filter(item => item.status === statusFilter);
   };
 
   protected readonly filteredVisibleItems = computed(() =>
-    this.filterItemsByStatus(this.activeItems(), this.statusFilter()),
+    this.filterItemsByStatus(this.activeItems(), this.statusFilter())
   );
 
   protected readonly filteredHiddenItems = computed(() =>
-    this.filterItemsByStatus(this.hiddenItems(), this.statusFilter()),
+    this.filterItemsByStatus(this.hiddenItems(), this.statusFilter())
   );
 
   protected readonly totalExpenseSpent = computed(() => {
@@ -139,11 +150,11 @@ export class DashboardPageComponent {
     const referenceDate = this.referenceDate();
     const allExpenses = [...this.expenses(), ...this.hiddenExpenses()];
     const expenseMap = new Map(allExpenses.map(exp => [exp.categoryId, exp]));
-    
+
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = instances.filter((instance) =>
-        isRecurringInstancePending(instance, { referenceDate }),
+      const pendingInstances = instances.filter(instance =>
+        isRecurringInstancePending(instance, { referenceDate })
       );
       if (pendingInstances.length === 0) {
         continue;
@@ -163,11 +174,11 @@ export class DashboardPageComponent {
     const referenceDate = this.referenceDate();
     const allIncomes = [...this.incomes(), ...this.hiddenIncomes()];
     const incomeMap = new Map(allIncomes.map(inc => [inc.categoryId, inc]));
-    
+
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = instances.filter((instance) =>
-        isRecurringInstancePending(instance, { referenceDate }),
+      const pendingInstances = instances.filter(instance =>
+        isRecurringInstancePending(instance, { referenceDate })
       );
       if (pendingInstances.length === 0) {
         continue;
@@ -185,22 +196,24 @@ export class DashboardPageComponent {
   protected readonly statusCounts = computed(() => {
     const items = this.activeItems();
     return {
-      over: items.filter((item) => item.status === 'over').length,
-      atRisk: items.filter((item) => item.status === 'at-risk').length,
-      onTrack: items.filter((item) => item.status === 'on-track').length,
+      over: items.filter(item => item.status === 'over').length,
+      atRisk: items.filter(item => item.status === 'at-risk').length,
+      onTrack: items.filter(item => item.status === 'on-track').length,
     };
   });
 
   protected readonly hiddenTotal = computed(() =>
-    this.filteredHiddenItems().reduce((sum, item) => sum + item.spent, 0),
+    this.filteredHiddenItems().reduce((sum, item) => sum + item.spent, 0)
   );
 
   protected readonly hiddenLabel = computed(() =>
-    this.activeTab() === 'expenses' ? 'categories' : 'income categories',
+    this.activeTab() === 'expenses' ? 'categories' : 'income categories'
   );
 
   protected readonly hiddenTotalFormatted = computed(() =>
-    formatCurrency(this.hiddenTotal(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.hiddenTotal(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   protected readonly visibleEmptyMessage = computed(() => {
@@ -237,12 +250,19 @@ export class DashboardPageComponent {
     const isLoading = this.isLoading();
     // Consider it loaded if: we're not currently loading AND (we have a refresh timestamp OR we have data)
     // This handles both: cached data with timestamp, and successful load with empty results
-    return !isLoading && (lastRefresh !== null || expensesLength > 0 || incomesLength > 0);
+    return (
+      !isLoading &&
+      (lastRefresh !== null || expensesLength > 0 || incomesLength > 0)
+    );
   });
 
-  protected readonly showInitialLoading = computed(() => this.isLoading() && !this.hasLoadedOnce());
+  protected readonly showInitialLoading = computed(
+    () => this.isLoading() && !this.hasLoadedOnce()
+  );
 
-  protected readonly isRefreshing = computed(() => this.isLoading() && this.hasLoadedOnce());
+  protected readonly isRefreshing = computed(
+    () => this.isLoading() && this.hasLoadedOnce()
+  );
 
   protected readonly lastRefreshText = computed(() => {
     const timestamp = this.lastRefresh();
@@ -278,12 +298,12 @@ export class DashboardPageComponent {
   }
 
   handleStatusFilterChange(status: 'over' | 'at-risk' | 'on-track'): void {
-    this.statusFilter.update((current) => (current === status ? 'all' : status));
+    this.statusFilter.update(current => (current === status ? 'all' : status));
     this.showHidden.set(false);
   }
 
   toggleHidden(): void {
-    this.showHidden.update((v) => !v);
+    this.showHidden.update(v => !v);
   }
 
   openPreferencesDialog(): void {

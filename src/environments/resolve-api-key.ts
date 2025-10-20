@@ -46,6 +46,7 @@ export const resolveLunchMoneyApiKey = (): string | null => {
     readFromImportMeta() ??
     readFromProcessEnv() ??
     readFromRuntimeModule() ??
-    readFromGlobalThis()
-  ) ?? null;
+    readFromGlobalThis() ??
+    null
+  );
 };

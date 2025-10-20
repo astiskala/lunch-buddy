@@ -3,7 +3,7 @@ import {
   toIsoDate,
   getCurrentMonthRange,
   startOfToday,
-  deriveReferenceDate
+  deriveReferenceDate,
 } from './date.util';
 
 describe('Date Utils', () => {
@@ -45,7 +45,7 @@ describe('Date Utils', () => {
       expect(progress).toBeGreaterThan(0.4);
       expect(progress).toBeLessThan(0.6);
     });
-    });
+  });
 
   describe('getCurrentMonthRange', () => {
     it('should return correct start and end for October', () => {
@@ -58,15 +58,16 @@ describe('Date Utils', () => {
       expect(range.end.getMonth()).toBe(9); // October
       expect(range.end.getDate()).toBe(31);
     });
-  });    describe('startOfToday', () => {
-      it('should return today at midnight', () => {
-        const today = startOfToday();
-        expect(today.getHours()).toBe(0);
-        expect(today.getMinutes()).toBe(0);
-        expect(today.getSeconds()).toBe(0);
-        expect(today.getMilliseconds()).toBe(0);
-      });
+  });
+  describe('startOfToday', () => {
+    it('should return today at midnight', () => {
+      const today = startOfToday();
+      expect(today.getHours()).toBe(0);
+      expect(today.getMinutes()).toBe(0);
+      expect(today.getSeconds()).toBe(0);
+      expect(today.getMilliseconds()).toBe(0);
     });
+  });
 
   describe('deriveReferenceDate', () => {
     it('should return start if today is before window', () => {
@@ -97,4 +98,5 @@ describe('Date Utils', () => {
       expect(ref.getMonth()).toBe(9);
       expect(ref.getDate()).toBe(15);
     });
-  });  });
+  });
+});

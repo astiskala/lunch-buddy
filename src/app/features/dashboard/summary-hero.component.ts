@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, input, computed, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  computed,
+  output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +30,9 @@ export class SummaryHeroComponent {
   readonly customize = output();
   readonly logout = output();
 
-  readonly monthProgressPercent = computed(() => Math.round(this.monthProgressRatio() * 100));
+  readonly monthProgressPercent = computed(() =>
+    Math.round(this.monthProgressRatio() * 100)
+  );
 
   readonly expenseSpentPercent = computed(() => {
     const budget = this.totalExpenseBudget();
@@ -51,37 +59,53 @@ export class SummaryHeroComponent {
   });
 
   readonly expenseRemaining = computed(
-    () => this.totalExpenseBudget() - (this.totalExpenseSpent() + this.totalExpenseUpcoming()),
+    () =>
+      this.totalExpenseBudget() -
+      (this.totalExpenseSpent() + this.totalExpenseUpcoming())
   );
 
   readonly incomeRemaining = computed(() => {
-    const remaining = this.totalIncomeBudget() - (this.totalIncomeSpent() + this.totalIncomeUpcoming());
+    const remaining =
+      this.totalIncomeBudget() -
+      (this.totalIncomeSpent() + this.totalIncomeUpcoming());
     // Invert sign for income categories
     return -remaining;
   });
 
   readonly expenseSpentFormatted = computed(() =>
-    formatCurrency(this.totalExpenseSpent(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.totalExpenseSpent(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   readonly expenseUpcomingFormatted = computed(() =>
-    formatCurrency(this.totalExpenseUpcoming(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.totalExpenseUpcoming(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   readonly expenseRemainingFormatted = computed(() =>
-    formatCurrency(this.expenseRemaining(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.expenseRemaining(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   readonly incomeSpentFormatted = computed(() =>
-    formatCurrency(this.totalIncomeSpent(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.totalIncomeSpent(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   readonly incomeUpcomingFormatted = computed(() =>
-    formatCurrency(this.totalIncomeUpcoming(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.totalIncomeUpcoming(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   readonly incomeRemainingFormatted = computed(() =>
-    formatCurrency(this.incomeRemaining(), this.currency(), { fallbackCurrency: 'USD' }),
+    formatCurrency(this.incomeRemaining(), this.currency(), {
+      fallbackCurrency: 'USD',
+    })
   );
 
   readonly monthName = computed(() => {

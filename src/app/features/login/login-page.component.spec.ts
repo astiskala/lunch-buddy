@@ -19,7 +19,10 @@ describe('LoginPageComponent', () => {
   let router: jasmine.SpyObj<RouterStub>;
 
   beforeEach(async () => {
-    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>('AuthService', ['setApiKey']);
+    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
+      'AuthService',
+      ['setApiKey']
+    );
     authServiceSpy.setApiKey.and.stub();
     const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
     routerSpy.navigate.and.resolveTo(true);

@@ -23,7 +23,10 @@ const defaultPreferences: CategoryPreferences = {
 
 class MockLunchMoneyService {
   budgetSummary$ = new Subject<BudgetSummaryItem[]>();
-  categoryTransactionsResponse: TransactionsResponse = { transactions: [], has_more: false };
+  categoryTransactionsResponse: TransactionsResponse = {
+    transactions: [],
+    has_more: false,
+  };
 
   getBudgetSummary(): Observable<BudgetSummaryItem[]> {
     return this.budgetSummary$.asObservable();
@@ -33,7 +36,7 @@ class MockLunchMoneyService {
     _categoryId: number | null,
     _startDate: string,
     _endDate: string,
-    _options?: { includeAllTransactions?: boolean },
+    _options?: { includeAllTransactions?: boolean }
   ): Observable<TransactionsResponse> {
     return of(this.categoryTransactionsResponse);
   }
@@ -43,7 +46,10 @@ class MockLunchMoneyService {
   }
 }
 
-const createSummary = (monthKey: string, overrides: Partial<BudgetSummaryItem>): BudgetSummaryItem => ({
+const createSummary = (
+  monthKey: string,
+  overrides: Partial<BudgetSummaryItem>
+): BudgetSummaryItem => ({
   category_id: 1,
   category_name: 'Dining Out',
   category_group_name: null,
@@ -90,7 +96,7 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
     JSON.stringify({
       ...defaultPreferences,
       ...prefs,
-    }),
+    })
   );
 };
 
@@ -104,7 +110,9 @@ describe('BudgetService background sync', () => {
   };
 
   type BackgroundSyncStub = {
-    updateBudgetPreferences: (payload: BackgroundPreferencesPayload) => Promise<void>;
+    updateBudgetPreferences: (
+      payload: BackgroundPreferencesPayload
+    ) => Promise<void>;
   };
 
   let backgroundSync: jasmine.SpyObj<BackgroundSyncStub>;
@@ -113,9 +121,10 @@ describe('BudgetService background sync', () => {
   beforeEach(() => {
     localStorage.clear();
     lunchMoney = new MockLunchMoneyService();
-    backgroundSync = jasmine.createSpyObj<BackgroundSyncStub>('BackgroundSyncService', [
-      'updateBudgetPreferences',
-    ]);
+    backgroundSync = jasmine.createSpyObj<BackgroundSyncStub>(
+      'BackgroundSyncService',
+      ['updateBudgetPreferences']
+    );
 
     backgroundSync.updateBudgetPreferences.and.resolveTo();
   });
@@ -143,13 +152,14 @@ describe('BudgetService background sync', () => {
     initService();
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
-    const [payload] = backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
+    const [payload] =
+      backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
     expect(payload).toEqual(
       jasmine.objectContaining({
         hiddenCategoryIds: [5],
         notificationsEnabled: true,
         warnAtRatio: 0.9,
-      }),
+      })
     );
   });
 
@@ -157,7 +167,7 @@ describe('BudgetService background sync', () => {
     initService();
     backgroundSync.updateBudgetPreferences.calls.reset();
 
-    service.updatePreferences((current) => ({
+    service.updatePreferences(current => ({
       ...current,
       notificationsEnabled: true,
       hiddenCategoryIds: [1, 2],
@@ -183,7 +193,8 @@ describe('BudgetService background sync', () => {
     lunchMoney.budgetSummary$.next([createSummary(monthKey, {})]);
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
-    const [payload] = backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
+    const [payload] =
+      backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
     expect(payload.currency).toBe('USD');
   });
 
@@ -219,7 +230,8 @@ describe('BudgetService background sync', () => {
     // Find the uncategorised expense entry by checking for null/undefined categoryId and correct name
     const incomes = service.getIncomes();
     const uncategorisedIncome = incomes.find(
-      (item) => item.categoryId == null && item.categoryName === 'Uncategorised Income'
+      item =>
+        item.categoryId == null && item.categoryName === 'Uncategorised Income'
     );
     expect(uncategorisedIncome).toBeDefined();
     expect(uncategorisedIncome?.spent).toBeCloseTo(-171.25, 5);
@@ -259,13 +271,13 @@ describe('BudgetService background sync', () => {
     const incomes = service.getIncomes();
 
     const uncategorisedExpenses = expenses.filter(
-      (item) => item.categoryName === 'Uncategorised Expenses',
+      item => item.categoryName === 'Uncategorised Expenses'
     );
     expect(uncategorisedExpenses.length).toBe(1);
     expect(uncategorisedExpenses[0].spent).toBeCloseTo(200, 5);
 
     const uncategorisedIncome = incomes.filter(
-      (item) => item.categoryName === 'Uncategorised Income',
+      item => item.categoryName === 'Uncategorised Income'
     );
     expect(uncategorisedIncome.length).toBe(1);
     expect(Math.abs(uncategorisedIncome[0].spent)).toBeCloseTo(200, 5);

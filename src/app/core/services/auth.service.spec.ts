@@ -5,7 +5,9 @@ import { skip } from 'rxjs';
 import { BackgroundSyncService } from './background-sync.service';
 
 class MockBackgroundSyncService {
-  updateApiCredentials = jasmine.createSpy('updateApiCredentials').and.resolveTo(undefined);
+  updateApiCredentials = jasmine
+    .createSpy('updateApiCredentials')
+    .and.resolveTo(undefined);
 }
 
 describe('AuthService', () => {
@@ -74,8 +76,8 @@ describe('AuthService', () => {
     expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
   });
 
-  it('should emit the current API key to subscribers', (done) => {
-    service.apiKey$.pipe(skip(1)).subscribe((apiKey) => {
+  it('should emit the current API key to subscribers', done => {
+    service.apiKey$.pipe(skip(1)).subscribe(apiKey => {
       expect(apiKey).toBe(TEST_API_KEY);
       done();
     });

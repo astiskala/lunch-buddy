@@ -80,8 +80,16 @@
         pointer-events: none;
         border-radius: inherit;
         background:
-          radial-gradient(circle at top left, var(--surface-accent), transparent 65%),
-          radial-gradient(circle at bottom right, var(--surface-accent), transparent 60%);
+          radial-gradient(
+            circle at top left,
+            var(--surface-accent),
+            transparent 65%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            var(--surface-accent),
+            transparent 60%
+          );
         mix-blend-mode: screen;
       }
 
@@ -157,12 +165,11 @@
         src="/icons/lunch-buddy.svg"
         alt="Lunch Buddy logo"
         width="88"
-        height="88"
-      />
+        height="88" />
       <h1>Looks like you’re offline</h1>
       <p>
-        Lunch Buddy needs a connection to sync your budget. We’ll keep retrying in the background, or you can try again
-        once you’re back online.
+        Lunch Buddy needs a connection to sync your budget. We’ll keep retrying
+        in the background, or you can try again once you’re back online.
       </p>
       <button type="button" onclick="window.location.reload()">Retry</button>
     </main>

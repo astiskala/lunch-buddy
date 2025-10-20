@@ -15,7 +15,10 @@ const parseDate = (value: string | null | undefined): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
-const parseWindowDate = (value: string | undefined, boundary: 'start' | 'end'): Date | null => {
+const parseWindowDate = (
+  value: string | undefined,
+  boundary: 'start' | 'end'
+): Date | null => {
   if (!value) {
     return null;
   }
@@ -44,7 +47,12 @@ const alignToWindowMonth = (base: Date, windowStart: Date): Date => {
   const lastDay = lastDayOfMonth(windowStart).getDate();
 
   target.setDate(Math.min(desiredDay, lastDay));
-  target.setHours(base.getHours(), base.getMinutes(), base.getSeconds(), base.getMilliseconds());
+  target.setHours(
+    base.getHours(),
+    base.getMinutes(),
+    base.getSeconds(),
+    base.getMilliseconds()
+  );
 
   return target;
 };
@@ -56,7 +64,11 @@ interface Duration {
   days?: number;
 }
 
-const getMonthDuration = (normalized: string, magnitude: number, hasNumber: boolean): Duration | null => {
+const getMonthDuration = (
+  normalized: string,
+  magnitude: number,
+  hasNumber: boolean
+): Duration | null => {
   if (!hasNumber) {
     if (normalized.includes('other') || normalized.includes('bi')) {
       return { months: 2 };
@@ -68,21 +80,31 @@ const getMonthDuration = (normalized: string, magnitude: number, hasNumber: bool
   return { months: magnitude };
 };
 
-const getWeekDuration = (normalized: string, magnitude: number, hasNumber: boolean): Duration => {
+const getWeekDuration = (
+  normalized: string,
+  magnitude: number,
+  hasNumber: boolean
+): Duration => {
   if (!hasNumber && normalized.includes('bi')) {
     return { weeks: 2 };
   }
   return { weeks: magnitude };
 };
 
-const getDayDuration = (normalized: string, magnitude: number, hasNumber: boolean): Duration => {
+const getDayDuration = (
+  normalized: string,
+  magnitude: number,
+  hasNumber: boolean
+): Duration => {
   if (!hasNumber && normalized.includes('bi')) {
     return { days: 2 };
   }
   return { days: magnitude };
 };
 
-const getCadenceDuration = (cadence: string | null | undefined): Duration | null => {
+const getCadenceDuration = (
+  cadence: string | null | undefined
+): Duration | null => {
   if (!cadence) {
     return null;
   }
@@ -128,7 +150,10 @@ const addDuration = (date: Date, duration: Duration): Date => {
   return result;
 };
 
-const isWithinInterval = (date: Date, interval: { start: Date; end: Date }): boolean => {
+const isWithinInterval = (
+  date: Date,
+  interval: { start: Date; end: Date }
+): boolean => {
   const time = date.getTime();
   return time >= interval.start.getTime() && time <= interval.end.getTime();
 };
@@ -141,7 +166,11 @@ const isAfter = (date: Date, dateToCompare: Date): boolean => {
   return date.getTime() > dateToCompare.getTime();
 };
 
-const clampToWindow = (candidate: Date, windowStart: Date, windowEnd: Date): boolean =>
+const clampToWindow = (
+  candidate: Date,
+  windowStart: Date,
+  windowEnd: Date
+): boolean =>
   isWithinInterval(candidate, { start: windowStart, end: windowEnd });
 
 const startOfDay = (date: Date): Date => {
@@ -160,7 +189,7 @@ const projectForwardWithCadence = (
   cadenceDuration: Duration,
   targetDate: Date,
   windowStart?: Date,
-  windowEnd?: Date,
+  windowEnd?: Date
 ): Date | null => {
   let projected = candidate;
   let iterations = 0;
@@ -171,7 +200,11 @@ const projectForwardWithCadence = (
     iterations += 1;
   }
 
-  if (windowStart && windowEnd && !clampToWindow(projected, windowStart, windowEnd)) {
+  if (
+    windowStart &&
+    windowEnd &&
+    !clampToWindow(projected, windowStart, windowEnd)
+  ) {
     return null;
   }
 
@@ -182,7 +215,7 @@ const adjustCandidateToWindow = (
   candidate: Date,
   windowStart: Date,
   windowEnd: Date,
-  cadenceDuration: Duration | null,
+  cadenceDuration: Duration | null
 ): AdjustmentResult => {
   if (isAfter(candidate, windowEnd)) {
     return { candidate, adjusted: false };
@@ -196,7 +229,13 @@ const adjustCandidateToWindow = (
   let wasAdjusted = false;
 
   if (cadenceDuration) {
-    const projected = projectForwardWithCadence(candidate, cadenceDuration, windowStart, windowStart, windowEnd);
+    const projected = projectForwardWithCadence(
+      candidate,
+      cadenceDuration,
+      windowStart,
+      windowStart,
+      windowEnd
+    );
     if (projected && clampToWindow(projected, windowStart, windowEnd)) {
       adjustedCandidate = projected;
       wasAdjusted = true;
@@ -220,7 +259,7 @@ const adjustCandidateToReference = (
   cadenceDuration: Duration | null,
   candidateAdjustedByWindow: boolean,
   windowStart?: Date,
-  windowEnd?: Date,
+  windowEnd?: Date
 ): Date | null => {
   const candidateStart = startOfDay(candidate);
   if (!isBefore(candidateStart, reference)) {
@@ -235,7 +274,10 @@ const adjustCandidateToReference = (
   let iterations = 0;
   const MAX_ITERATIONS = 60;
 
-  while (isBefore(startOfDay(projected), reference) && iterations < MAX_ITERATIONS) {
+  while (
+    isBefore(startOfDay(projected), reference) &&
+    iterations < MAX_ITERATIONS
+  ) {
     const nextProjection = addDuration(projected, cadenceDuration);
     iterations += 1;
 
@@ -245,7 +287,10 @@ const adjustCandidateToReference = (
 
     projected = nextProjection;
 
-    const isWithinWindow = !windowStart || !windowEnd || clampToWindow(projected, windowStart, windowEnd);
+    const isWithinWindow =
+      !windowStart ||
+      !windowEnd ||
+      clampToWindow(projected, windowStart, windowEnd);
     const isNotBeforeReference = !isBefore(startOfDay(projected), reference);
 
     if (isWithinWindow && isNotBeforeReference) {
@@ -266,7 +311,7 @@ export const getRecurringDate = (
     start_date: string | null;
     cadence: string;
   },
-  options?: RecurringDateOptions,
+  options?: RecurringDateOptions
 ): Date | null => {
   let candidate =
     parseDate(expense.next_occurrence) ??
@@ -280,7 +325,9 @@ export const getRecurringDate = (
   const windowStart = parseWindowDate(options?.windowStart, 'start');
   const windowEnd = parseWindowDate(options?.windowEnd, 'end');
   const cadenceDuration = getCadenceDuration(expense.cadence);
-  const reference = options?.referenceDate ? startOfDay(options.referenceDate) : null;
+  const reference = options?.referenceDate
+    ? startOfDay(options.referenceDate)
+    : null;
 
   let candidateAdjustedByWindow = false;
 
@@ -289,7 +336,12 @@ export const getRecurringDate = (
       return null;
     }
 
-    const adjustment = adjustCandidateToWindow(candidate, windowStart, windowEnd, cadenceDuration);
+    const adjustment = adjustCandidateToWindow(
+      candidate,
+      windowStart,
+      windowEnd,
+      cadenceDuration
+    );
     candidate = adjustment.candidate;
     candidateAdjustedByWindow = adjustment.adjusted;
 
@@ -305,7 +357,7 @@ export const getRecurringDate = (
       cadenceDuration,
       candidateAdjustedByWindow,
       windowStart ?? undefined,
-      windowEnd ?? undefined,
+      windowEnd ?? undefined
     );
     if (!adjusted) {
       return null;
@@ -322,7 +374,7 @@ export interface RecurringPendingOptions {
 
 export const isRecurringInstancePending = (
   instance: RecurringInstance,
-  options?: RecurringPendingOptions,
+  options?: RecurringPendingOptions
 ): boolean => {
   const type = instance.expense.type.toLowerCase().trim();
   if (type === 'cleared') {

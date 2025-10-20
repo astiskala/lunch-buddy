@@ -40,7 +40,8 @@ export class BackgroundSyncService implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly apiBaseUrl = environment.lunchmoneyApiBase;
 
-  private registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
+  private registrationPromise: Promise<ServiceWorkerRegistration | null> | null =
+    null;
   private readonly authSubscription: Subscription;
   private currentConfig: BackgroundConfigPayload = {
     apiKey: null,
@@ -54,7 +55,7 @@ export class BackgroundSyncService implements OnDestroy {
   };
 
   constructor() {
-    this.authSubscription = this.authService.apiKey$.subscribe((apiKey) => {
+    this.authSubscription = this.authService.apiKey$.subscribe(apiKey => {
       void this.updateApiCredentials(apiKey);
     });
   }
@@ -77,7 +78,9 @@ export class BackgroundSyncService implements OnDestroy {
     await this.refreshSyncRegistration();
   }
 
-  async updateBudgetPreferences(preferences: BudgetPreferencesPayload): Promise<void> {
+  async updateBudgetPreferences(
+    preferences: BudgetPreferencesPayload
+  ): Promise<void> {
     this.currentConfig = {
       ...this.currentConfig,
       preferences: {
@@ -99,7 +102,8 @@ export class BackgroundSyncService implements OnDestroy {
       return;
     }
 
-    const worker = registration.active ?? registration.waiting ?? registration.installing;
+    const worker =
+      registration.active ?? registration.waiting ?? registration.installing;
     if (!worker) {
       return;
     }
@@ -112,7 +116,10 @@ export class BackgroundSyncService implements OnDestroy {
     try {
       worker.postMessage(message);
     } catch (error) {
-      this.logger.error('BackgroundSyncService: failed to post config to service worker', error);
+      this.logger.error(
+        'BackgroundSyncService: failed to post config to service worker',
+        error
+      );
     }
   }
 
@@ -122,7 +129,8 @@ export class BackgroundSyncService implements OnDestroy {
       return;
     }
 
-    const notificationsEnabled = this.currentConfig.preferences.notificationsEnabled;
+    const notificationsEnabled =
+      this.currentConfig.preferences.notificationsEnabled;
     const hasCredentials = !!this.currentConfig.apiKey;
 
     if (!notificationsEnabled || !hasCredentials) {
@@ -131,9 +139,11 @@ export class BackgroundSyncService implements OnDestroy {
     }
 
     if ('periodicSync' in registration) {
-      const periodicSync = (registration as ServiceWorkerRegistration & {
-        periodicSync?: PeriodicSyncManager;
-      }).periodicSync;
+      const periodicSync = (
+        registration as ServiceWorkerRegistration & {
+          periodicSync?: PeriodicSyncManager;
+        }
+      ).periodicSync;
 
       if (periodicSync) {
         try {
@@ -144,7 +154,10 @@ export class BackgroundSyncService implements OnDestroy {
             });
           }
         } catch (error) {
-          this.logger.warn('BackgroundSyncService: periodic sync unavailable', error);
+          this.logger.warn(
+            'BackgroundSyncService: periodic sync unavailable',
+            error
+          );
           await this.registerOneOffSync(registration);
         }
         return;
@@ -154,27 +167,38 @@ export class BackgroundSyncService implements OnDestroy {
     await this.registerOneOffSync(registration);
   }
 
-  private async registerOneOffSync(registration: ServiceWorkerRegistration): Promise<void> {
+  private async registerOneOffSync(
+    registration: ServiceWorkerRegistration
+  ): Promise<void> {
     if ('sync' in registration) {
-      const syncManager = (registration as ServiceWorkerRegistration & {
-        sync?: SyncManager;
-      }).sync;
+      const syncManager = (
+        registration as ServiceWorkerRegistration & {
+          sync?: SyncManager;
+        }
+      ).sync;
 
       if (syncManager) {
         try {
           await syncManager.register(PERIODIC_SYNC_TAG);
         } catch (error) {
-          this.logger.warn('BackgroundSyncService: sync registration failed', error);
+          this.logger.warn(
+            'BackgroundSyncService: sync registration failed',
+            error
+          );
         }
       }
     }
   }
 
-  private async unregisterPeriodicSync(registration: ServiceWorkerRegistration): Promise<void> {
+  private async unregisterPeriodicSync(
+    registration: ServiceWorkerRegistration
+  ): Promise<void> {
     if ('periodicSync' in registration) {
-      const periodicSync = (registration as ServiceWorkerRegistration & {
-        periodicSync?: PeriodicSyncManager;
-      }).periodicSync;
+      const periodicSync = (
+        registration as ServiceWorkerRegistration & {
+          periodicSync?: PeriodicSyncManager;
+        }
+      ).periodicSync;
 
       if (periodicSync) {
         try {
@@ -183,7 +207,10 @@ export class BackgroundSyncService implements OnDestroy {
             await periodicSync.unregister(PERIODIC_SYNC_TAG);
           }
         } catch (error) {
-          this.logger.warn('BackgroundSyncService: failed to unregister periodic sync', error);
+          this.logger.warn(
+            'BackgroundSyncService: failed to unregister periodic sync',
+            error
+          );
         }
       }
     }
@@ -223,8 +250,15 @@ export class BackgroundSyncService implements OnDestroy {
     }
 
     try {
-      const timeout = new Promise<null>((resolve) => setTimeout(() => { resolve(null); }, 1000));
-      const registration = await Promise.race([navigator.serviceWorker.ready, timeout]);
+      const timeout = new Promise<null>(resolve =>
+        setTimeout(() => {
+          resolve(null);
+        }, 1000)
+      );
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        timeout,
+      ]);
       return registration ?? null;
     } catch {
       return null;

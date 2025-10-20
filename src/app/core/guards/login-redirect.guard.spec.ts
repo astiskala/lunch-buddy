@@ -1,6 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import {
+  Router,
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+} from '@angular/router';
 import { loginRedirectGuard } from './login-redirect.guard';
 import { AuthService } from '../services/auth.service';
 
@@ -18,10 +22,10 @@ describe('loginRedirectGuard', () => {
   let router: jasmine.SpyObj<RouterStub>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>('AuthService', [
-      'ready',
-      'hasApiKey',
-    ]);
+    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
+      'AuthService',
+      ['ready', 'hasApiKey']
+    );
     const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
@@ -43,7 +47,10 @@ describe('loginRedirectGuard', () => {
     router.parseUrl.and.returnValue(dashboardUrl);
 
     const result = await TestBed.runInInjectionContext(() =>
-      loginRedirectGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+      loginRedirectGuard(
+        {} as ActivatedRouteSnapshot,
+        {} as RouterStateSnapshot
+      )
     );
 
     expect(result).toBe(dashboardUrl);
@@ -53,8 +60,12 @@ describe('loginRedirectGuard', () => {
   it('should allow activation when user is not authenticated', async () => {
     authService.hasApiKey.and.returnValue(false);
 
-    const result = await TestBed.runInInjectionContext(() =>
-      loginRedirectGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot) as Promise<boolean>,
+    const result = await TestBed.runInInjectionContext(
+      () =>
+        loginRedirectGuard(
+          {} as ActivatedRouteSnapshot,
+          {} as RouterStateSnapshot
+        ) as Promise<boolean>
     );
 
     expect(result).toBe(true);

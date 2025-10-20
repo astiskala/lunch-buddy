@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
 import { formatCurrency } from '../../shared/utils/currency.util';
@@ -159,7 +164,9 @@ export class RecurringExpensesPanelComponent {
   readonly sortedExpenses = computed(() => {
     const referenceDate = this.referenceDate();
     return this.expenses()
-      .filter((instance) => isRecurringInstancePending(instance, { referenceDate }))
+      .filter(instance =>
+        isRecurringInstancePending(instance, { referenceDate })
+      )
       .sort((a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime());
   });
 
@@ -175,7 +182,9 @@ export class RecurringExpensesPanelComponent {
   });
 
   getPayee(entry: RecurringInstance): string {
-    return decodeHtmlEntities(entry.expense.payee) || 'Unnamed recurring expense';
+    return (
+      decodeHtmlEntities(entry.expense.payee) || 'Unnamed recurring expense'
+    );
   }
 
   getDescription(entry: RecurringInstance): string | null {

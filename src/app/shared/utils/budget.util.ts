@@ -6,8 +6,10 @@ import {
 } from '../../core/models/lunchmoney.types';
 import { decodeHtmlEntities } from './text.util';
 
-const pickMonthData = (summary: BudgetSummaryItem, monthKey: string): BudgetMonthData | null =>
-  summary.data[monthKey] ?? null;
+const pickMonthData = (
+  summary: BudgetSummaryItem,
+  monthKey: string
+): BudgetMonthData | null => summary.data[monthKey] ?? null;
 
 export const calculateBudgetStatus = (
   spent: number,
@@ -15,7 +17,7 @@ export const calculateBudgetStatus = (
   monthProgress: number,
   warnAtRatio: number,
   isIncome: boolean,
-  recurringTotal: number,
+  recurringTotal: number
 ): BudgetProgress['status'] => {
   if (budget <= 0) {
     return 'on-track';
@@ -74,7 +76,7 @@ export const buildBudgetProgress = (
   summary: BudgetSummaryItem,
   monthKey: string,
   monthProgress: number,
-  warnAtRatio: number,
+  warnAtRatio: number
 ): BudgetProgress => {
   const monthData = pickMonthData(summary, monthKey);
   const budgetAmount = parseBudgetAmount(monthData);
@@ -90,7 +92,8 @@ export const buildBudgetProgress = (
   const isAutomated = Boolean(monthData?.is_automated);
   const progressRatio =
     budgetAmount > 0 ? Math.min(1, Math.max(0, actualValue / budgetAmount)) : 0;
-  const budgetCurrency = monthData?.budget_currency ?? summary.config?.currency ?? null;
+  const budgetCurrency =
+    monthData?.budget_currency ?? summary.config?.currency ?? null;
 
   return {
     categoryId: summary.category_id,
@@ -109,13 +112,13 @@ export const buildBudgetProgress = (
     isAutomated,
     recurringTotal,
     recurringItems,
-  status: calculateBudgetStatus(
+    status: calculateBudgetStatus(
       spent,
       budgetAmount,
       monthProgress,
       warnAtRatio,
       summary.is_income,
-      recurringTotal,
+      recurringTotal
     ),
     progressRatio,
   };
@@ -123,18 +126,22 @@ export const buildBudgetProgress = (
 
 export const rankBudgetProgress = (
   items: BudgetProgress[],
-  customOrder: (number | null)[] = [],
+  customOrder: (number | null)[] = []
 ): BudgetProgress[] => {
   // If no custom order is specified, preserve the original API order
   if (customOrder.length === 0) {
     return [...items];
   }
 
-  const orderMap = new Map(customOrder.map((categoryId, index) => [categoryId, index]));
+  const orderMap = new Map(
+    customOrder.map((categoryId, index) => [categoryId, index])
+  );
 
   return [...items].sort((a, b) => {
-    const orderA = a.categoryId === null ? undefined : orderMap.get(a.categoryId);
-    const orderB = b.categoryId === null ? undefined : orderMap.get(b.categoryId);
+    const orderA =
+      a.categoryId === null ? undefined : orderMap.get(a.categoryId);
+    const orderB =
+      b.categoryId === null ? undefined : orderMap.get(b.categoryId);
 
     if (orderA !== undefined && orderB !== undefined) {
       return orderA - orderB;

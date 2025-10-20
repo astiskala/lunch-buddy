@@ -1,7 +1,19 @@
-import { ChangeDetectionStrategy, Component, signal, input, computed, inject, effect } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  input,
+  computed,
+  inject,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { BudgetProgress, RecurringInstance, Transaction } from '../../core/models/lunchmoney.types';
+import {
+  BudgetProgress,
+  RecurringInstance,
+  Transaction,
+} from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { OfflineService } from '../../core/services/offline.service';
@@ -69,10 +81,12 @@ export class CategoryCardComponent {
   readonly budgetLabel = computed(() =>
     formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    }),
+    })
   );
 
-  readonly spentLabelText = computed(() => (this.item().isIncome ? 'Received' : 'Spent'));
+  readonly spentLabelText = computed(() =>
+    this.item().isIncome ? 'Received' : 'Spent'
+  );
 
   readonly spentLabel = computed(() => {
     const item = this.item();
@@ -83,12 +97,16 @@ export class CategoryCardComponent {
   });
 
   readonly progressValue = computed(() =>
-    Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100))),
+    Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100)))
   );
 
-  readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount || 0) > 0);
+  readonly hasBudget = computed(
+    () => Math.abs(this.item().budgetAmount || 0) > 0
+  );
 
-  readonly monthProgressPercent = computed(() => Math.round(this.monthProgressRatio() * 100));
+  readonly monthProgressPercent = computed(() =>
+    Math.round(this.monthProgressRatio() * 100)
+  );
 
   readonly statusColor = computed(() => {
     const st = this.item().status;
@@ -98,21 +116,22 @@ export class CategoryCardComponent {
   });
 
   readonly activityEntries = computed(() => {
-  // Use filtered transactionList for uncategorised categories
-  const item = this.item();
-  const txns = Array.isArray(item.transactionList) ? item.transactionList : this.transactions();
-  const recurring = this.recurringExpenses();
-  const referenceDate = this.referenceDate();
-  const entries: ActivityEntry[] = [];
+    // Use filtered transactionList for uncategorised categories
+    const item = this.item();
+    const txns = Array.isArray(item.transactionList)
+      ? item.transactionList
+      : this.transactions();
+    const recurring = this.recurringExpenses();
+    const referenceDate = this.referenceDate();
+    const entries: ActivityEntry[] = [];
 
     // Add transactions
     for (const transaction of txns) {
       const amount = Number.parseFloat(transaction.amount);
       const date = new Date(transaction.date);
-      const label =
-        decodeHtmlEntities(
-          transaction.display_name || transaction.payee || 'Unnamed transaction',
-        );
+      const label = decodeHtmlEntities(
+        transaction.display_name || transaction.payee || 'Unnamed transaction'
+      );
       const notes = decodeHtmlEntities(transaction.notes);
 
       entries.push({
@@ -144,7 +163,8 @@ export class CategoryCardComponent {
       }
 
       const amount = Number.parseFloat(instance.expense.amount);
-      const label = decodeHtmlEntities(instance.expense.payee) || 'Recurring expense';
+      const label =
+        decodeHtmlEntities(instance.expense.payee) || 'Recurring expense';
       const notes = decodeHtmlEntities(instance.expense.description);
 
       entries.push({
@@ -197,7 +217,7 @@ export class CategoryCardComponent {
   readonly upcomingLabel = computed(() =>
     formatCurrency(this.upcomingRecurringTotal(), this.item().budgetCurrency, {
       fallbackCurrency: this.defaultCurrency(),
-    }),
+    })
   );
 
   readonly remainingAfterUpcoming = computed(() => {
@@ -215,9 +235,13 @@ export class CategoryCardComponent {
   });
 
   readonly remainingAfterUpcomingLabel = computed(() =>
-    formatCurrency(Math.abs(this.remainingAfterUpcoming()), this.item().budgetCurrency, {
-      fallbackCurrency: this.defaultCurrency(),
-    }),
+    formatCurrency(
+      Math.abs(this.remainingAfterUpcoming()),
+      this.item().budgetCurrency,
+      {
+        fallbackCurrency: this.defaultCurrency(),
+      }
+    )
   );
 
   readonly projectedValue = computed(() => {
@@ -246,11 +270,16 @@ export class CategoryCardComponent {
     this.transactionsLoadError.set(false);
 
     this.lunchMoneyService
-      .getCategoryTransactions(this.item().categoryId, this.startDate(), this.endDate(), {
-        includeAllTransactions: includeAll,
-      })
+      .getCategoryTransactions(
+        this.item().categoryId,
+        this.startDate(),
+        this.endDate(),
+        {
+          includeAllTransactions: includeAll,
+        }
+      )
       .subscribe({
-        next: (response) => {
+        next: response => {
           this.transactions.set(response.transactions);
           this.isLoadingTransactions.set(false);
           this.transactionsLoadError.set(false);

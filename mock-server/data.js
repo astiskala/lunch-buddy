@@ -434,9 +434,11 @@ const recurringExpenseTemplates = [
   },
 ];
 
-const categoriesById = new Map(categories.map((category) => [category.id, category]));
+const categoriesById = new Map(
+  categories.map(category => [category.id, category])
+);
 
-const toDate = (value) => {
+const toDate = value => {
   if (!value) {
     return null;
   }
@@ -448,19 +450,19 @@ const toDate = (value) => {
   return parsed;
 };
 
-const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+const startOfMonth = date => new Date(date.getFullYear(), date.getMonth(), 1);
 
-const endOfMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
+const endOfMonth = date => new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-const daysInMonth = (date) => endOfMonth(date).getDate();
+const daysInMonth = date => endOfMonth(date).getDate();
 
-const monthKey = (date) => {
+const monthKey = date => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   return `${year}-${month}-01`;
 };
 
-const formatDate = (date) => {
+const formatDate = date => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
@@ -469,7 +471,11 @@ const formatDate = (date) => {
 
 const clampDayToMonth = (monthStart, day) => {
   const cappedDay = Math.min(day, daysInMonth(monthStart));
-  const date = new Date(monthStart.getFullYear(), monthStart.getMonth(), cappedDay);
+  const date = new Date(
+    monthStart.getFullYear(),
+    monthStart.getMonth(),
+    cappedDay
+  );
   date.setHours(0, 0, 0, 0);
   return date;
 };
@@ -491,7 +497,7 @@ const computeMonthProgress = (monthStart, monthEnd, now) => {
   return Math.max(0, Math.min(1, elapsed / totalDays));
 };
 
-const formatAmount = (value) => {
+const formatAmount = value => {
   const rounded = Math.round(value * 100) / 100;
   const normalized = Math.abs(rounded) < 0.005 ? 0 : rounded;
   return normalized.toFixed(2);
@@ -509,14 +515,17 @@ const scaleExpenseAmounts = (templates, target) => {
     return [];
   }
 
-  const baseTotal = templates.reduce((sum, template) => sum + Math.abs(template.amount), 0);
+  const baseTotal = templates.reduce(
+    (sum, template) => sum + Math.abs(template.amount),
+    0
+  );
   if (baseTotal === 0) {
     return templates.map(() => 0);
   }
 
   const factor = target / baseTotal;
-  const scaled = templates.map((template) => template.amount * factor);
-  const rounded = scaled.map((value) => Math.round(value * 100) / 100);
+  const scaled = templates.map(template => template.amount * factor);
+  const rounded = scaled.map(value => Math.round(value * 100) / 100);
 
   const total = rounded.reduce((sum, value) => sum + Math.abs(value), 0);
   const delta = Number((target - total).toFixed(2));
@@ -524,7 +533,9 @@ const scaleExpenseAmounts = (templates, target) => {
   if (Math.abs(delta) >= 0.01) {
     const lastIndex = rounded.length - 1;
     const sign = rounded[lastIndex] >= 0 ? 1 : -1;
-    rounded[lastIndex] = Number((rounded[lastIndex] + delta * (sign >= 0 ? 1 : -1)).toFixed(2));
+    rounded[lastIndex] = Number(
+      (rounded[lastIndex] + delta * (sign >= 0 ? 1 : -1)).toFixed(2)
+    );
   }
 
   return rounded;
@@ -561,7 +572,7 @@ const generateExpenseTransactions = (category, settings, monthStart, now) => {
   const totalDays = daysInMonth(monthStart);
   const limitDay = Math.max(1, Math.floor(progress * totalDays));
   const activeTemplates = settings.transactionTemplates
-    .filter((template) => template.day <= limitDay)
+    .filter(template => template.day <= limitDay)
     .sort((a, b) => a.sequence - b.sequence);
 
   if (!activeTemplates.length) {
@@ -575,10 +586,13 @@ const generateExpenseTransactions = (category, settings, monthStart, now) => {
 
   const scaledAmounts = scaleExpenseAmounts(activeTemplates, target);
   const transactions = activeTemplates.map((template, index) =>
-    buildTransaction(template, scaledAmounts[index], monthStart, category),
+    buildTransaction(template, scaledAmounts[index], monthStart, category)
   );
 
-  const total = transactions.reduce((sum, txn) => sum + Math.abs(Number(txn.amount)), 0);
+  const total = transactions.reduce(
+    (sum, txn) => sum + Math.abs(Number(txn.amount)),
+    0
+  );
   return { transactions, total: Number(total.toFixed(2)) };
 };
 
@@ -593,15 +607,15 @@ const generateIncomeTransactions = (category, settings, monthStart, now) => {
   const totalDays = daysInMonth(monthStart);
   const limitDay = Math.max(1, Math.floor(progress * totalDays));
   const activeTemplates = settings.transactionTemplates
-    .filter((template) => template.day <= limitDay)
+    .filter(template => template.day <= limitDay)
     .sort((a, b) => a.sequence - b.sequence);
 
   if (!activeTemplates.length) {
     return { transactions: [], total: 0 };
   }
 
-  const transactions = activeTemplates.map((template) =>
-    buildTransaction(template, template.amount, monthStart, category),
+  const transactions = activeTemplates.map(template =>
+    buildTransaction(template, template.amount, monthStart, category)
   );
   const total = transactions.reduce((sum, txn) => sum + Number(txn.amount), 0);
   return { transactions, total: Number(total.toFixed(2)) };
@@ -614,11 +628,21 @@ const generateMonthSnapshot = (category, monthStart, now) => {
 
   if (settings) {
     if (category.is_income) {
-      const generated = generateIncomeTransactions(category, settings, monthStart, now);
+      const generated = generateIncomeTransactions(
+        category,
+        settings,
+        monthStart,
+        now
+      );
       transactions = generated.transactions;
       total = generated.total;
     } else {
-      const generated = generateExpenseTransactions(category, settings, monthStart, now);
+      const generated = generateExpenseTransactions(
+        category,
+        settings,
+        monthStart,
+        now
+      );
       transactions = generated.transactions;
       total = generated.total;
     }
@@ -627,8 +651,8 @@ const generateMonthSnapshot = (category, monthStart, now) => {
   const monthData = {
     num_transactions: transactions.length,
     spending_to_base: Number(total.toFixed(2)),
-    budget_to_base: category.is_income ? 0 : settings?.monthlyBudget ?? 0,
-    budget_amount: category.is_income ? 0 : settings?.monthlyBudget ?? 0,
+    budget_to_base: category.is_income ? 0 : (settings?.monthlyBudget ?? 0),
+    budget_amount: category.is_income ? 0 : (settings?.monthlyBudget ?? 0),
     budget_currency: currency,
     is_automated: true,
   };
@@ -661,7 +685,7 @@ const buildBudgetSummaries = ({ startDate, endDate }) => {
   const rangeEnd = toDate(endDate) ?? endOfMonth(rangeStart);
   const months = enumerateMonths(rangeStart, rangeEnd);
 
-  return categories.map((category) => {
+  return categories.map(category => {
     const settings = categorySettings[category.id];
     const data = months.reduce((acc, monthStart) => {
       const snapshot = generateMonthSnapshot(category, monthStart, now);
@@ -672,7 +696,7 @@ const buildBudgetSummaries = ({ startDate, endDate }) => {
     const recurring =
       settings?.recurringSummary?.length > 0
         ? {
-            data: settings.recurringSummary.map((item) => ({
+            data: settings.recurringSummary.map(item => ({
               payee: item.payee,
               amount: item.amount,
               currency: item.currency,
@@ -717,7 +741,7 @@ const buildRecurringExpenses = ({ startDate }) => {
 
   const monthStart = startOfMonth(toDate(startDate) ?? now);
 
-  const expenses = recurringExpenseTemplates.map((template) => {
+  const expenses = recurringExpenseTemplates.map(template => {
     const billingDate = clampDayToMonth(monthStart, template.billingDay ?? 1);
 
     const nextOccurrence =

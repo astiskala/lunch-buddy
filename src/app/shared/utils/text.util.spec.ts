@@ -19,9 +19,9 @@ describe('Text Utils', () => {
     });
 
     it('should decode multiple entities in a string', () => {
-      expect(decodeHtmlEntities('&lt;div&gt;Hello &amp; Goodbye&lt;/div&gt;')).toBe(
-        '<div>Hello & Goodbye</div>',
-      );
+      expect(
+        decodeHtmlEntities('&lt;div&gt;Hello &amp; Goodbye&lt;/div&gt;')
+      ).toBe('<div>Hello & Goodbye</div>');
     });
 
     it('should decode decimal numeric entities', () => {
@@ -57,13 +57,14 @@ describe('Text Utils', () => {
     });
 
     it('should handle mixed entities and text', () => {
-      expect(decodeHtmlEntities('Caf&eacute; &amp; Restaurant')).toBe('Café & Restaurant');
+      expect(decodeHtmlEntities('Caf&eacute; &amp; Restaurant')).toBe(
+        'Café & Restaurant'
+      );
     });
 
     it('should handle empty string', () => {
       expect(decodeHtmlEntities('')).toBe('');
     });
-
 
     it('should handle special characters from code points', () => {
       expect(decodeHtmlEntities('&#128512;')).toBe('😀'); // Emoji

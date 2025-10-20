@@ -18,9 +18,7 @@ const normalizeBaseUrl = (baseUrl: string): string => {
   return url;
 };
 
-const LUNCH_MONEY_API_BASE = normalizeBaseUrl(
-  environment.lunchmoneyApiBase,
-);
+const LUNCH_MONEY_API_BASE = normalizeBaseUrl(environment.lunchmoneyApiBase);
 
 @Injectable({
   providedIn: 'root',
@@ -47,7 +45,7 @@ export class LunchMoneyService {
   getUser(): Observable<LunchMoneyUser> {
     return this.http.get<LunchMoneyUser>(
       `${LUNCH_MONEY_API_BASE}/me`,
-      this.createRequestOptions(),
+      this.createRequestOptions()
     );
   }
 
@@ -56,22 +54,26 @@ export class LunchMoneyService {
    */
   getCategories(): Observable<LunchMoneyCategory[]> {
     return this.http
-      .get<{ categories: LunchMoneyCategory[] }>(
-        `${LUNCH_MONEY_API_BASE}/categories`,
-        this.createRequestOptions(),
-      )
-      .pipe(map((response) => response.categories));
+      .get<{
+        categories: LunchMoneyCategory[];
+      }>(`${LUNCH_MONEY_API_BASE}/categories`, this.createRequestOptions())
+      .pipe(map(response => response.categories));
   }
 
   /**
    * Get budget summary for a specific date range
    */
-  getBudgetSummary(startDate: string, endDate: string): Observable<BudgetSummaryItem[]> {
-    const params = new HttpParams().set('start_date', startDate).set('end_date', endDate);
+  getBudgetSummary(
+    startDate: string,
+    endDate: string
+  ): Observable<BudgetSummaryItem[]> {
+    const params = new HttpParams()
+      .set('start_date', startDate)
+      .set('end_date', endDate);
 
     return this.http.get<BudgetSummaryItem[]>(
       `${LUNCH_MONEY_API_BASE}/budgets`,
-      this.createRequestOptions(params),
+      this.createRequestOptions(params)
     );
   }
 
@@ -79,16 +81,18 @@ export class LunchMoneyService {
    * Get recurring expenses
    */
   getRecurringExpenses(monthStart: string): Observable<RecurringExpense[]> {
-    const params = new HttpParams().set('start_date', monthStart).set('debit_as_negative', 'true');
+    const params = new HttpParams()
+      .set('start_date', monthStart)
+      .set('debit_as_negative', 'true');
 
     return this.http
       .get<{
         recurring_expenses: RecurringExpense[];
       }>(
         `${LUNCH_MONEY_API_BASE}/recurring_expenses`,
-        this.createRequestOptions(params),
+        this.createRequestOptions(params)
       )
-      .pipe(map((response) => response.recurring_expenses));
+      .pipe(map(response => response.recurring_expenses));
   }
 
   /**
@@ -98,7 +102,7 @@ export class LunchMoneyService {
     categoryId: number | null,
     startDate: string,
     endDate: string,
-    options?: { includeAllTransactions?: boolean },
+    options?: { includeAllTransactions?: boolean }
   ): Observable<TransactionsResponse> {
     let params = new HttpParams()
       .set('start_date', startDate)
@@ -116,20 +120,24 @@ export class LunchMoneyService {
       params = params.set('status', 'cleared');
     }
 
-    return this.http.get<TransactionsResponse>(
-      `${LUNCH_MONEY_API_BASE}/transactions`,
-      this.createRequestOptions(params),
-    ).pipe(
-      map((response) => {
-        // If querying for uncategorized transactions, filter client-side
-        if (categoryId === null) {
-          return {
-            ...response,
-            transactions: response.transactions.filter(txn => txn.category_id === null),
-          };
-        }
-        return response;
-      }),
-    );
+    return this.http
+      .get<TransactionsResponse>(
+        `${LUNCH_MONEY_API_BASE}/transactions`,
+        this.createRequestOptions(params)
+      )
+      .pipe(
+        map(response => {
+          // If querying for uncategorized transactions, filter client-side
+          if (categoryId === null) {
+            return {
+              ...response,
+              transactions: response.transactions.filter(
+                txn => txn.category_id === null
+              ),
+            };
+          }
+          return response;
+        })
+      );
   }
 }

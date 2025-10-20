@@ -13,7 +13,7 @@ export const routes: Routes = [
     path: 'dashboard',
     loadComponent: () =>
       import('./features/dashboard/dashboard-page.component').then(
-        (m) => m.DashboardPageComponent
+        m => m.DashboardPageComponent
       ),
     canActivate: [authGuard],
   },

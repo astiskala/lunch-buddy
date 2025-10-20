@@ -24,7 +24,7 @@ describe('OfflineService', () => {
   it('should provide readonly signals', () => {
     const onlineStatus = service.getOnlineStatus();
     const offlineStatus = service.getOfflineStatus();
-    
+
     expect(onlineStatus()).toBe(!offlineStatus());
   });
 });

@@ -1,12 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { BudgetService, CategoryPreferences } from '../../shared/services/budget.service';
+import {
+  BudgetService,
+  CategoryPreferences,
+} from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 
 describe('DashboardPageComponent - Unit Tests', () => {
   type BudgetServiceStub = {
     refresh: () => void;
-    updatePreferences: (updater: (current: CategoryPreferences) => CategoryPreferences) => void;
+    updatePreferences: (
+      updater: (current: CategoryPreferences) => CategoryPreferences
+    ) => void;
   };
 
   type AuthServiceStub = {
@@ -22,12 +27,14 @@ describe('DashboardPageComponent - Unit Tests', () => {
   let mockRouter: jasmine.SpyObj<RouterStub>;
 
   beforeEach(() => {
-    mockBudgetService = jasmine.createSpyObj<BudgetServiceStub>('BudgetService', [
-      'refresh',
-      'updatePreferences',
-    ]);
+    mockBudgetService = jasmine.createSpyObj<BudgetServiceStub>(
+      'BudgetService',
+      ['refresh', 'updatePreferences']
+    );
 
-    mockAuthService = jasmine.createSpyObj<AuthServiceStub>('AuthService', ['clearApiKey']);
+    mockAuthService = jasmine.createSpyObj<AuthServiceStub>('AuthService', [
+      'clearApiKey',
+    ]);
 
     mockRouter = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
     mockRouter.navigate.and.resolveTo(true);

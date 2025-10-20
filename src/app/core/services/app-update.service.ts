@@ -17,13 +17,13 @@ export class AppUpdateService {
     }
 
     this.subscribeToUpdates();
-    this.swUpdate
-      .checkForUpdate()
-      .catch((error: unknown) => { this.logger.warn('AppUpdateService: checkForUpdate failed', error); });
+    this.swUpdate.checkForUpdate().catch((error: unknown) => {
+      this.logger.warn('AppUpdateService: checkForUpdate failed', error);
+    });
   }
 
   private subscribeToUpdates(): void {
-    this.swUpdate?.versionUpdates.subscribe((event) => {
+    this.swUpdate?.versionUpdates.subscribe(event => {
       if (event.type === 'VERSION_READY') {
         this.logger.info('AppUpdateService: new version ready, activating');
         void this.activateAndReload();

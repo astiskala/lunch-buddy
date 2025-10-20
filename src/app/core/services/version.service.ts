@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { version } from '../../../environments/version';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VersionService {
   getVersion(): string {

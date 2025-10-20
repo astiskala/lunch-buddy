@@ -276,7 +276,11 @@ summary-hero {
 
   @media (prefers-color-scheme: dark) {
     .summary-hero {
-      background: linear-gradient(135deg, rgb(15 96 90 / 90%) 0%, rgb(44 122 115 / 90%) 100%);
+      background: linear-gradient(
+        135deg,
+        rgb(15 96 90 / 90%) 0%,
+        rgb(44 122 115 / 90%) 100%
+      );
       border: 1px solid rgb(68 149 140 / 35%);
 
       .action-buttons {
@@ -313,7 +317,7 @@ category-card {
     transition: box-shadow 0.2s ease;
     cursor: pointer;
     position: relative;
-    
+
     // Reset button styles
     border: none;
     font-family: inherit;
@@ -1103,7 +1107,7 @@ category-preferences-dialog {
     max-height: 90vh;
     box-shadow: var(--shadow-lg);
     background: var(--color-surface);
-    
+
     &::backdrop {
       background: rgb(0 0 0 / 50%);
     }

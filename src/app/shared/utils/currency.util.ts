@@ -1,5 +1,7 @@
 const resolveLocale = (): string =>
-  typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US';
+  typeof navigator !== 'undefined' && navigator.language
+    ? navigator.language
+    : 'en-US';
 
 export interface FormatCurrencyOptions {
   readonly locale?: string;
@@ -11,7 +13,7 @@ export interface FormatCurrencyOptions {
 export const formatCurrency = (
   value: number,
   currency: string | null,
-  options: FormatCurrencyOptions = {},
+  options: FormatCurrencyOptions = {}
 ): string =>
   new Intl.NumberFormat(options.locale ?? resolveLocale(), {
     style: 'currency',

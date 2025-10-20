@@ -35,19 +35,24 @@ export class App implements OnInit {
   public ngOnInit(): void {
     this._swUpdate.versionUpdates
       .pipe(
-        filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY'),
-        map((event) => ({
+        filter(
+          (event): event is VersionReadyEvent => event.type === 'VERSION_READY'
+        ),
+        map(event => ({
           type: 'UPDATE_AVAILABLE',
           current: event.currentVersion,
           available: event.latestVersion,
-        })),
+        }))
       )
       .subscribe(() => {
-        this._swUpdate.activateUpdate().then(() => {
-          globalThis.location.reload();
-        }).catch((error: unknown) => {
-          console.error('Failed to activate update:', error);
-        });
+        this._swUpdate
+          .activateUpdate()
+          .then(() => {
+            globalThis.location.reload();
+          })
+          .catch((error: unknown) => {
+            console.error('Failed to activate update:', error);
+          });
       });
   }
 }

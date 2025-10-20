@@ -17,7 +17,9 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
   let ensurePermissionSpy: jasmine.Spy;
 
   beforeEach(async () => {
-    ensurePermissionSpy = jasmine.createSpy('ensurePermission').and.resolveTo(true);
+    ensurePermissionSpy = jasmine
+      .createSpy('ensurePermission')
+      .and.resolveTo(true);
 
     await TestBed.configureTestingModule({
       imports: [CategoryPreferencesDialogComponent],

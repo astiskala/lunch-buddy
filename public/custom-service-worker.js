@@ -26,7 +26,7 @@ const defaultState = () => ({
 });
 
 // Handle Lunch Money API requests before delegating other traffic to the Angular worker.
-globalThis.addEventListener('fetch', (event) => {
+globalThis.addEventListener('fetch', event => {
   const { request } = event;
 
   if (request.method !== 'GET') {
@@ -46,7 +46,10 @@ globalThis.addEventListener('fetch', (event) => {
     event.respondWith(handleApiRequest(request));
   } catch (error) {
     // Fallback to the default handling if respondWith throws for any reason.
-    console.warn('[WARN] custom-service-worker: failed to respond with cached API data', error);
+    console.warn(
+      '[WARN] custom-service-worker: failed to respond with cached API data',
+      error
+    );
   }
 });
 
@@ -58,16 +61,17 @@ globalThis.addEventListener('install', () => {
 });
 
 // Activate event - cleanup old caches
-globalThis.addEventListener('activate', (event) => {
+globalThis.addEventListener('activate', event => {
   event.waitUntil(
     (async () => {
       const cacheNames = await caches.keys();
       const cachesToDelete = cacheNames.filter(
-        (name) => name.startsWith('lunchbuddy-api-cache-') && name !== API_CACHE_NAME,
+        name =>
+          name.startsWith('lunchbuddy-api-cache-') && name !== API_CACHE_NAME
       );
-      await Promise.all(cachesToDelete.map((name) => caches.delete(name)));
+      await Promise.all(cachesToDelete.map(name => caches.delete(name)));
       await globalThis.clients.claim();
-    })(),
+    })()
   );
 });
 
@@ -83,11 +87,11 @@ async function handleApiRequest(request) {
     // Try network first with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
+
     const networkResponse = await fetch(request.clone(), {
       signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
 
     if (networkResponse.ok) {
@@ -101,7 +105,10 @@ async function handleApiRequest(request) {
     return getCachedResponse(request);
   } catch (error) {
     // Network error or timeout - use cache
-    console.warn('[WARN] custom-service-worker: network request failed, falling back to cache', error);
+    console.warn(
+      '[WARN] custom-service-worker: network request failed, falling back to cache',
+      error
+    );
     return getCachedResponse(request);
   }
 }
@@ -124,11 +131,11 @@ async function getCachedResponse(request) {
       status: 503,
       statusText: 'Service Unavailable',
       headers: { 'Content-Type': 'application/json' },
-    },
+    }
   );
 }
 
-globalThis.addEventListener('message', (event) => {
+globalThis.addEventListener('message', event => {
   const data = event.data;
   if (!data || typeof data !== 'object') {
     return;
@@ -139,13 +146,13 @@ globalThis.addEventListener('message', (event) => {
   }
 });
 
-globalThis.addEventListener('periodicsync', (event) => {
+globalThis.addEventListener('periodicsync', event => {
   if (event.tag === PERIODIC_SYNC_TAG) {
     event.waitUntil(handleBudgetSync('periodic'));
   }
 });
 
-globalThis.addEventListener('sync', (event) => {
+globalThis.addEventListener('sync', event => {
   if (event.tag === PERIODIC_SYNC_TAG) {
     event.waitUntil(handleBudgetSync('sync'));
   }
@@ -198,9 +205,9 @@ async function handleBudgetSync(trigger) {
     }
 
     const progress = summaries
-      .filter((summary) => !summary.exclude_from_budget && !summary.is_group)
-      .map((summary) =>
-        buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio),
+      .filter(summary => !summary.exclude_from_budget && !summary.is_group)
+      .map(summary =>
+        buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio)
       );
 
     const alerts = filterAlerts(progress, config.preferences.hiddenCategoryIds);
@@ -229,7 +236,10 @@ async function handleBudgetSync(trigger) {
       return;
     }
 
-    const payload = buildNotificationPayload(alerts, config.preferences.currency);
+    const payload = buildNotificationPayload(
+      alerts,
+      config.preferences.currency
+    );
     await globalThis.registration.showNotification(payload.title, {
       body: payload.body,
       tag: 'lunch-buddy-budget-alerts',
@@ -286,7 +296,7 @@ async function isAnyClientVisible() {
       type: 'window',
       includeUncontrolled: true,
     });
-    return clientList.some((client) => client.visibilityState === 'visible');
+    return clientList.some(client => client.visibilityState === 'visible');
   } catch {
     return false;
   }
@@ -358,16 +368,16 @@ function parseSpentAmount(monthData) {
 function filterAlerts(progress, hiddenCategoryIds) {
   const hidden = new Set(hiddenCategoryIds ?? []);
   return progress.filter(
-    (item) =>
+    item =>
       !hidden.has(item.categoryId) &&
       !item.isIncome &&
-      (item.status === 'over' || item.status === 'at-risk'),
+      (item.status === 'over' || item.status === 'at-risk')
   );
 }
 
 function buildSignature(alerts) {
   return alerts
-    .map((alert) => `${alert.categoryId}:${alert.status}`)
+    .map(alert => `${alert.categoryId}:${alert.status}`)
     .sort()
     .join('|');
 }
@@ -375,17 +385,21 @@ function buildSignature(alerts) {
 function buildNotificationPayload(alerts, preferredCurrency) {
   const fallbackCurrency =
     preferredCurrency ??
-    alerts.find((alert) => alert.budgetCurrency)?.budgetCurrency ??
+    alerts.find(alert => alert.budgetCurrency)?.budgetCurrency ??
     FALLBACK_CURRENCY;
 
   if (alerts.length === 1) {
     const [alert] = alerts;
     const statusLabel = alert.status === 'over' ? 'over budget' : 'at risk';
-    const spent = formatCurrency(alert.spent, alert.budgetCurrency, fallbackCurrency);
+    const spent = formatCurrency(
+      alert.spent,
+      alert.budgetCurrency,
+      fallbackCurrency
+    );
     const budget = formatCurrency(
       alert.budgetAmount,
       alert.budgetCurrency,
-      fallbackCurrency,
+      fallbackCurrency
     );
 
     return {
@@ -395,7 +409,10 @@ function buildNotificationPayload(alerts, preferredCurrency) {
   }
 
   const summary = alerts
-    .map((alert) => `${alert.categoryName} (${alert.status === 'over' ? 'over' : 'at risk'})`)
+    .map(
+      alert =>
+        `${alert.categoryName} (${alert.status === 'over' ? 'over' : 'at risk'})`
+    )
     .join(', ');
 
   return {
@@ -440,7 +457,11 @@ function getMonthProgress(today, range) {
 
 function differenceInCalendarDays(left, right) {
   const utcLeft = Date.UTC(left.getFullYear(), left.getMonth(), left.getDate());
-  const utcRight = Date.UTC(right.getFullYear(), right.getMonth(), right.getDate());
+  const utcRight = Date.UTC(
+    right.getFullYear(),
+    right.getMonth(),
+    right.getDate()
+  );
   return Math.floor((utcLeft - utcRight) / (1000 * 60 * 60 * 24));
 }
 
@@ -449,7 +470,7 @@ async function openDb() {
     return null;
   }
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = () => {
@@ -510,7 +531,7 @@ async function loadState() {
 }
 
 function putValue(db, storeName, key, value) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const tx = db.transaction(storeName, 'readwrite');
     tx.objectStore(storeName).put(value, key);
     tx.oncomplete = () => resolve();
@@ -519,7 +540,7 @@ function putValue(db, storeName, key, value) {
 }
 
 function getValue(db, storeName, key) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const tx = db.transaction(storeName, 'readonly');
     const request = tx.objectStore(storeName).get(key);
     request.onsuccess = () => resolve(request.result);

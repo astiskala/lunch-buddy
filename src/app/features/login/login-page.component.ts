@@ -1,5 +1,10 @@
 import { NgOptimizedImage } from '@angular/common';
-import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
@@ -45,7 +50,9 @@ export class LoginPageComponent {
       await this.router.navigate(['/']);
     } catch (error: unknown) {
       this.logger.error('LoginPageComponent: failed to persist API key', error);
-      this.errorMessage.set('We could not save your API key. Please try again.');
+      this.errorMessage.set(
+        'We could not save your API key. Please try again.'
+      );
     } finally {
       this.isSubmitting.set(false);
     }

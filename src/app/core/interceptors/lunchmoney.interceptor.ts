@@ -28,6 +28,6 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
         },
       });
       return next(clonedReq);
-    }),
+    })
   );
 };

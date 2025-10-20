@@ -14,7 +14,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-15',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate },
+      { windowStart, windowEnd, referenceDate }
     );
 
     expect(result?.toISOString()).toBe('2025-10-15T00:00:00.000Z');
@@ -28,7 +28,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate },
+      { windowStart, windowEnd, referenceDate }
     );
 
     expect(result).toBeNull();
@@ -42,7 +42,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate },
+      { windowStart, windowEnd, referenceDate }
     );
 
     expect(result?.toISOString()).toBe('2025-10-01T00:00:00.000Z');
@@ -56,7 +56,7 @@ describe('getRecurringDate', () => {
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
-      { windowStart, windowEnd, referenceDate },
+      { windowStart, windowEnd, referenceDate }
     );
 
     expect(result).toBeNull();
@@ -95,7 +95,7 @@ describe('isRecurringInstancePending', () => {
     expect(
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-10T00:00:00.000Z'),
-      }),
+      })
     ).toBeTrue();
   });
 
@@ -112,7 +112,7 @@ describe('isRecurringInstancePending', () => {
     expect(
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-20T00:00:00.000Z'),
-      }),
+      })
     ).toBeFalse();
   });
 
@@ -129,7 +129,7 @@ describe('isRecurringInstancePending', () => {
     expect(
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-20T00:00:00.000Z'),
-      }),
+      })
     ).toBeTrue();
   });
 
@@ -146,7 +146,7 @@ describe('isRecurringInstancePending', () => {
     expect(
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-10T00:00:00.000Z'),
-      }),
+      })
     ).toBeTrue();
   });
 });

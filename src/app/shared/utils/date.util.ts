@@ -31,7 +31,7 @@ export const startOfToday = (): Date => {
 export const deriveReferenceDate = (
   windowStart: string,
   windowEnd: string,
-  today = startOfToday(),
+  today = startOfToday()
 ): Date => {
   const start = parseIsoDay(windowStart);
   const end = parseIsoDay(windowEnd);
@@ -63,8 +63,16 @@ function endOfMonth(date: Date): Date {
 }
 
 function differenceInCalendarDays(dateLeft: Date, dateRight: Date): number {
-  const utcLeft = Date.UTC(dateLeft.getFullYear(), dateLeft.getMonth(), dateLeft.getDate());
-  const utcRight = Date.UTC(dateRight.getFullYear(), dateRight.getMonth(), dateRight.getDate());
+  const utcLeft = Date.UTC(
+    dateLeft.getFullYear(),
+    dateLeft.getMonth(),
+    dateLeft.getDate()
+  );
+  const utcRight = Date.UTC(
+    dateRight.getFullYear(),
+    dateRight.getMonth(),
+    dateRight.getDate()
+  );
   return Math.floor((utcLeft - utcRight) / (1000 * 60 * 60 * 24));
 }
 

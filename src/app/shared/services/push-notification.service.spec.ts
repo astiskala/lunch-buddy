@@ -9,9 +9,10 @@ import {
 class MockNotificationChannel implements NotificationChannel {
   supported = true;
   permission: NotificationPermission = 'default';
-  requestPermissionSpy = jasmine.createSpy<() => Promise<NotificationPermission>>(
-    'requestPermission',
-  );
+  requestPermissionSpy =
+    jasmine.createSpy<() => Promise<NotificationPermission>>(
+      'requestPermission'
+    );
 
   isSupported(): boolean {
     return this.supported;

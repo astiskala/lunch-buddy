@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
+import {
+  NO_ERRORS_SCHEMA,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { CategoryProgressListComponent } from './category-progress-list.component';
 
 describe('CategoryProgressListComponent', () => {
@@ -26,7 +29,7 @@ describe('CategoryProgressListComponent', () => {
     component.componentRef.setInput('endDate', '2025-10-31');
     component.componentRef.setInput('referenceDate', new Date());
     component.detectChanges();
-    
+
     expect(component.componentInstance.items()).toEqual([]);
   });
 
@@ -38,7 +41,7 @@ describe('CategoryProgressListComponent', () => {
     component.componentRef.setInput('endDate', '2025-10-31');
     component.componentRef.setInput('referenceDate', new Date());
     component.detectChanges();
-    
+
     const compiled = component.nativeElement as HTMLElement;
     const emptyMsg = compiled.querySelector('.empty-message');
     expect(emptyMsg?.textContent).toContain('No categories available');
@@ -53,7 +56,7 @@ describe('CategoryProgressListComponent', () => {
     component.componentRef.setInput('endDate', '2025-10-31');
     component.componentRef.setInput('referenceDate', new Date());
     component.detectChanges();
-    
+
     const compiled = component.nativeElement as HTMLElement;
     const emptyMsg = compiled.querySelector('.empty-message');
     expect(emptyMsg?.textContent).toContain('Custom empty message');

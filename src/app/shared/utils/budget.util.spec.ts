@@ -1,4 +1,7 @@
-import { BudgetProgress, BudgetSummaryItem } from '../../core/models/lunchmoney.types';
+import {
+  BudgetProgress,
+  BudgetSummaryItem,
+} from '../../core/models/lunchmoney.types';
 import { buildBudgetProgress, rankBudgetProgress } from './budget.util';
 
 describe('Budget Utils', () => {
@@ -25,7 +28,11 @@ describe('Budget Utils', () => {
     });
 
     it('should preserve API order when no custom order provided', () => {
-      const items = [createItem(1, 'A'), createItem(2, 'B'), createItem(3, 'C')];
+      const items = [
+        createItem(1, 'A'),
+        createItem(2, 'B'),
+        createItem(3, 'C'),
+      ];
 
       const ranked = rankBudgetProgress(items, []);
 
@@ -36,7 +43,11 @@ describe('Budget Utils', () => {
     });
 
     it('should apply custom order when provided', () => {
-      const items = [createItem(1, 'A'), createItem(2, 'B'), createItem(3, 'C')];
+      const items = [
+        createItem(1, 'A'),
+        createItem(2, 'B'),
+        createItem(3, 'C'),
+      ];
 
       const ranked = rankBudgetProgress(items, [3, 1, 2]);
 
@@ -46,7 +57,11 @@ describe('Budget Utils', () => {
     });
 
     it('should handle items not in custom order', () => {
-      const items = [createItem(1, 'A'), createItem(2, 'B'), createItem(3, 'C')];
+      const items = [
+        createItem(1, 'A'),
+        createItem(2, 'B'),
+        createItem(3, 'C'),
+      ];
 
       const ranked = rankBudgetProgress(items, [3]);
 
@@ -128,7 +143,11 @@ describe('buildBudgetProgress status evaluation', () => {
   });
 
   it('marks income categories on track when received meets the budget', () => {
-    const summary = createSummary({ spent: -1000, budget: 1000, isIncome: true });
+    const summary = createSummary({
+      spent: -1000,
+      budget: 1000,
+      isIncome: true,
+    });
     const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
 
     expect(result.status).toBe('on-track');
@@ -137,7 +156,11 @@ describe('buildBudgetProgress status evaluation', () => {
   });
 
   it('marks income categories at risk when received is below the budget', () => {
-    const summary = createSummary({ spent: -450, budget: 1000, isIncome: true });
+    const summary = createSummary({
+      spent: -450,
+      budget: 1000,
+      isIncome: true,
+    });
     const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
 
     expect(result.status).toBe('at-risk');
@@ -146,7 +169,12 @@ describe('buildBudgetProgress status evaluation', () => {
   });
 
   it('keeps income on track when upcoming payments close the shortfall', () => {
-    const summary = createSummary({ spent: -200, budget: 1000, isIncome: true, recurring: [800] });
+    const summary = createSummary({
+      spent: -200,
+      budget: 1000,
+      isIncome: true,
+      recurring: [800],
+    });
     const result = buildBudgetProgress(summary, monthKey, 0.5, 0.9);
 
     expect(result.status).toBe('on-track');
@@ -154,7 +182,12 @@ describe('buildBudgetProgress status evaluation', () => {
   });
 
   it('marks income at risk when projected total stays below the threshold', () => {
-    const summary = createSummary({ spent: -600, budget: 1000, isIncome: true, recurring: [120] });
+    const summary = createSummary({
+      spent: -600,
+      budget: 1000,
+      isIncome: true,
+      recurring: [120],
+    });
     const result = buildBudgetProgress(summary, monthKey, 0.6, 0.9);
 
     expect(result.status).toBe('at-risk');

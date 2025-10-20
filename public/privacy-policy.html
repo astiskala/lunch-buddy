@@ -1,49 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lunch Buddy Privacy Policy</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-        h1 { color: #333; }
-        h2 { color: #555; margin-top: 30px; }
-        ul { margin-left: 20px; }
-        p { margin-bottom: 10px; }
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 20px;
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      h2 {
+        color: #555;
+        margin-top: 30px;
+      }
+
+      ul {
+        margin-left: 20px;
+      }
+
+      p {
+        margin-bottom: 10px;
+      }
     </style>
-</head>
-<body>
+  </head>
+
+  <body>
     <h1>Lunch Buddy Privacy Summary</h1>
     <p><strong>Version:</strong> 2025-10-16</p>
-    <p><strong>Contact:</strong> <a href="mailto:lunch-buddy@adamstiskala.com">lunch-buddy@adamstiskala.com</a></p>
-    <p><strong>Policy:</strong> <a href="/privacy-policy.html">/privacy-policy.html</a></p>
+    <p>
+      <strong>Contact:</strong>
+      <a href="mailto:lunch-buddy@adamstiskala.com"
+        >lunch-buddy@adamstiskala.com</a
+      >
+    </p>
+    <p>
+      <strong>Policy:</strong>
+      <a href="/privacy-policy.html">/privacy-policy.html</a>
+    </p>
 
     <h2>Data We Access:</h2>
     <ul>
-        <li>API key you supply so the app can call the Lunch Money API on your behalf.</li>
-        <li>Budget, category, transaction, and recurring expense information returned directly from Lunch Money when you use the app.</li>
-        <li>Category preferences and notification settings you adjust inside the app.</li>
+      <li>
+        API key you supply so the app can call the Lunch Money API on your
+        behalf.
+      </li>
+      <li>
+        Budget, category, transaction, and recurring expense information
+        returned directly from Lunch Money when you use the app.
+      </li>
+      <li>
+        Category preferences and notification settings you adjust inside the
+        app.
+      </li>
     </ul>
 
     <h2>Storage & Processing:</h2>
     <ul>
-        <li>API keys and display preferences are stored locally in your browser via <code>localStorage</code>.</li>
-        <li>The optional background notification feature stores the API key, alert signature, and warning threshold in the service worker's IndexedDB to evaluate budgets while the app is closed.</li>
-        <li>Offline support comes from the service worker, which caches static assets and the most recent API responses on your device.</li>
+      <li>
+        API keys and display preferences are stored locally in your browser via
+        <code>localStorage</code>.
+      </li>
+      <li>
+        The optional background notification feature stores the API key, alert
+        signature, and warning threshold in the service worker's IndexedDB to
+        evaluate budgets while the app is closed.
+      </li>
+      <li>
+        Offline support comes from the service worker, which caches static
+        assets and the most recent API responses on your device.
+      </li>
     </ul>
 
     <h2>Third Parties:</h2>
     <ul>
-        <li>Network requests go only to the Lunch Money API base (<code>https://dev.lunchmoney.app/v1</code>).</li>
-        <li>Our third party hosts (Vercel and CloudFlare) may create standard access logs containing IP address, user agent, and timestamps.</li>
+      <li>
+        Network requests go only to the Lunch Money API base
+        (<code>https://dev.lunchmoney.app/v1</code>).
+      </li>
+      <li>
+        Our third party hosts (Vercel and CloudFlare) may create standard access
+        logs containing IP address, user agent, and timestamps.
+      </li>
     </ul>
 
     <h2>User Control:</h2>
     <ul>
-        <li>Use the sign-out option or clear browser storage to remove the stored API key and cached data.</li>
-        <li>Disable notifications from within the category preferences dialog or through your browser's notification permissions.</li>
+      <li>
+        Use the sign-out option or clear browser storage to remove the stored
+        API key and cached data.
+      </li>
+      <li>
+        Disable notifications from within the category preferences dialog or
+        through your browser's notification permissions.
+      </li>
     </ul>
 
     <p><strong>Last Updated:</strong> 2025-10-16</p>
-</body>
+  </body>
 </html>

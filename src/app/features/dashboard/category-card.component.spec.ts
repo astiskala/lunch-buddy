@@ -60,7 +60,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'SGD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-19T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-19T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
     expect(component.activityEntries().length).toBe(1);
@@ -70,7 +73,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'SGD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-19T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-19T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
     expect(component.activityEntries().length).toBe(1);
@@ -102,11 +108,12 @@ describe('CategoryCardComponent', () => {
   };
 
   beforeEach(async () => {
-    mockLunchmoneyService = jasmine.createSpyObj<LunchMoneyService>('LunchMoneyService', [
-      'getCategoryTransactions',
-    ]);
+    mockLunchmoneyService = jasmine.createSpyObj<LunchMoneyService>(
+      'LunchMoneyService',
+      ['getCategoryTransactions']
+    );
     mockLunchmoneyService.getCategoryTransactions.and.returnValue(
-      of({ transactions: [], total: 0, has_more: false }),
+      of({ transactions: [], total: 0, has_more: false })
     );
 
     await TestBed.configureTestingModule({
@@ -134,7 +141,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
@@ -148,7 +158,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
@@ -169,14 +182,20 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const label = (compiled.querySelector('.metrics .metric .label')?.textContent || '').trim();
+    const label = (
+      compiled.querySelector('.metrics .metric .label')?.textContent || ''
+    ).trim();
     expect(label).toBe('Received');
-    const value = compiled.querySelector('.metrics .metric .value')?.textContent || '';
+    const value =
+      compiled.querySelector('.metrics .metric .value')?.textContent || '';
     expect(value).toContain('$650.00');
   });
 
@@ -193,7 +212,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
@@ -207,12 +229,17 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.category-card[data-status="on-track"]')).toBeTruthy();
+    expect(
+      compiled.querySelector('.category-card[data-status="on-track"]')
+    ).toBeTruthy();
   });
 
   it('should calculate month progress percent', () => {
@@ -221,7 +248,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.75);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
@@ -234,7 +264,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
@@ -255,7 +288,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-10T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
@@ -279,13 +315,16 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-20T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-20T00:00:00.000Z')
+    );
 
     const createInstance = (
       id: number,
       type: 'cleared' | 'suggested',
       amount: string,
-      payee: string,
+      payee: string
     ): RecurringInstance => ({
       expense: {
         id,
@@ -318,7 +357,9 @@ describe('CategoryCardComponent', () => {
 
     expect(component.upcomingRecurringTotal()).toBeCloseTo(300);
 
-    const upcomingEntries = component.activityEntries().filter((entry) => entry.kind === 'upcoming');
+    const upcomingEntries = component
+      .activityEntries()
+      .filter(entry => entry.kind === 'upcoming');
     expect(upcomingEntries.length).toBe(1);
     expect(upcomingEntries[0].label).toContain('Ministry of Manpower');
   });
@@ -329,7 +370,10 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('endDate', '2025-10-31');
     fixture.componentRef.setInput('monthProgressRatio', 0.5);
     fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput('referenceDate', new Date('2025-10-05T00:00:00.000Z'));
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-05T00:00:00.000Z')
+    );
 
     const futureCleared: RecurringInstance = {
       expense: {
@@ -359,7 +403,9 @@ describe('CategoryCardComponent', () => {
     fixture.detectChanges();
 
     expect(component.upcomingRecurringTotal()).toBeCloseTo(200);
-    const upcomingEntries = component.activityEntries().filter((entry) => entry.kind === 'upcoming');
+    const upcomingEntries = component
+      .activityEntries()
+      .filter(entry => entry.kind === 'upcoming');
     expect(upcomingEntries.length).toBe(1);
     expect(upcomingEntries[0].label).toContain('Upcoming Tax');
   });

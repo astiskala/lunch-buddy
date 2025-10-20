@@ -3,6 +3,7 @@
     "stylelint-config-standard-scss",
     "stylelint-config-prettier-scss"
   ],
+  "plugins": ["stylelint-scss"],
   "rules": {
     "selector-pseudo-element-no-unknown": [
       true,
@@ -13,16 +14,8 @@
     "selector-type-no-unknown": [
       true,
       {
-        "ignoreTypes": [
-          "/^app-/",
-          "/^mat-/",
-          "summary-hero",
-          "category-card",
-          "dashboard-page",
-          "category-preferences-dialog",
-          "recurring-expenses-panel",
-          "category-progress-list"
-        ]
+        "ignore": ["custom-elements"],
+        "ignoreTypes": ["/^app-/", "/^mat-/", "/^cdk-/", "/^mdc-/"]
       }
     ],
     "selector-class-pattern": [
@@ -36,7 +29,19 @@
     "scss/at-rule-no-unknown": [
       true,
       {
-        "ignoreAtRules": ["tailwind", "apply", "layer"]
+        "ignoreAtRules": ["tailwind", "apply", "layer", "use", "forward"]
+      }
+    ],
+    "scss/at-mixin-pattern": [
+      "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$",
+      {
+        "message": "Use kebab-case for mixin names to align with Angular style conventions."
+      }
+    ],
+    "scss/dollar-variable-pattern": [
+      "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$",
+      {
+        "message": "Use kebab-case for shared SCSS variables."
       }
     ]
   },
