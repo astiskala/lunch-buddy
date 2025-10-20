@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/@angular/service-worker/config/schema.json",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "index": "/index.html",
   "assetGroups": [
     {
