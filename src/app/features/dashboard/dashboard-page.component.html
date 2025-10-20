@@ -102,17 +102,24 @@
       />
     }
 
-    <category-progress-list
-      [items]="filteredVisibleItems()"
-      [recurringByCategory]="recurringByCategory().assigned"
-      [defaultCurrency]="currency() ?? 'USD'"
-      [startDate]="startDate()"
-      [endDate]="endDate()"
-      [monthProgressRatio]="monthProgressRatio()"
-      [emptyMessage]="visibleEmptyMessage()"
-      [referenceDate]="referenceDate()"
-      [includeAllTransactions]="preferences().includeAllTransactions"
-    />
+    @if (isLoading() && filteredVisibleItems().length === 0) {
+      <div class="loading-state list-loading">
+        <div class="spinner"></div>
+        <p>Loading categories...</p>
+      </div>
+    } @else {
+      <category-progress-list
+        [items]="filteredVisibleItems()"
+        [recurringByCategory]="recurringByCategory().assigned"
+        [defaultCurrency]="currency() ?? 'USD'"
+        [startDate]="startDate()"
+        [endDate]="endDate()"
+        [monthProgressRatio]="monthProgressRatio()"
+        [emptyMessage]="visibleEmptyMessage()"
+        [referenceDate]="referenceDate()"
+        [includeAllTransactions]="preferences().includeAllTransactions"
+      />
+    }
 
     @if (filteredHiddenItems().length > 0) {
       <div class="hidden-section">
