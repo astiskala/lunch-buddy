@@ -1,14 +1,14 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Observable, of, switchMap, catchError, map } from 'rxjs';
-import { Transaction } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import {
+  Transaction,
   BudgetProgress,
   BudgetMonthData,
   BudgetSummaryItem,
   RecurringExpense,
   RecurringInstance,
-  TransactionsResponse,
+  TransactionsResponse
 } from '../../core/models/lunchmoney.types';
 import { buildBudgetProgress, calculateBudgetStatus, rankBudgetProgress } from '../utils/budget.util';
 import {
@@ -198,7 +198,7 @@ export class BudgetService {
     this.errors.set([]);
 
     this.lunchMoneyService.getBudgetSummary(this.startDate(), this.endDate()).pipe(
-      switchMap((summaries: BudgetSummaryItem[]) => 
+      switchMap((summaries: BudgetSummaryItem[]) =>
         this.buildBudgetProgressFromSummaries(summaries)
       ),
     ).subscribe({
@@ -439,13 +439,13 @@ export class BudgetService {
     const monthData = existingMonthData
       ? { ...existingMonthData }
       : {
-          num_transactions: 0,
-          spending_to_base: 0,
-          budget_to_base: 0,
-          budget_amount: 0,
-          budget_currency: baseSummary.config?.currency ?? null,
-          is_automated: false,
-        };
+        num_transactions: 0,
+        spending_to_base: 0,
+        budget_to_base: 0,
+        budget_amount: 0,
+        budget_currency: baseSummary.config?.currency ?? null,
+        is_automated: false,
+      };
 
     monthData.spending_to_base = isIncome ? -Math.abs(amount) : Math.abs(amount);
     monthData.num_transactions = transactions;
@@ -460,10 +460,10 @@ export class BudgetService {
       },
     };
 
-  // Pass transactionList to BudgetProgress for UI filtering
-  const progress = buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio);
-  progress.transactionList = transactionList;
-  return progress;
+    // Pass transactionList to BudgetProgress for UI filtering
+    const progress = buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio);
+    progress.transactionList = transactionList;
+    return progress;
   }
 
   private syncBackgroundPreferences(): void {

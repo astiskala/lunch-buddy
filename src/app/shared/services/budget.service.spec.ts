@@ -72,7 +72,7 @@ const createSummary = (monthKey: string, overrides: Partial<BudgetSummaryItem>):
 const createTransaction = (overrides: Partial<Transaction>): Transaction => ({
   id: 1,
   date: '2025-10-01',
-  amount: '-10.00',
+  amount: '-10',
   currency: 'USD',
   payee: 'Test',
   category_id: null,
@@ -194,7 +194,7 @@ describe('BudgetService background sync', () => {
     lunchMoney.categoryTransactionsResponse = {
       has_more: false,
       transactions: [
-        createTransaction({ id: 101, amount: '-120.50', to_base: -120.50 }),
+        createTransaction({ id: 101, amount: '-120.5', to_base: -120.5 }),
         createTransaction({ id: 102, amount: '-50.75', to_base: -50.75 }),
       ],
     };
@@ -232,9 +232,9 @@ describe('BudgetService background sync', () => {
     lunchMoney.categoryTransactionsResponse = {
       has_more: false,
       transactions: [
-        createTransaction({ id: 201, amount: '-200.00' }),
-        createTransaction({ id: 202, amount: '150.00' }),
-        createTransaction({ id: 203, amount: '50.00' }),
+        createTransaction({ id: 201, amount: '-200' }),
+        createTransaction({ id: 202, amount: '150' }),
+        createTransaction({ id: 203, amount: '50' }),
       ],
     };
 
