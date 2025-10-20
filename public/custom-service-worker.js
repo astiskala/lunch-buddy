@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const DB_NAME = 'lunchbuddy-background';
 const DB_VERSION = 1;
@@ -9,7 +8,6 @@ const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://dev.lunchmoney.app/v1';
 const API_CACHE_NAME = 'lunchbuddy-api-cache-v1';
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const defaultConfig = () => ({
   apiKey: null,
@@ -55,7 +53,7 @@ globalThis.addEventListener('fetch', (event) => {
 importScripts('./ngsw-worker.js');
 
 // Install event - prepare cache
-globalThis.addEventListener('install', (event) => {
+globalThis.addEventListener('install', () => {
   globalThis.skipWaiting();
 });
 
@@ -275,8 +273,11 @@ function dateKey(date) {
 }
 
 function buildBudgetsUrl(baseUrl, startIso, endIso) {
-  const normalized = (baseUrl || DEFAULT_API_BASE).replace(/\/+$/, '');
-  return `${normalized}/budgets?start_date=${startIso}&end_date=${endIso}`;
+  let base = baseUrl || DEFAULT_API_BASE;
+  while (base.endsWith('/')) {
+    base = base.slice(0, -1);
+  }
+  return `${base}/budgets?start_date=${startIso}&end_date=${endIso}`;
 }
 
 async function isAnyClientVisible() {

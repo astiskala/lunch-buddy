@@ -66,5 +66,58 @@ export default tseslint.config(
       ...ngeslint.configs.templateAccessibility,
     ],
     rules: {},
+  },
+
+  // Service Worker files
+  {
+    files: ["public/custom-service-worker.js"],
+    languageOptions: {
+      globals: {
+        // Service Worker specific globals
+        importScripts: "readonly",
+        skipWaiting: "readonly",
+        
+        // Web APIs available in Service Workers
+        caches: "readonly",
+        clients: "readonly",
+        registration: "readonly",
+        
+        // Standard Web APIs
+        console: "readonly",
+        fetch: "readonly",
+        Request: "readonly",
+        Response: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        AbortController: "readonly",
+        
+        // Timers
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        
+        // IndexedDB
+        indexedDB: "readonly",
+        IDBDatabase: "readonly",
+        IDBTransaction: "readonly",
+        IDBRequest: "readonly",
+        
+        // Date and Math
+        Date: "readonly",
+        Math: "readonly",
+        
+        // JSON and other built-ins
+        JSON: "readonly",
+        Promise: "readonly",
+        Array: "readonly",
+        Object: "readonly",
+        Set: "readonly",
+        Map: "readonly",
+        Number: "readonly",
+        String: "readonly",
+        Intl: "readonly",
+      },
+    },
   }
 );

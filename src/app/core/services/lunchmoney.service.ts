@@ -10,7 +10,13 @@ import {
 } from '../models/lunchmoney.types';
 import { environment } from '../../../environments/environment';
 
-const normalizeBaseUrl = (baseUrl: string): string => baseUrl.replace(/\/+$/, '');
+const normalizeBaseUrl = (baseUrl: string): string => {
+  let url = baseUrl;
+  while (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  return url;
+};
 
 const LUNCH_MONEY_API_BASE = normalizeBaseUrl(
   environment.lunchmoneyApiBase,
