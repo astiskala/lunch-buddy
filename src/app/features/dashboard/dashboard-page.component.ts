@@ -44,7 +44,7 @@ export class DashboardPageComponent {
   readonly budgetService = inject(BudgetService);
   readonly authService = inject(AuthService);
   readonly router = inject(Router);
-  private locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
+  readonly locale = typeof navigator === 'undefined' ? 'en-US' : navigator.language;
 
   // Local state
   protected readonly activeTab = signal<TabType>('expenses');
@@ -77,7 +77,7 @@ export class DashboardPageComponent {
     this.activeTab() === 'expenses' ? this.hiddenExpenses() : this.hiddenIncomes(),
   );
 
-  private filterItemsByStatus = (items: BudgetProgress[], statusFilter: StatusFilter): BudgetProgress[] => {
+  readonly filterItemsByStatus = (items: BudgetProgress[], statusFilter: StatusFilter): BudgetProgress[] => {
     if (statusFilter === 'all') return items;
     return items.filter((item) => item.status === statusFilter);
   };
@@ -173,7 +173,7 @@ export class DashboardPageComponent {
         continue;
       }
       const category = incomeMap.get(categoryId);
-      if (category && category.isIncome) {
+      if (category?.isIncome) {
         for (const inst of pendingInstances) {
           total += Math.abs(Number.parseFloat(inst.expense.amount));
         }
