@@ -1,12 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
 import { CategoryCardComponent } from './category-card.component';
-import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.types';
+import {
+  BudgetProgress,
+  RecurringInstance,
+} from '../../core/models/lunchmoney.types';
+import { LunchMoneyService } from '../../core/services/lunchmoney.service';
+import { of } from 'rxjs';
 
 describe('CategoryCardComponent', () => {
   let component: CategoryCardComponent;
   let fixture: ComponentFixture<CategoryCardComponent>;
+  let mockLunchmoneyService: jasmine.SpyObj<LunchMoneyService>;
 
   const mockItem: BudgetProgress = {
     categoryId: 1,
@@ -30,9 +35,20 @@ describe('CategoryCardComponent', () => {
   };
 
   beforeEach(async () => {
+    mockLunchmoneyService = jasmine.createSpyObj('LunchMoneyService', ['getCategoryTransactions']);
+    mockLunchmoneyService.getCategoryTransactions.and.returnValue(
+      of({ transactions: [], total: 0, has_more: false }),
+    );
+
     await TestBed.configureTestingModule({
       imports: [CategoryCardComponent],
-      providers: [provideZonelessChangeDetection(), provideHttpClient()],
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: LunchMoneyService,
+          useValue: mockLunchmoneyService,
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CategoryCardComponent);
