@@ -35,7 +35,9 @@ describe('CategoryCardComponent', () => {
   };
 
   beforeEach(async () => {
-    mockLunchmoneyService = jasmine.createSpyObj('LunchMoneyService', ['getCategoryTransactions']);
+    mockLunchmoneyService = jasmine.createSpyObj<LunchMoneyService>('LunchMoneyService', [
+      'getCategoryTransactions',
+    ]);
     mockLunchmoneyService.getCategoryTransactions.and.returnValue(
       of({ transactions: [], total: 0, has_more: false }),
     );
