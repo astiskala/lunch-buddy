@@ -51,7 +51,7 @@
       ],
       "cacheConfig": {
         "maxSize": 20,
-        "maxAge": "1y",
+        "maxAge": "365d",
         "strategy": "cacheFirst"
       }
     }
