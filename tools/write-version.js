@@ -3,7 +3,7 @@ const path = require('node:path');
 const { version } = require('../package.json');
 
 const content = `export const version = {
-  version: '${version}'
+  version: '${version}',
 };
 `;
 
