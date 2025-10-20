@@ -26,9 +26,9 @@ interface ActivityEntry {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryCardComponent {
-  private lunchMoneyService = inject(LunchMoneyService);
-  private logger = inject(LoggerService);
-  private offlineService = inject(OfflineService);
+  readonly lunchMoneyService = inject(LunchMoneyService);
+  readonly logger = inject(LoggerService);
+  readonly offlineService = inject(OfflineService);
 
   readonly item = input.required<BudgetProgress>();
   readonly defaultCurrency = input.required<string>();

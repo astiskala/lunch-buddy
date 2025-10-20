@@ -11,7 +11,7 @@ export class AppUpdateService {
   private readonly swUpdate = inject(SwUpdate, { optional: true });
 
   constructor() {
-    if (!this.swUpdate || !this.swUpdate.isEnabled) {
+    if (!this.swUpdate?.isEnabled) {
       this.logger.debug('AppUpdateService: service worker updates disabled');
       return;
     }
@@ -37,11 +37,7 @@ export class AppUpdateService {
     } catch (error) {
       this.logger.warn('AppUpdateService: activateUpdate failed', error);
     } finally {
-      if (typeof window !== 'undefined' && 'location' in window) {
-        window.location.reload();
-      } else {
-        this.logger.warn('AppUpdateService: unable to reload window');
-      }
+      globalThis.window.location.reload();
     }
   }
 }

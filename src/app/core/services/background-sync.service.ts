@@ -194,9 +194,7 @@ export class BackgroundSyncService implements OnDestroy {
       return null;
     }
 
-    if (!this.registrationPromise) {
-      this.registrationPromise = this.resolveRegistration();
-    }
+    this.registrationPromise ??= this.resolveRegistration();
 
     try {
       const registration = await this.registrationPromise;
