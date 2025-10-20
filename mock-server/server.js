@@ -13,7 +13,29 @@ const API_PREFIX = '/v1';
 
 const app = express();
 
-app.use(cors());
+// Configure CORS to only allow requests from localhost (where the dev server runs)
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests) in development
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Allow only localhost origins on various ports (common dev server ports)
+    const allowedOrigins = [
+      'http://localhost:4200',  // Default Angular dev server
+      'http://127.0.0.1:4200'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS policy`));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.set('json spaces', 2);
 

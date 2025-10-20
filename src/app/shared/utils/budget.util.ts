@@ -133,8 +133,8 @@ export const rankBudgetProgress = (
   const orderMap = new Map(customOrder.map((categoryId, index) => [categoryId, index]));
 
   return [...items].sort((a, b) => {
-    const orderA = a.categoryId !== null ? orderMap.get(a.categoryId) : undefined;
-    const orderB = b.categoryId !== null ? orderMap.get(b.categoryId) : undefined;
+    const orderA = a.categoryId === null ? undefined : orderMap.get(a.categoryId);
+    const orderB = b.categoryId === null ? undefined : orderMap.get(b.categoryId);
 
     if (orderA !== undefined && orderB !== undefined) {
       return orderA - orderB;
