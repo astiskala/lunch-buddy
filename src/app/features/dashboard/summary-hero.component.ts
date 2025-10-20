@@ -54,9 +54,11 @@ export class SummaryHeroComponent {
     () => this.totalExpenseBudget() - (this.totalExpenseSpent() + this.totalExpenseUpcoming()),
   );
 
-  readonly incomeRemaining = computed(
-    () => this.totalIncomeBudget() - (this.totalIncomeSpent() + this.totalIncomeUpcoming()),
-  );
+  readonly incomeRemaining = computed(() => {
+    const remaining = this.totalIncomeBudget() - (this.totalIncomeSpent() + this.totalIncomeUpcoming());
+    // Invert sign for income categories
+    return -remaining;
+  });
 
   readonly expenseSpentFormatted = computed(() =>
     formatCurrency(this.totalExpenseSpent(), this.currency(), { fallbackCurrency: 'USD' }),

@@ -1,10 +1,14 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { Observable, of, switchMap, catchError, map } from 'rxjs';
+import { Transaction } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import {
   BudgetProgress,
+  BudgetMonthData,
   BudgetSummaryItem,
   RecurringExpense,
   RecurringInstance,
+  TransactionsResponse,
 } from '../../core/models/lunchmoney.types';
 import { buildBudgetProgress, calculateBudgetStatus, rankBudgetProgress } from '../utils/budget.util';
 import {
@@ -35,6 +39,8 @@ const defaultCategoryPreferences: CategoryPreferences = {
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
+const UNCATEGORISED_EXPENSES_LABEL = 'Uncategorised Expenses';
+const UNCATEGORISED_INCOME_LABEL = 'Uncategorised Income';
 
 @Injectable({
   providedIn: 'root',
@@ -191,9 +197,12 @@ export class BudgetService {
     this.isLoading.set(true);
     this.errors.set([]);
 
-    this.lunchMoneyService.getBudgetSummary(this.startDate(), this.endDate()).subscribe({
-      next: (summaries: BudgetSummaryItem[]) => {
-        const progress = this.buildBudgetProgressFromSummaries(summaries);
+    this.lunchMoneyService.getBudgetSummary(this.startDate(), this.endDate()).pipe(
+      switchMap((summaries: BudgetSummaryItem[]) => 
+        this.buildBudgetProgressFromSummaries(summaries)
+      ),
+    ).subscribe({
+      next: (progress: BudgetProgress[]) => {
         this.budgetData.set(progress);
         this.recomputeBudgetStatuses();
         this.isLoading.set(false);
@@ -252,16 +261,209 @@ export class BudgetService {
 
   private buildBudgetProgressFromSummaries(
     summaries: BudgetSummaryItem[],
-  ): BudgetProgress[] {
+  ): Observable<BudgetProgress[]> {
     const monthKey = this.monthKey;
     const monthProgress = this.monthProgressRatio();
     const warnAtRatio = this.preferences().warnAtRatio;
+    const includeAll = this.preferences().includeAllTransactions;
 
-    return summaries
-      .map((summary: BudgetSummaryItem) =>
-        buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio),
+    // Separate uncategorised from regular summaries
+    const uncategorisedSummaries: BudgetSummaryItem[] = [];
+    const regularItems: BudgetProgress[] = [];
+
+    const shouldSplitUncategorised = (summary: BudgetSummaryItem): boolean => {
+      const normalizedName = summary.category_name.trim().toLowerCase();
+      const hasQualifier =
+        normalizedName.includes('income') ||
+        normalizedName.includes('expense');
+      const isDefaultName =
+        normalizedName === 'uncategorized' ||
+        normalizedName === 'uncategorised';
+      const isNullCategory = summary.category_id === null;
+      return (isNullCategory || isDefaultName) && !hasQualifier;
+    };
+
+    for (const summary of summaries) {
+      if (shouldSplitUncategorised(summary)) {
+        uncategorisedSummaries.push(summary);
+      } else {
+        const item = buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio);
+        regularItems.push(item);
+      }
+    }
+
+    if (uncategorisedSummaries.length === 0) {
+      return of(regularItems.filter((item) => !item.excludeFromBudget && !item.isGroup));
+    }
+
+    type SplitResult = {
+      summary: BudgetSummaryItem;
+      expense?: {
+        total: number;
+        transactions: number;
+        transactionList: Transaction[];
+      };
+      income?: {
+        total: number;
+        transactions: number;
+        transactionList: Transaction[];
+      };
+      fallback?: BudgetProgress;
+    };
+
+    // Only one API call for all uncategorized transactions
+    const uncategorisedSummary = uncategorisedSummaries[0];
+    const uncategorisedRequest: Observable<SplitResult> = this.lunchMoneyService
+      .getCategoryTransactions(
+        uncategorisedSummary.category_id,
+        this.startDate(),
+        this.endDate(),
+        { includeAllTransactions: includeAll },
       )
-      .filter((item: BudgetProgress) => !item.excludeFromBudget && !item.isGroup);
+      .pipe(
+        map((response: TransactionsResponse): SplitResult => {
+          let expenseTotal = 0;
+          let expenseCount = 0;
+          let incomeTotal = 0;
+          let incomeCount = 0;
+          const expenseTransactions: typeof response.transactions = [];
+          const incomeTransactions: typeof response.transactions = [];
+
+          for (const transaction of response.transactions) {
+            // Use to_base if present and valid, else fallback to amount
+            const valueRaw = (transaction.to_base !== undefined && transaction.to_base !== null)
+              ? String(transaction.to_base)
+              : transaction.amount;
+            const value = Number.parseFloat(valueRaw);
+            if (Number.isNaN(value)) continue;
+            if (value < 0) {
+              incomeTotal += Math.abs(value);
+              incomeCount += 1;
+              incomeTransactions.push(transaction);
+            } else if (value > 0) {
+              expenseTotal += value;
+              expenseCount += 1;
+              expenseTransactions.push(transaction);
+            }
+            // Zero amounts are ignored
+          }
+
+          const result: SplitResult = { summary: uncategorisedSummary };
+
+          if (expenseTotal > 0) {
+            result.expense = {
+              total: expenseTotal,
+              transactions: expenseCount,
+              transactionList: expenseTransactions,
+            };
+          }
+
+          if (incomeTotal > 0) {
+            result.income = {
+              total: incomeTotal,
+              transactions: incomeCount,
+              transactionList: incomeTransactions,
+            };
+          }
+
+          if (!result.expense && !result.income) {
+            result.fallback = buildBudgetProgress(uncategorisedSummary, monthKey, monthProgress, warnAtRatio);
+          }
+
+          return result;
+        }),
+        catchError((error: unknown) => {
+          this.logger.error('Failed to fetch uncategorised transactions', error);
+          return of({
+            summary: uncategorisedSummary,
+            fallback: buildBudgetProgress(uncategorisedSummary, monthKey, monthProgress, warnAtRatio),
+          } satisfies SplitResult);
+        }),
+      );
+
+    return uncategorisedRequest.pipe(
+      switchMap((result: SplitResult) => {
+        const derivedItems: BudgetProgress[] = [];
+        const fallbackItems: BudgetProgress[] = [];
+        if (result.fallback) {
+          fallbackItems.push(result.fallback);
+        }
+        if (result.expense) {
+          derivedItems.push(
+            this.buildUncategorisedProgress({
+              baseSummary: result.summary,
+              monthKey,
+              monthProgress,
+              warnAtRatio,
+              amount: result.expense.total,
+              transactions: result.expense.transactions,
+              isIncome: false,
+              transactionList: result.expense.transactionList,
+            })
+          );
+        }
+        if (result.income) {
+          derivedItems.push(
+            this.buildUncategorisedProgress({
+              baseSummary: result.summary,
+              monthKey,
+              monthProgress,
+              warnAtRatio,
+              amount: result.income.total,
+              transactions: result.income.transactions,
+              isIncome: true,
+              transactionList: result.income.transactionList,
+            })
+          );
+        }
+        const allItems = [...regularItems, ...derivedItems, ...fallbackItems];
+        return of(allItems.filter((item) => !item.excludeFromBudget && !item.isGroup));
+      })
+    );
+  }
+
+  private buildUncategorisedProgress(options: {
+    baseSummary: BudgetSummaryItem;
+    monthKey: string;
+    monthProgress: number;
+    warnAtRatio: number;
+    amount: number;
+    transactions: number;
+    isIncome: boolean;
+    transactionList: Transaction[];
+  }): BudgetProgress {
+    const { baseSummary, monthKey, monthProgress, warnAtRatio, amount, transactions, isIncome, transactionList } =
+      options;
+
+    const existingMonthData = baseSummary.data[monthKey] as BudgetMonthData | undefined;
+    const monthData = existingMonthData
+      ? { ...existingMonthData }
+      : {
+          num_transactions: 0,
+          spending_to_base: 0,
+          budget_to_base: 0,
+          budget_amount: 0,
+          budget_currency: baseSummary.config?.currency ?? null,
+          is_automated: false,
+        };
+
+    monthData.spending_to_base = isIncome ? -Math.abs(amount) : Math.abs(amount);
+    monthData.num_transactions = transactions;
+
+    const summary: BudgetSummaryItem = {
+      ...baseSummary,
+      category_name: isIncome ? UNCATEGORISED_INCOME_LABEL : UNCATEGORISED_EXPENSES_LABEL,
+      is_income: isIncome,
+      data: {
+        ...baseSummary.data,
+        [monthKey]: monthData,
+      },
+    };
+
+  // Pass transactionList to BudgetProgress for UI filtering
+  const progress = buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio);
+  progress.transactionList = transactionList;
+  return progress;
   }
 
   private syncBackgroundPreferences(): void {

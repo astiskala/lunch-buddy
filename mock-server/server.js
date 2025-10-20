@@ -11,7 +11,12 @@ const {
 const DEFAULT_PORT = Number(process.env.MOCK_API_PORT) || 4600;
 const API_PREFIX = '/v1';
 
+
+const helmet = require('helmet');
 const app = express();
+
+// Use Helmet's hidePoweredBy middleware for stronger protection
+app.use(helmet.hidePoweredBy());
 
 // Configure CORS to only allow requests from localhost (where the dev server runs)
 const corsOptions = {

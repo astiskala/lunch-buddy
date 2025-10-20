@@ -56,7 +56,7 @@ export interface BudgetRecurringItem {
 
 export interface BudgetSummaryItem {
   category_name: string;
-  category_id: number;
+  category_id: number | null;
   category_group_name: string | null;
   group_id: number | null;
   is_group: boolean | null;
@@ -113,6 +113,7 @@ export interface Transaction {
   }>;
   is_group?: boolean;
   group_id?: number | null;
+  to_base?: number | string | null;
 }
 
 export interface TransactionsResponse {
@@ -146,4 +147,5 @@ export interface BudgetProgress {
   recurringItems: BudgetRecurringItem[];
   status: BudgetStatus;
   progressRatio: number;
+  transactionList?: Transaction[];
 }

@@ -98,11 +98,12 @@ export class CategoryCardComponent {
   });
 
   readonly activityEntries = computed(() => {
-    const txns = this.transactions();
-    const recurring = this.recurringExpenses();
-    const item = this.item();
-    const referenceDate = this.referenceDate();
-    const entries: ActivityEntry[] = [];
+  // Use filtered transactionList for uncategorised categories
+  const item = this.item();
+  const txns = Array.isArray(item.transactionList) ? item.transactionList : this.transactions();
+  const recurring = this.recurringExpenses();
+  const referenceDate = this.referenceDate();
+  const entries: ActivityEntry[] = [];
 
     // Add transactions
     for (const transaction of txns) {
@@ -203,9 +204,14 @@ export class CategoryCardComponent {
     const item = this.item();
     const upcoming = this.upcomingRecurringTotal();
     const actualSpent = item.isIncome ? Math.abs(item.spent) : item.spent;
-    return item.budgetAmount
+    let remaining = item.budgetAmount
       ? item.budgetAmount - actualSpent - upcoming
       : item.remaining - upcoming;
+    // For income categories, invert sign
+    if (item.isIncome) {
+      remaining = -remaining;
+    }
+    return remaining;
   });
 
   readonly remainingAfterUpcomingLabel = computed(() =>

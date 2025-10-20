@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Observable, of, Subject } from 'rxjs';
-import { BudgetSummaryItem, RecurringExpense } from '../../core/models/lunchmoney.types';
+import {
+  BudgetSummaryItem,
+  RecurringExpense,
+  TransactionsResponse,
+  Transaction,
+} from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
@@ -18,9 +23,19 @@ const defaultPreferences: CategoryPreferences = {
 
 class MockLunchMoneyService {
   budgetSummary$ = new Subject<BudgetSummaryItem[]>();
+  categoryTransactionsResponse: TransactionsResponse = { transactions: [], has_more: false };
 
   getBudgetSummary(): Observable<BudgetSummaryItem[]> {
     return this.budgetSummary$.asObservable();
+  }
+
+  getCategoryTransactions(
+    _categoryId: number | null,
+    _startDate: string,
+    _endDate: string,
+    _options?: { includeAllTransactions?: boolean },
+  ): Observable<TransactionsResponse> {
+    return of(this.categoryTransactionsResponse);
   }
 
   getRecurringExpenses(): Observable<RecurringExpense[]> {
@@ -51,6 +66,21 @@ const createSummary = (monthKey: string, overrides: Partial<BudgetSummaryItem>):
   },
   config: null,
   recurring: { data: [] },
+  ...overrides,
+});
+
+const createTransaction = (overrides: Partial<Transaction>): Transaction => ({
+  id: 1,
+  date: '2025-10-01',
+  amount: '-10.00',
+  currency: 'USD',
+  payee: 'Test',
+  category_id: null,
+  notes: null,
+  recurring_id: null,
+  recurring_payee: null,
+  recurring_description: null,
+  tags: [],
   ...overrides,
 });
 
@@ -155,5 +185,89 @@ describe('BudgetService background sync', () => {
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
     const [payload] = backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
     expect(payload.currency).toBe('USD');
+  });
+
+  it('creates a single uncategorised expense entry for negative-only transactions', () => {
+    initService();
+    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+
+    lunchMoney.categoryTransactionsResponse = {
+      has_more: false,
+      transactions: [
+        createTransaction({ id: 101, amount: '-120.50', to_base: -120.50 }),
+        createTransaction({ id: 102, amount: '-50.75', to_base: -50.75 }),
+      ],
+    };
+
+    lunchMoney.budgetSummary$.next([
+      createSummary(monthKey, {
+        category_id: null,
+        category_name: 'Uncategorised',
+        data: {
+          [monthKey]: {
+            num_transactions: 2,
+            spending_to_base: 171.25,
+            budget_to_base: 0,
+            budget_amount: 0,
+            budget_currency: 'USD',
+            is_automated: false,
+          },
+        },
+      }),
+    ]);
+
+    // Find the uncategorised expense entry by checking for null/undefined categoryId and correct name
+    const incomes = service.getIncomes();
+    const uncategorisedIncome = incomes.find(
+      (item) => item.categoryId == null && item.categoryName === 'Uncategorised Income'
+    );
+    expect(uncategorisedIncome).toBeDefined();
+    expect(uncategorisedIncome?.spent).toBeCloseTo(-171.25, 5);
+  });
+
+  it('splits uncategorised totals into expense and income entries when both exist', () => {
+    initService();
+    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+
+    lunchMoney.categoryTransactionsResponse = {
+      has_more: false,
+      transactions: [
+        createTransaction({ id: 201, amount: '-200.00' }),
+        createTransaction({ id: 202, amount: '150.00' }),
+        createTransaction({ id: 203, amount: '50.00' }),
+      ],
+    };
+
+    lunchMoney.budgetSummary$.next([
+      createSummary(monthKey, {
+        category_id: null,
+        category_name: 'Uncategorised',
+        data: {
+          [monthKey]: {
+            num_transactions: 3,
+            spending_to_base: 200,
+            budget_to_base: 0,
+            budget_amount: 0,
+            budget_currency: 'USD',
+            is_automated: false,
+          },
+        },
+      }),
+    ]);
+
+    const expenses = service.getExpenses();
+    const incomes = service.getIncomes();
+
+    const uncategorisedExpenses = expenses.filter(
+      (item) => item.categoryName === 'Uncategorised Expenses',
+    );
+    expect(uncategorisedExpenses.length).toBe(1);
+    expect(uncategorisedExpenses[0].spent).toBeCloseTo(200, 5);
+
+    const uncategorisedIncome = incomes.filter(
+      (item) => item.categoryName === 'Uncategorised Income',
+    );
+    expect(uncategorisedIncome.length).toBe(1);
+    expect(Math.abs(uncategorisedIncome[0].spent)).toBeCloseTo(200, 5);
   });
 });
