@@ -101,8 +101,10 @@ async function handleApiRequest(request) {
       return networkResponse;
     }
 
-    // If network response not OK, try cache
-    return getCachedResponse(request);
+    // Non-OK network responses should fall back to cached data when available,
+    // otherwise surface the original error response to the client.
+    const cachedResponse = await findCachedResponse(request);
+    return cachedResponse ?? networkResponse;
   } catch (error) {
     // Network error or timeout - use cache
     console.warn(
@@ -113,9 +115,13 @@ async function handleApiRequest(request) {
   }
 }
 
-async function getCachedResponse(request) {
+async function findCachedResponse(request) {
   const cache = await caches.open(API_CACHE_NAME);
-  const cachedResponse = await cache.match(request);
+  return cache.match(request);
+}
+
+async function getCachedResponse(request) {
+  const cachedResponse = await findCachedResponse(request);
 
   if (cachedResponse) {
     return cachedResponse;
