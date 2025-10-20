@@ -228,7 +228,7 @@ Prefer using the `inject` function over injecting constructor parameters. The `i
 *   `inject` is generally more readable, especially when a class injects many dependencies.
 *   It's more syntactically straightforward to add comments to injected dependencies
 *   `inject` offers better type inference.
-*   When targeting ES2022+ with [`useDefineForClassFields`](https://www.typescriptlang.org/tsconfig/#useDefineForClassFields), you can avoid separating field declaration and initialization when fields read on injected dependencies.
+*   When targeting ES2024+ with [`useDefineForClassFields`](https://www.typescriptlang.org/tsconfig/#useDefineForClassFields), you can avoid separating field declaration and initialization when fields read on injected dependencies.
 
 [You can refactor existing code to `inject` with an automatic tool](reference/migrations/inject-function).
 
