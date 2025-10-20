@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "version": "1.4.1",
   "index": "/index.html",
   "assetGroups": [
     {
@@ -51,7 +52,7 @@
       "cacheConfig": {
         "maxSize": 20,
         "maxAge": "365d",
-        "strategy": "performance"
+        "strategy": "cacheFirst"
       }
     }
   ],
