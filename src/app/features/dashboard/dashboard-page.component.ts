@@ -151,7 +151,7 @@ export class DashboardPageComponent {
       const category = expenseMap.get(categoryId);
       if (category && !category.isIncome) {
         for (const inst of pendingInstances) {
-          total += Math.abs(parseFloat(inst.expense.amount));
+          total += Math.abs(Number.parseFloat(inst.expense.amount));
         }
       }
     }
@@ -175,7 +175,7 @@ export class DashboardPageComponent {
       const category = incomeMap.get(categoryId);
       if (category && category.isIncome) {
         for (const inst of pendingInstances) {
-          total += Math.abs(parseFloat(inst.expense.amount));
+          total += Math.abs(Number.parseFloat(inst.expense.amount));
         }
       }
     }

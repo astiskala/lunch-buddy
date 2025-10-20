@@ -165,7 +165,7 @@ export class RecurringExpensesPanelComponent {
 
   readonly totalFormatted = computed(() => {
     const total = this.sortedExpenses().reduce((sum, entry) => {
-      const amount = Math.abs(parseFloat(entry.expense.amount));
+      const amount = Math.abs(Number.parseFloat(entry.expense.amount));
       return sum + amount;
     }, 0);
 
@@ -183,7 +183,7 @@ export class RecurringExpensesPanelComponent {
   }
 
   getFormattedAmount(entry: RecurringInstance): string {
-    const value = Math.abs(parseFloat(entry.expense.amount));
+    const value = Math.abs(Number.parseFloat(entry.expense.amount));
     return formatCurrency(value, entry.expense.currency || this.currency(), {
       fallbackCurrency: this.defaultCurrency(),
     });

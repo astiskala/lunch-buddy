@@ -106,7 +106,7 @@ export class CategoryCardComponent {
 
     // Add transactions
     for (const transaction of txns) {
-      const amount = parseFloat(transaction.amount);
+      const amount = Number.parseFloat(transaction.amount);
       const date = new Date(transaction.date);
       const label =
         decodeHtmlEntities(
@@ -117,7 +117,7 @@ export class CategoryCardComponent {
       entries.push({
         id: `txn-${transaction.id.toString()}`,
         kind: 'transaction',
-        date: isNaN(date.getTime()) ? null : date,
+        date: Number.isNaN(date.getTime()) ? null : date,
         label,
         notes,
         amount,
@@ -142,7 +142,7 @@ export class CategoryCardComponent {
         continue;
       }
 
-      const amount = parseFloat(instance.expense.amount);
+      const amount = Number.parseFloat(instance.expense.amount);
       const label = decodeHtmlEntities(instance.expense.payee) || 'Recurring expense';
       const notes = decodeHtmlEntities(instance.expense.description);
 
@@ -187,7 +187,7 @@ export class CategoryCardComponent {
         continue;
       }
 
-      total += Math.abs(parseFloat(instance.expense.amount));
+      total += Math.abs(Number.parseFloat(instance.expense.amount));
     }
 
     return total;

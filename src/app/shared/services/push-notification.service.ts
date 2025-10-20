@@ -22,15 +22,11 @@ const defaultNotificationChannel: NotificationChannel = {
       return Promise.resolve('denied');
     }
 
-    try {
-      const result = Notification.requestPermission();
-      if (result instanceof Promise) {
-        return result;
-      }
-      return Promise.resolve(result);
-    } catch {
-      return Promise.resolve('denied');
+    const result = Notification.requestPermission();
+    if (result instanceof Promise) {
+      return result.catch(() => 'denied');
     }
+    return Promise.resolve(result);
   },
   async showNotification(title: string, options: NotificationOptions): Promise<void> {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {

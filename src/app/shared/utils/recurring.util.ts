@@ -12,7 +12,7 @@ const parseDate = (value: string | null | undefined): Date | null => {
   }
 
   const parsed = new Date(value);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 const parseWindowDate = (value: string | undefined, boundary: 'start' | 'end'): Date | null => {
@@ -21,7 +21,7 @@ const parseWindowDate = (value: string | undefined, boundary: 'start' | 'end'): 
   }
 
   const parsed = new Date(value);
-  if (isNaN(parsed.getTime())) {
+  if (Number.isNaN(parsed.getTime())) {
     return null;
   }
 
@@ -93,7 +93,7 @@ const getCadenceDuration = (cadence: string | null | undefined): Duration | null
   }
 
   const numberMatch = normalized.match(/(\d+)/);
-  const magnitude = numberMatch ? parseInt(numberMatch[1], 10) || 1 : 1;
+  const magnitude = numberMatch ? Number.parseInt(numberMatch[1], 10) || 1 : 1;
   const hasNumber = !!numberMatch;
 
   if (normalized.includes('quarter')) {

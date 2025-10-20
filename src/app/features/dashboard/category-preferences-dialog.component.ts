@@ -141,7 +141,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
 
   handleWarnRatioChange(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.warnAtRatio.set(parseInt(target.value) / 100);
+    this.warnAtRatio.set(Number.parseInt(target.value) / 100);
   }
 
   async handleNotificationsChange(event: Event): Promise<void> {
