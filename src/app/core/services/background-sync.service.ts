@@ -179,9 +179,9 @@ export class BackgroundSyncService implements OnDestroy {
       if (periodicSync) {
         try {
           const tags = await periodicSync.getTags();
-          await Promise.all(
-            tags.filter((tag: string) => tag === PERIODIC_SYNC_TAG).map((tag: string) => periodicSync.unregister(tag)),
-          );
+          if (tags.includes(PERIODIC_SYNC_TAG)) {
+            await periodicSync.unregister(PERIODIC_SYNC_TAG);
+          }
         } catch (error) {
           this.logger.warn('BackgroundSyncService: failed to unregister periodic sync', error);
         }
