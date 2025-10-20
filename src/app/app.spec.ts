@@ -1,14 +1,28 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { SwUpdate } from '@angular/service-worker';
+import { NEVER } from 'rxjs';
 import { App } from './app';
 import { routes } from './app.routes';
 
 describe('App', () => {
   beforeEach(async () => {
+    const mockSwUpdate = {
+      versionUpdates: NEVER,
+      activateUpdate: () => Promise.resolve(true),
+    };
+
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideZonelessChangeDetection(), provideRouter(routes)],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter(routes),
+        {
+          provide: SwUpdate,
+          useValue: mockSwUpdate,
+        },
+      ],
     }).compileComponents();
   });
 
