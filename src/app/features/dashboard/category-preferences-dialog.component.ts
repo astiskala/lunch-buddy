@@ -7,6 +7,9 @@ import {
   input,
   OnInit,
   inject,
+  viewChild,
+  ElementRef,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +34,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   private readonly logger = inject(LoggerService);
   private readonly versionService = inject(VersionService);
 
+  readonly dialogElement = viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
   readonly version = this.versionService.getVersion();
   readonly open = input.required<boolean>();
   readonly items = input.required<BudgetProgress[]>();
@@ -64,6 +68,23 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   });
 
   readonly warnAtPercent = computed(() => Math.round(this.warnAtRatio() * 100));
+
+  constructor() {
+    // Handle dialog open/close based on input signal
+    effect(() => {
+      const dialog = this.dialogElement().nativeElement;
+
+      if (this.open()) {
+        if (!dialog.open) {
+          dialog.showModal();
+        }
+      } else {
+        if (dialog.open) {
+          dialog.close();
+        }
+      }
+    });
+  }
 
   ngOnInit() {
     // Initialize local state from preferences

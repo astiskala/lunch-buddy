@@ -1,11 +1,9 @@
-<div
+<button
   class="category-card"
   [attr.data-status]="item().status"
   (click)="toggleDetails()"
-  (keydown.enter)="toggleDetails()"
-  (keydown.space)="toggleDetails(); $event.preventDefault()"
-  tabindex="0"
-  role="button"
+  [attr.aria-label]="'Category card for ' + item().categoryName + '. Click to toggle details.'"
+  type="button"
 >
   <div class="card-header">
     <div class="category-info">
@@ -90,9 +88,8 @@
   </div>
 
   @if (showDetails()) {
-    <div
+    <section
       class="details"
-      role="region"
       aria-label="Category details"
     >
       <h4>This month's activity</h4>
@@ -147,6 +144,6 @@
           }
         </div>
       }
-    </div>
+    </section>
   }
-</div>
+</button>

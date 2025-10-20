@@ -1,59 +1,49 @@
-@if (open()) {
-  <div
-    class="dialog-overlay"
-    (click)="handleClose()"
-    role="button"
-    tabindex="0"
-    (keydown.escape)="handleClose()"
-    aria-label="Close dialog"
-  >
-    <div
-      class="dialog-container"
-      (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
-      role="dialog"
-      aria-labelledby="dialog-title"
-      aria-modal="true"
-    >
-      <div class="dialog-header">
-        <h2 id="dialog-title">Customize your dashboard</h2>
-        <button mat-icon-button (click)="handleClose()" aria-label="Close dialog">
-          <mat-icon fontIcon="close"></mat-icon>
-        </button>
-      </div>
+<dialog
+  #dialogElement
+  class="dialog-container"
+  (cancel)="handleClose()"
+  aria-labelledby="dialog-title"
+>
+  <div class="dialog-content-wrapper">
+    <div class="dialog-header">
+      <h2 id="dialog-title">Customize your dashboard</h2>
+      <button mat-icon-button (click)="handleClose()" aria-label="Close dialog">
+        <mat-icon fontIcon="close"></mat-icon>
+      </button>
+    </div>
 
-      <div class="dialog-content">
-        <!-- Alert Threshold -->
-        <div class="setting-section">
-          <div class="setting-header">
-            <span class="icon warning">⚠</span>
-            <div class="setting-info">
+    <div class="dialog-content">
+      <!-- Alert Threshold -->
+      <div class="setting-section">
+        <div class="setting-header">
+          <span class="icon warning">⚠</span>
+          <div class="setting-info">
               <h3>Alert threshold</h3>
               <p>Control when a category is flagged as "at risk" relative to its budget.</p>
             </div>
-          </div>
-          <div class="slider-container">
-            <input
-              type="range"
-              min="50"
-              max="95"
-              step="1"
-              [value]="warnAtPercent()"
-              (input)="handleWarnRatioChange($event)"
-              class="slider"
-            />
-            <div class="slider-labels">
-              <span>50%</span>
-              <span class="current-value">{{ warnAtPercent() }}%</span>
-              <span>95%</span>
-            </div>
+        </div>
+        <div class="slider-container">
+          <input
+            type="range"
+            min="50"
+            max="95"
+            step="1"
+            [value]="warnAtPercent()"
+            (input)="handleWarnRatioChange($event)"
+            class="slider"
+          />
+          <div class="slider-labels">
+            <span>50%</span>
+            <span class="current-value">{{ warnAtPercent() }}%</span>
+            <span>95%</span>
           </div>
         </div>
+      </div>
 
-        <!-- Transactions Filter -->
-        <div class="setting-section">
-          <div class="setting-header">
-            <label class="toggle-container">
+      <!-- Transactions Filter -->
+      <div class="setting-section">
+        <div class="setting-header">
+          <label class="toggle-container" aria-label="Include pending transactions">
               <input
                 type="checkbox"
                 [checked]="includeAllTransactions()"
@@ -71,7 +61,7 @@
         <!-- Notifications -->
         <div class="setting-section">
           <div class="setting-header">
-            <label class="toggle-container">
+            <label class="toggle-container" aria-label="Push notifications">
               <input
                 type="checkbox"
                 [checked]="notificationsEnabled()"
@@ -170,7 +160,6 @@
             </div>
           </div>
         }
-      </div>
 
       <div class="dialog-actions">
         <div class="actions-left">
@@ -189,4 +178,4 @@
       </div>
     </div>
   </div>
-}
+</dialog>
