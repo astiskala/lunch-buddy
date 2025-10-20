@@ -102,17 +102,19 @@
       />
     }
 
-    <category-progress-list
-      [items]="filteredVisibleItems()"
-      [recurringByCategory]="recurringByCategory().assigned"
-      [defaultCurrency]="currency() ?? 'USD'"
-      [startDate]="startDate()"
-      [endDate]="endDate()"
-      [monthProgressRatio]="monthProgressRatio()"
-      [emptyMessage]="visibleEmptyMessage()"
-      [referenceDate]="referenceDate()"
-      [includeAllTransactions]="preferences().includeAllTransactions"
-    />
+    @if (!showInitialLoading()) {
+      <category-progress-list
+        [items]="filteredVisibleItems()"
+        [recurringByCategory]="recurringByCategory().assigned"
+        [defaultCurrency]="currency() ?? 'USD'"
+        [startDate]="startDate()"
+        [endDate]="endDate()"
+        [monthProgressRatio]="monthProgressRatio()"
+        [emptyMessage]="visibleEmptyMessage()"
+        [referenceDate]="referenceDate()"
+        [includeAllTransactions]="preferences().includeAllTransactions"
+      />
+    }
 
     @if (filteredHiddenItems().length > 0) {
       <div class="hidden-section">

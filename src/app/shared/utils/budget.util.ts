@@ -123,7 +123,7 @@ export const buildBudgetProgress = (
 
 export const rankBudgetProgress = (
   items: BudgetProgress[],
-  customOrder: number[] = [],
+  customOrder: (number | null)[] = [],
 ): BudgetProgress[] => {
   // If no custom order is specified, preserve the original API order
   if (customOrder.length === 0) {
@@ -133,8 +133,8 @@ export const rankBudgetProgress = (
   const orderMap = new Map(customOrder.map((categoryId, index) => [categoryId, index]));
 
   return [...items].sort((a, b) => {
-    const orderA = orderMap.get(a.categoryId);
-    const orderB = orderMap.get(b.categoryId);
+    const orderA = a.categoryId !== null ? orderMap.get(a.categoryId) : undefined;
+    const orderB = b.categoryId !== null ? orderMap.get(b.categoryId) : undefined;
 
     if (orderA !== undefined && orderB !== undefined) {
       return orderA - orderB;

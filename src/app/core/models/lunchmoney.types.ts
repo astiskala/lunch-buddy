@@ -128,7 +128,7 @@ export interface RecurringInstance {
 export type BudgetStatus = 'over' | 'at-risk' | 'on-track';
 
 export interface BudgetProgress {
-  categoryId: number;
+  categoryId: number | null;
   categoryName: string;
   categoryGroupName: string | null;
   groupId: number | null;

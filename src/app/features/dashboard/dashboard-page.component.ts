@@ -206,16 +206,21 @@ export class DashboardPageComponent {
   protected readonly visibleEmptyMessage = computed(() => {
     const tab = this.activeTab();
     const filterDesc = this.getFilterDescription();
+    const hasLoaded = this.hasLoadedOnce();
 
     if (tab === 'expenses') {
-      return filterDesc
-        ? `No expense categories are currently ${filterDesc}.`
-        : 'No expense categories available. Configure your budgets in your account.';
-    } else {
-      return filterDesc
-        ? `No income categories are currently ${filterDesc}.`
-        : 'No income categories available this month.';
+      if (filterDesc) {
+        return `No expense categories are currently ${filterDesc}.`;
+      }
+      return hasLoaded
+        ? 'No expense categories available. Configure your budgets in your account.'
+        : '';
     }
+
+    if (filterDesc) {
+      return `No income categories are currently ${filterDesc}.`;
+    }
+    return hasLoaded ? 'No income categories available this month.' : '';
   });
 
   protected readonly hiddenEmptyMessage = computed(() => {
@@ -225,11 +230,18 @@ export class DashboardPageComponent {
       : `No hidden ${this.hiddenLabel()}.`;
   });
 
-  protected readonly hasLoadedOnce = computed(
-    () => this.lastRefresh() !== null || this.expenses().length > 0 || this.incomes().length > 0,
-  );
+  protected readonly hasLoadedOnce = computed(() => {
+    const lastRefresh = this.lastRefresh();
+    const expensesLength = this.expenses().length;
+    const incomesLength = this.incomes().length;
+    const isLoading = this.isLoading();
+    // Consider it loaded if: we're not currently loading AND (we have a refresh timestamp OR we have data)
+    // This handles both: cached data with timestamp, and successful load with empty results
+    return !isLoading && (lastRefresh !== null || expensesLength > 0 || incomesLength > 0);
+  });
 
   protected readonly showInitialLoading = computed(() => this.isLoading() && !this.hasLoadedOnce());
+
   protected readonly isRefreshing = computed(() => this.isLoading() && this.hasLoadedOnce());
 
   protected readonly lastRefreshText = computed(() => {

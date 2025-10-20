@@ -95,16 +95,21 @@ export class LunchMoneyService {
    * Get transactions for a category
    */
   getCategoryTransactions(
-    categoryId: number,
+    categoryId: number | null,
     startDate: string,
     endDate: string,
     options?: { includeAllTransactions?: boolean },
   ): Observable<TransactionsResponse> {
     let params = new HttpParams()
-      .set('category_id', categoryId.toString())
       .set('start_date', startDate)
       .set('end_date', endDate)
       .set('debit_as_negative', 'true');
+
+    // For specific categories, set the category_id filter
+    // For uncategorized (null), we'll filter client-side after fetching
+    if (categoryId !== null) {
+      params = params.set('category_id', categoryId.toString());
+    }
 
     const includeAll = options?.includeAllTransactions ?? true;
     if (!includeAll) {
@@ -114,6 +119,17 @@ export class LunchMoneyService {
     return this.http.get<TransactionsResponse>(
       `${LUNCH_MONEY_API_BASE}/transactions`,
       this.createRequestOptions(params),
+    ).pipe(
+      map((response) => {
+        // If querying for uncategorized transactions, filter client-side
+        if (categoryId === null) {
+          return {
+            ...response,
+            transactions: response.transactions.filter(txn => txn.category_id === null),
+          };
+        }
+        return response;
+      }),
     );
   }
 }

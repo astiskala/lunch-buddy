@@ -18,8 +18,8 @@ import { BackgroundSyncService } from '../../core/services/background-sync.servi
 import { LoggerService } from '../../core/services/logger.service';
 
 export interface CategoryPreferences {
-  customOrder: number[];
-  hiddenCategoryIds: number[];
+  customOrder: (number | null)[];
+  hiddenCategoryIds: (number | null)[];
   warnAtRatio: number;
   notificationsEnabled: boolean;
   includeAllTransactions: boolean;
@@ -111,7 +111,7 @@ export class BudgetService {
 
   // Recurring expenses by category
   protected readonly recurringByCategory = computed(() => {
-    const assigned = new Map<number, RecurringInstance[]>();
+    const assigned = new Map<number | null, RecurringInstance[]>();
     const unassigned: RecurringInstance[] = [];
     const expenses = this.recurringExpenses();
 

@@ -47,7 +47,7 @@ import { BudgetProgress, RecurringInstance } from '../../core/models/lunchmoney.
 export class CategoryProgressListComponent {
   readonly items = input.required<BudgetProgress[]>();
   readonly defaultCurrency = input.required<string>();
-  readonly recurringByCategory = input<Map<number, RecurringInstance[]>>();
+  readonly recurringByCategory = input<Map<number | null, RecurringInstance[]>>();
   readonly emptyMessage = input<string>(
     'No categories available. Adjust your filters or configure your budgets in Lunch Money.',
   );

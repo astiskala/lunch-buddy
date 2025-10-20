@@ -44,8 +44,8 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly dialogClose = output();
   readonly preferencesChange = output<CategoryPreferences>();
 
-  readonly orderedIds = signal<number[]>([]);
-  readonly hiddenIds = signal<Set<number>>(new Set());
+  readonly orderedIds = signal<(number | null)[]>([]);
+  readonly hiddenIds = signal<Set<number | null>>(new Set());
   readonly warnAtRatio = signal(0.85);
   readonly notificationsEnabled = signal(false);
   readonly includeAllTransactions = signal(true);
@@ -94,7 +94,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.includeAllTransactions.set(prefs.includeAllTransactions);
   }
 
-  private ensureOrderContains(current: number[]): number[] {
+  private ensureOrderContains(current: (number | null)[]): (number | null)[] {
     const existing = new Set(current);
     const appended = [...current];
     for (const category of this.allCategories()) {
@@ -105,7 +105,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     return appended;
   }
 
-  moveCategory(categoryId: number, direction: -1 | 1): void {
+  moveCategory(categoryId: number | null, direction: -1 | 1): void {
     this.orderedIds.update((previous) => {
       const order = this.ensureOrderContains(previous);
       const index = order.indexOf(categoryId);
@@ -121,7 +121,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     });
   }
 
-  toggleVisibility(categoryId: number): void {
+  toggleVisibility(categoryId: number | null): void {
     this.hiddenIds.update((previous) => {
       const next = new Set(previous);
       if (next.has(categoryId)) {

@@ -19,7 +19,7 @@ type SyncManager = {
 };
 
 interface BudgetPreferencesPayload {
-  hiddenCategoryIds: number[];
+  hiddenCategoryIds: (number | null)[];
   notificationsEnabled: boolean;
   warnAtRatio: number;
   currency: string | null;
