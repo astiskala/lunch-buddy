@@ -44,7 +44,7 @@ export class App implements OnInit {
         })),
       )
       .subscribe(() => {
-        this._swUpdate.activateUpdate().then(() => {
+        void this._swUpdate.activateUpdate().then(() => {
           window.location.reload();
         });
       });
