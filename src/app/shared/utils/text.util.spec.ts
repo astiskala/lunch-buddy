@@ -57,7 +57,7 @@ describe('Text Utils', () => {
     });
 
     it('should handle mixed entities and text', () => {
-      expect(decodeHtmlEntities('Caf&eacute; &amp; Restaurant')).toBe(
+      expect(decodeHtmlEntities('Caf&#233; &amp; Restaurant')).toBe(
         'Café & Restaurant'
       );
     });

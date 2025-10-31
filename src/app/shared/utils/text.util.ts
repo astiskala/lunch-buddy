@@ -10,12 +10,20 @@ const BASIC_ENTITY_MAP: Record<string, string> = {
 
 function decodeWithFallback(html: string): string {
   return html
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) =>
-      String.fromCodePoint(parseInt(hex, 16))
-    )
-    .replace(/&#([0-9]+);/g, (_, dec: string) =>
-      String.fromCodePoint(parseInt(dec, 10))
-    )
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => {
+      try {
+        return String.fromCodePoint(parseInt(hex, 16));
+      } catch {
+        return '�';
+      }
+    })
+    .replace(/&#([0-9]+);/g, (_, dec: string) => {
+      try {
+        return String.fromCodePoint(parseInt(dec, 10));
+      } catch {
+        return '�';
+      }
+    })
     .replace(
       /&(?:amp|lt|gt|quot|apos|#39|#x27);/g,
       entity => BASIC_ENTITY_MAP[entity] ?? entity
