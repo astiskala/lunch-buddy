@@ -1,3 +1,6 @@
+// Import Angular service worker first
+importScripts('./ngsw-worker.js');
+
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const DB_NAME = 'lunchbuddy-background';
 const DB_VERSION = 1;
@@ -52,8 +55,6 @@ globalThis.addEventListener('fetch', event => {
     );
   }
 });
-
-importScripts('./ngsw-worker.js');
 
 // Install event - prepare cache
 globalThis.addEventListener('install', () => {
