@@ -17,7 +17,7 @@ function decodeWithFallback(html: string): string {
         return '�';
       }
     })
-    .replaceAll(/&#([0-9]+);/g, (_, dec: string) => {
+    .replaceAll(/&#(\d+);/g, (_, dec: string) => {
       try {
         return String.fromCodePoint(Number.parseInt(dec, 10));
       } catch {
