@@ -2,6 +2,7 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
+import { resolveLunchMoneyApiKey } from '../../../environments/resolve-api-key';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 
@@ -63,7 +64,19 @@ export class AuthService {
   private initialize(): void {
     try {
       const stored = this.readStoredApiKey();
-      this.apiKey.next(stored);
+      if (stored) {
+        this.apiKey.next(stored);
+        return;
+      }
+
+      const envKey = resolveLunchMoneyApiKey();
+      if (envKey) {
+        this.storeApiKey(envKey);
+        this.apiKey.next(envKey);
+        return;
+      }
+
+      this.apiKey.next(null);
     } catch (error) {
       this.logger.error('AuthService: failed to load stored API key', error);
       this.apiKey.next(null);

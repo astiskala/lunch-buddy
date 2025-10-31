@@ -22,7 +22,7 @@ export class LoginPageComponent {
   private readonly logger = inject(LoggerService);
   private readonly router = inject(Router);
 
-  protected readonly apiKey = signal('');
+  protected readonly apiKey = signal(this.authService.getApiKey() ?? '');
   protected readonly errorMessage = signal('');
   protected readonly isSubmitting = signal(false);
 

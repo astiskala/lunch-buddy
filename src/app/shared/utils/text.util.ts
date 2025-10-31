@@ -1,6 +1,30 @@
+const BASIC_ENTITY_MAP: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&#x27;': "'",
+  '&apos;': "'",
+};
+
+function decodeWithFallback(html: string): string {
+  return html
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) =>
+      String.fromCodePoint(parseInt(hex, 16))
+    )
+    .replace(/&#([0-9]+);/g, (_, dec: string) =>
+      String.fromCodePoint(parseInt(dec, 10))
+    )
+    .replace(
+      /&(?:amp|lt|gt|quot|apos|#39|#x27);/g,
+      entity => BASIC_ENTITY_MAP[entity] ?? entity
+    );
+}
+
 /**
- * Decodes HTML entities using the browser's native DOMParser.
- * This is simpler and more reliable than manual regex-based decoding.
+ * Decodes HTML entities without relying on DOM APIs so Trusted Types checks do not flag the code path.
+ * Handles the common named entities plus hexadecimal and decimal numeric references.
  */
 export function decodeHtmlEntities(value: string): string;
 export function decodeHtmlEntities(value: null | undefined): null;
@@ -14,7 +38,5 @@ export function decodeHtmlEntities(
     return null;
   }
 
-  // Use DOMParser with text/html to properly decode entities
-  const doc = new DOMParser().parseFromString(value, 'text/html');
-  return doc.documentElement.textContent || '';
+  return decodeWithFallback(value);
 }

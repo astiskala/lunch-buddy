@@ -28,6 +28,8 @@ describe('AuthService', () => {
 
   afterEach(() => {
     localStorage.clear();
+    delete (globalThis as { NG_APP_LUNCHMONEY_API_KEY?: string })
+      .NG_APP_LUNCHMONEY_API_KEY;
   });
 
   it('should be created', () => {
@@ -64,6 +66,24 @@ describe('AuthService', () => {
         { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
       ],
     });
+    const newService = TestBed.inject(AuthService);
+    await newService.ready();
+    expect(newService.getApiKey()).toBe(TEST_API_KEY);
+  });
+
+  it('should prefer runtime environment API key when no stored key exists', async () => {
+    (
+      globalThis as { NG_APP_LUNCHMONEY_API_KEY?: string }
+    ).NG_APP_LUNCHMONEY_API_KEY = TEST_API_KEY;
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
+      ],
+    });
+
     const newService = TestBed.inject(AuthService);
     await newService.ready();
     expect(newService.getApiKey()).toBe(TEST_API_KEY);

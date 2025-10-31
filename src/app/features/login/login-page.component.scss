@@ -37,7 +37,7 @@
 
   p {
     font-size: 0.95rem;
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
     margin: 0;
   }
 }
@@ -89,7 +89,7 @@
     padding: 0.875rem;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: #1a202c;
     background: var(--color-secondary);
     border: none;
     border-radius: 8px;
@@ -123,17 +123,17 @@
 
   p {
     font-size: 0.875rem;
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
     margin: 0;
 
     a {
-      color: var(--color-primary);
+      color: var(--color-primary-light);
       text-decoration: none;
       font-weight: 600;
 
       &:hover {
         text-decoration: underline;
-        color: var(--color-secondary-dark);
+        color: var(--color-secondary);
       }
     }
   }

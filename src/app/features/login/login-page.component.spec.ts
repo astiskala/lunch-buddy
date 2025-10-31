@@ -8,6 +8,7 @@ describe('LoginPageComponent', () => {
   let component: LoginPageComponent;
   let fixture: ComponentFixture<LoginPageComponent>;
   type AuthServiceStub = {
+    getApiKey: () => string | null;
     setApiKey: (key: string) => void;
   };
 
@@ -21,8 +22,9 @@ describe('LoginPageComponent', () => {
   beforeEach(async () => {
     const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
       'AuthService',
-      ['setApiKey']
+      ['getApiKey', 'setApiKey']
     );
+    authServiceSpy.getApiKey.and.returnValue(null);
     authServiceSpy.setApiKey.and.stub();
     const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
     routerSpy.navigate.and.resolveTo(true);

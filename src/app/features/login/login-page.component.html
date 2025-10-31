@@ -1,17 +1,19 @@
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
+<main
+  class="login-container"
+  aria-labelledby="login-title login-subtitle"
+  role="main">
+  <section class="login-card" aria-labelledby="login-title login-subtitle">
+    <header class="login-header">
       <img
         ngSrc="icons/lunch-buddy.svg"
         width="64"
         height="64"
         alt="Lunch Buddy logo"
         class="login-logo"
-        priority
-      />
-      <h1>Lunch Buddy</h1>
-      <p>Enter your API key to continue</p>
-    </div>
+        priority />
+      <h1 id="login-title">Lunch Buddy</h1>
+      <p id="login-subtitle">Enter your API key to continue</p>
+    </header>
 
     <form (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
@@ -23,8 +25,7 @@
           (input)="onApiKeyChange($any($event.target).value)"
           placeholder="Enter your API key"
           required
-          autocomplete="off"
-        />
+          autocomplete="off" />
         @if (errorMessage()) {
           <span class="error-message">{{ errorMessage() }}</span>
         }
@@ -39,13 +40,16 @@
       </button>
     </form>
 
-    <div class="login-footer">
+    <footer class="login-footer" aria-label="Developer resources">
       <p>
         Don't have an API key?
-        <a href="https://my.lunchmoney.app/developers" target="_blank" rel="noopener noreferrer">
+        <a
+          href="https://my.lunchmoney.app/developers"
+          target="_blank"
+          rel="noopener noreferrer">
           Get one from Lunch Money
         </a>
       </p>
-    </div>
-  </div>
-</div>
+    </footer>
+  </section>
+</main>
