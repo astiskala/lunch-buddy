@@ -4,5 +4,10 @@
     "connectionId": "astiskala",
     "projectKey": "astiskala_lunch-buddy"
   },
-  "mcp.servers.sonarqube.disabled": true
+  "mcp.servers.sonarqube.disabled": true,
+  "[git-commit]": {
+    "editor.rulers": [100],
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 100
+  }
 }

@@ -61,14 +61,17 @@ test.describe('Dashboard', () => {
 
     // Simulate offline mode
     await context.setOffline(true);
+    try {
+      // Trigger a network request or wait for offline detection
+      await page.waitForTimeout(1000);
 
-    // Trigger a network request or wait for offline detection
-    await page.waitForTimeout(1000);
-
-    // Check for offline indicator
-    const offlineIndicator = page.locator('[role="alert"]');
-    await expect(offlineIndicator).toBeVisible();
-    await expect(offlineIndicator).toContainText(/offline/i);
+      // Check for offline indicator
+      const offlineIndicator = page.locator('[role="alert"]');
+      await expect(offlineIndicator).toBeVisible();
+      await expect(offlineIndicator).toContainText(/offline/i);
+    } finally {
+      await context.setOffline(false);
+    }
   });
 
   test('should have proper heading hierarchy', async ({ page }) => {

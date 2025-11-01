@@ -31,7 +31,7 @@
   h1 {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--color-secondary);
+    color: var(--color-primary);
     margin: 0 0 0.5rem;
   }
 
@@ -127,13 +127,19 @@
     margin: 0;
 
     a {
-      color: var(--color-primary-light);
+      color: var(--color-primary-dark);
       text-decoration: none;
       font-weight: 600;
 
       &:hover {
         text-decoration: underline;
-        color: var(--color-secondary);
+        color: var(--color-primary-dark);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+        text-decoration: underline;
       }
     }
   }

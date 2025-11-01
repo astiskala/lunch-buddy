@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { LunchMoneyService } from './lunchmoney.service';
 
@@ -155,5 +155,102 @@ describe('LunchMoneyService', () => {
     expect(req.request.headers.get('Expires')).toBe('0');
     expect(req.request.headers.get('If-Modified-Since')).toBe('0');
     req.flush({});
+  });
+
+  it('should filter uncategorized transactions client-side', () => {
+    const mockResponse = {
+      transactions: [
+        {
+          id: 1,
+          date: '2025-11-01',
+          amount: '-10.00',
+          currency: 'USD',
+          payee: 'Coffee',
+          category_id: null,
+          notes: null,
+          recurring_id: null,
+          recurring_payee: null,
+          recurring_description: null,
+          tags: [],
+        },
+        {
+          id: 2,
+          date: '2025-11-02',
+          amount: '-20.00',
+          currency: 'USD',
+          payee: 'Groceries',
+          category_id: 5,
+          notes: null,
+          recurring_id: null,
+          recurring_payee: null,
+          recurring_description: null,
+          tags: [],
+        },
+      ],
+      has_more: false,
+    };
+
+    service
+      .getCategoryTransactions(null, '2025-11-01', '2025-11-30')
+      .subscribe(response => {
+        expect(response.transactions.length).toBe(1);
+        expect(response.transactions[0].id).toBe(1);
+        expect(response.has_more).toBe(false);
+      });
+
+    const req = httpMock.expectOne(request => {
+      return request.url === `${baseUrl}/transactions`;
+    });
+
+    expect(req.request.params.get('start_date')).toBe('2025-11-01');
+    expect(req.request.params.get('end_date')).toBe('2025-11-30');
+    expect(req.request.params.get('debit_as_negative')).toBe('true');
+    expect(req.request.params.has('category_id')).toBeFalse();
+    req.flush(mockResponse);
+  });
+
+  it('should request only cleared transactions when includeAllTransactions is false', () => {
+    const mockResponse = {
+      transactions: [],
+      has_more: false,
+    };
+
+    service
+      .getCategoryTransactions(5, '2025-11-01', '2025-11-30', {
+        includeAllTransactions: false,
+      })
+      .subscribe(response => {
+        expect(response.transactions).toEqual([]);
+      });
+
+    const req = httpMock.expectOne(request => {
+      return request.url === `${baseUrl}/transactions`;
+    });
+
+    expect(req.request.params.get('category_id')).toBe('5');
+    expect(req.request.params.get('status')).toBe('cleared');
+    req.flush(mockResponse);
+  });
+
+  it('should surface HTTP errors to the caller', () => {
+    const expectedStatus = 500;
+    let capturedError: HttpErrorResponse | undefined;
+
+    service.getUser().subscribe({
+      error: (error: unknown) => {
+        if (error instanceof HttpErrorResponse) {
+          capturedError = error;
+        }
+      },
+    });
+
+    const req = httpMock.expectOne(`${baseUrl}/me`);
+    req.flush('error', {
+      status: expectedStatus,
+      statusText: 'Server Error',
+    });
+
+    expect(capturedError).toBeDefined();
+    expect(capturedError?.status).toBe(expectedStatus);
   });
 });

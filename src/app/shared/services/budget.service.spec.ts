@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import {
   BudgetSummaryItem,
   RecurringExpense,
@@ -9,6 +9,7 @@ import {
 } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
@@ -100,8 +101,19 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
   );
 };
 
+type LoggerSpies = {
+  debug: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
+  info: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
+  warn: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
+  error: jasmine.Spy<
+    (message: string, error?: unknown, ...args: unknown[]) => void
+  >;
+};
+
 describe('BudgetService background sync', () => {
   let lunchMoney: MockLunchMoneyService;
+  let logger: LoggerService;
+  let loggerSpies: LoggerSpies;
   type BackgroundPreferencesPayload = {
     hiddenCategoryIds: number[];
     notificationsEnabled: boolean;
@@ -121,6 +133,18 @@ describe('BudgetService background sync', () => {
   beforeEach(() => {
     localStorage.clear();
     lunchMoney = new MockLunchMoneyService();
+    loggerSpies = {
+      debug: jasmine.createSpy('debug'),
+      info: jasmine.createSpy('info'),
+      warn: jasmine.createSpy('warn'),
+      error: jasmine.createSpy('error'),
+    };
+    logger = {
+      debug: loggerSpies.debug,
+      info: loggerSpies.info,
+      warn: loggerSpies.warn,
+      error: loggerSpies.error,
+    } as unknown as LoggerService;
     backgroundSync = jasmine.createSpyObj<BackgroundSyncStub>(
       'BackgroundSyncService',
       ['updateBudgetPreferences']
@@ -136,6 +160,7 @@ describe('BudgetService background sync', () => {
         BudgetService,
         { provide: LunchMoneyService, useValue: lunchMoney },
         { provide: BackgroundSyncService, useValue: backgroundSync },
+        { provide: LoggerService, useValue: logger },
       ],
     });
 
@@ -281,5 +306,87 @@ describe('BudgetService background sync', () => {
     );
     expect(uncategorisedIncome.length).toBe(1);
     expect(Math.abs(uncategorisedIncome[0].spent)).toBeCloseTo(200, 5);
+  });
+
+  it('exposes hidden expenses and incomes based on preferences', () => {
+    initService();
+    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+
+    lunchMoney.budgetSummary$.next([
+      createSummary(monthKey, {
+        category_id: 10,
+        category_name: 'Dining Out',
+        data: {
+          [monthKey]: {
+            num_transactions: 1,
+            spending_to_base: 120,
+            budget_to_base: 0,
+            budget_amount: 0,
+            budget_currency: 'USD',
+            is_automated: false,
+          },
+        },
+      }),
+      createSummary(monthKey, {
+        category_id: 20,
+        category_name: 'Salary',
+        is_income: true,
+        data: {
+          [monthKey]: {
+            num_transactions: 1,
+            spending_to_base: -5000,
+            budget_to_base: 0,
+            budget_amount: 0,
+            budget_currency: 'USD',
+            is_automated: false,
+          },
+        },
+      }),
+    ]);
+
+    service.updatePreferences(current => ({
+      ...current,
+      hiddenCategoryIds: [10, 20],
+    }));
+
+    const hiddenExpenses = service.getHiddenExpenses();
+    const hiddenIncomes = service.getHiddenIncomes();
+
+    expect(hiddenExpenses.some(item => item.categoryId === 10)).toBeTrue();
+    expect(hiddenIncomes.some(item => item.categoryId === 20)).toBeTrue();
+  });
+
+  it('recovers from recurring expense load failures', () => {
+    initService();
+    const failure = new Error('network');
+    const getRecurringExpensesSpy = spyOn(
+      lunchMoney,
+      'getRecurringExpenses'
+    ).and.returnValue(throwError(() => failure));
+
+    service.loadRecurringExpenses();
+
+    expect(getRecurringExpensesSpy).toHaveBeenCalled();
+    expect(loggerSpies.error).toHaveBeenCalledWith(
+      'Failed to load recurring expenses',
+      failure
+    );
+  });
+
+  it('refresh reuses budget and recurring loaders', () => {
+    initService();
+    const loadBudgetSpy = spyOn(
+      service as unknown as { loadBudgetData: () => void },
+      'loadBudgetData'
+    ).and.callThrough();
+    const loadRecurringSpy = spyOn(
+      service as unknown as { loadRecurringExpenses: () => void },
+      'loadRecurringExpenses'
+    ).and.callThrough();
+
+    service.refresh();
+
+    expect(loadBudgetSpy).toHaveBeenCalledTimes(1);
+    expect(loadRecurringSpy).toHaveBeenCalledTimes(1);
   });
 });

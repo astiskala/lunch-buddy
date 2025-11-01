@@ -17,9 +17,22 @@ export class AppUpdateService {
     }
 
     this.subscribeToUpdates();
-    this.swUpdate.checkForUpdate().catch((error: unknown) => {
+  }
+
+  /**
+   * Initialize the service and trigger a check for service worker updates.
+   * Call this from an application lifecycle hook (for example, AppComponent.ngOnInit).
+   */
+  public async init(): Promise<void> {
+    if (!this.swUpdate?.isEnabled) {
+      return;
+    }
+
+    try {
+      await this.swUpdate.checkForUpdate();
+    } catch (error: unknown) {
       this.logger.warn('AppUpdateService: checkForUpdate failed', error);
-    });
+    }
   }
 
   private subscribeToUpdates(): void {
@@ -37,7 +50,11 @@ export class AppUpdateService {
     } catch (error) {
       this.logger.warn('AppUpdateService: activateUpdate failed', error);
     } finally {
-      globalThis.window.location.reload();
+      this.reloadWindow();
     }
+  }
+
+  protected reloadWindow(): void {
+    globalThis.window.location.reload();
   }
 }

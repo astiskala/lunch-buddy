@@ -11,7 +11,7 @@
         alt="Lunch Buddy logo"
         class="login-logo"
         priority />
-      <h1 id="login-title">Lunch Buddy</h1>
+      <h1 id="login-title">Sign in to Lunch Buddy</h1>
       <p id="login-subtitle">Enter your API key to continue</p>
     </header>
 
@@ -31,7 +31,11 @@
         }
       </div>
 
-      <button type="submit" class="submit-button" [disabled]="isSubmitting()">
+      <button
+        type="submit"
+        class="submit-button"
+        [disabled]="!canSubmit()"
+        [attr.aria-disabled]="!canSubmit()">
         @if (isSubmitting()) {
           <span>Logging in...</span>
         } @else {

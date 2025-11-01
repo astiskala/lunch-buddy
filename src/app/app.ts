@@ -48,11 +48,15 @@ export class App implements OnInit {
         this._swUpdate
           .activateUpdate()
           .then(() => {
-            globalThis.location.reload();
+            this.reloadPage();
           })
           .catch((error: unknown) => {
             console.error('Failed to activate update:', error);
           });
       });
+  }
+
+  protected reloadPage(): void {
+    globalThis.location.reload();
   }
 }

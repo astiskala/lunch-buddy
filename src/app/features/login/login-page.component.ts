@@ -2,6 +2,7 @@ import { NgOptimizedImage } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   signal,
   inject,
 } from '@angular/core';
@@ -22,9 +23,21 @@ export class LoginPageComponent {
   private readonly logger = inject(LoggerService);
   private readonly router = inject(Router);
 
+  private static readonly MIN_API_KEY_LENGTH = 20;
+
   protected readonly apiKey = signal(this.authService.getApiKey() ?? '');
   protected readonly errorMessage = signal('');
   protected readonly isSubmitting = signal(false);
+  protected readonly isApiKeyValid = computed(() => {
+    const value = this.apiKey().trim();
+    return (
+      value.length >= LoginPageComponent.MIN_API_KEY_LENGTH &&
+      /^[a-zA-Z0-9]+$/.test(value)
+    );
+  });
+  protected readonly canSubmit = computed(
+    () => this.isApiKeyValid() && !this.isSubmitting()
+  );
 
   protected async onSubmit(): Promise<void> {
     const trimmedApiKey = this.apiKey().trim();
@@ -34,7 +47,7 @@ export class LoginPageComponent {
     }
 
     // Basic validation - API keys are typically alphanumeric
-    if (trimmedApiKey.length < 20 || !/^[a-zA-Z0-9]+$/.test(trimmedApiKey)) {
+    if (!this.isApiKeyValid()) {
       this.errorMessage.set('API key appears to be invalid');
       return;
     }

@@ -9,6 +9,7 @@ import {
   withInterceptors,
 } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import { lunchmoneyInterceptor } from './lunchmoney.interceptor';
 import { AuthService } from '../services/auth.service';
 
@@ -18,13 +19,15 @@ describe('lunchmoneyInterceptor', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
-    authServiceSpy = jasmine.createSpyObj(
-      'AuthService',
-      ['ready', 'getApiKey'],
-      {
-        apiKey$: jasmine.createSpyObj('BehaviorSubject', ['getValue']),
-      }
-    );
+    const apiKeySubject = new BehaviorSubject<string | null>('test-api-key');
+    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', [
+      'ready',
+      'getApiKey',
+    ]);
+    Object.defineProperty(authServiceSpy, 'apiKey$', {
+      configurable: true,
+      value: apiKeySubject.asObservable(),
+    });
     authServiceSpy.ready.and.returnValue(Promise.resolve());
     authServiceSpy.getApiKey.and.returnValue('test-api-key');
 

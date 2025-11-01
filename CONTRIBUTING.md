@@ -75,6 +75,10 @@ refactor: simplify budget state management
 
 Commitlint enforces this automatically on every commit.
 
+- Keep commit body lines at or below 100 characters. The repository VS Code settings (`.vscode/settings.json`)
+  add a 100-character ruler and wrap commit messages automatically in the Source Control view so you can spot
+  issues before the Husky hook runs.
+
 ## Code Style & Architecture
 
 ### Angular Best Practices
