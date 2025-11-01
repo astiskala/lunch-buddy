@@ -9,6 +9,7 @@
     "lint": "ng lint --fix && stylelint \"**/*.scss\" --fix",
     "mock:server": "node mock-server/server.js",
     "prepare": "husky",
+    "postinstall": "playwright install --with-deps chromium",
     "prestart": "npm run generate:env",
     "pretest": "npm run generate:env",
     "prewatch": "node tools/write-version.js && node tools/write-pwa-version.js",
