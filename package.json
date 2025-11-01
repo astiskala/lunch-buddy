@@ -47,6 +47,12 @@
   "lint-staged": {
     "*.{ts,js,scss,html,json,md}": "prettier --write"
   },
+  "overrides": {
+    "tar": "7.5.2",
+    "npm": {
+      "tar": "7.5.2"
+    }
+  },
   "dependencies": {
     "@angular/cdk": "^20.2.11",
     "@angular/common": "^20.3.9",
