@@ -3,15 +3,10 @@
   "name": "Lunch Buddy",
   "short_name": "LunchBuddy",
   "description": "Lunch Buddy keeps your Lunch Money budgets close at hand, even when you go offline.",
-  "categories": [
-    "finance"
-  ],
+  "categories": ["finance"],
   "lang": "en",
   "dir": "ltr",
-  "display_override": [
-    "minimal-ui",
-    "standalone"
-  ],
+  "display_override": ["minimal-ui", "standalone"],
   "display": "fullscreen",
   "scope": "/",
   "start_url": "/",

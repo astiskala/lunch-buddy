@@ -85,13 +85,28 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     // Handle dialog open/close based on input signal
     effect(() => {
       const dialog = this.dialogElement().nativeElement;
+      const shouldOpen = this.open();
 
-      if (this.open()) {
-        if (!dialog.open) {
-          dialog.showModal();
+      if (!shouldOpen) {
+        if (dialog.open && typeof dialog.close === 'function') {
+          dialog.close();
         }
-      } else if (dialog.open) {
-        dialog.close();
+
+        dialog.removeAttribute('open');
+        return;
+      }
+
+      if (!dialog.open) {
+        if (typeof dialog.showModal === 'function') {
+          try {
+            dialog.showModal();
+            return;
+          } catch (error) {
+            this.logger.error('Failed to open dialog with showModal', error);
+          }
+        }
+
+        dialog.setAttribute('open', '');
       }
     });
   }

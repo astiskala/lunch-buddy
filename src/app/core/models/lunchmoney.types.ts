@@ -49,9 +49,9 @@ export interface BudgetConfig {
 
 export interface BudgetRecurringItem {
   payee: string;
-  amount: number;
-  currency: string;
-  to_base: number;
+  amount: number | null;
+  currency: string | null;
+  to_base: number | null;
 }
 
 export interface BudgetSummaryItem {
@@ -105,12 +105,12 @@ export interface Transaction {
   recurring_id: number | null;
   recurring_payee: string | null;
   recurring_description: string | null;
-  tags: Array<{
+  tags: {
     id: number;
     name: string;
     description: string | null;
     archived: boolean;
-  }>;
+  }[];
   is_group?: boolean;
   group_id?: number | null;
   to_base?: number | string | null;

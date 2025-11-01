@@ -9,14 +9,14 @@ import { loginRedirectGuard } from './login-redirect.guard';
 import { AuthService } from '../services/auth.service';
 
 describe('loginRedirectGuard', () => {
-  type AuthServiceStub = {
+  interface AuthServiceStub {
     hasApiKey: () => boolean;
     ready: () => Promise<void>;
-  };
+  }
 
-  type RouterStub = {
+  interface RouterStub {
     parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
-  };
+  }
 
   let authService: jasmine.SpyObj<AuthServiceStub>;
   let router: jasmine.SpyObj<RouterStub>;

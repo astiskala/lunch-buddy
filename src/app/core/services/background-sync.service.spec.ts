@@ -5,31 +5,31 @@ import { BackgroundSyncService } from './background-sync.service';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 
-type PrivateApi = {
+interface PrivateApi {
   updateApiCredentials(apiKey: string | null): Promise<void>;
   getRegistration(): Promise<ServiceWorkerRegistration | null>;
-};
+}
 
-type PeriodicSyncSpies = {
+interface PeriodicSyncSpies {
   getTags: jasmine.Spy<() => Promise<string[]>>;
   register: jasmine.Spy<
     (tag: string, options: { minInterval: number }) => Promise<void>
   >;
   unregister: jasmine.Spy<(tag: string) => Promise<void>>;
-};
+}
 
-type SyncSpies = {
+interface SyncSpies {
   register: jasmine.Spy<(tag: string) => Promise<void>>;
-};
+}
 
-type RegistrationFixture = {
+interface RegistrationFixture {
   registration: ServiceWorkerRegistration;
   workerPostMessage: jasmine.Spy<(message: unknown) => void>;
   periodic?: PeriodicSyncSpies;
   sync?: SyncSpies;
-};
+}
 
-type RegistrationOverrides = {
+interface RegistrationOverrides {
   periodicSync?: {
     getTags?: () => Promise<string[]>;
     register?: (tag: string, options: { minInterval: number }) => Promise<void>;
@@ -41,7 +41,7 @@ type RegistrationOverrides = {
   worker?: {
     postMessage?: (message: unknown) => void;
   };
-};
+}
 
 describe('BackgroundSyncService', () => {
   let loggerSpy: jasmine.SpyObj<LoggerService>;
@@ -145,12 +145,20 @@ describe('BackgroundSyncService', () => {
     fixture: RegistrationFixture
   ): PeriodicSyncSpies => {
     expect(fixture.periodic).toBeDefined();
-    return fixture.periodic as PeriodicSyncSpies;
+    if (!fixture.periodic) {
+      throw new Error('Periodic sync spies not initialized');
+    }
+
+    return fixture.periodic;
   };
 
   const expectSyncManager = (fixture: RegistrationFixture): SyncSpies => {
     expect(fixture.sync).toBeDefined();
-    return fixture.sync as SyncSpies;
+    if (!fixture.sync) {
+      throw new Error('Sync manager spies not initialized');
+    }
+
+    return fixture.sync;
   };
 
   describe('on the server platform', () => {

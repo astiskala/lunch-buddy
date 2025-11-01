@@ -7,36 +7,36 @@ on:
     branches:
       - main
     paths:
-      - ".github/**"
-      - "angular.json"
-      - "package.json"
-      - "package-lock.json"
-      - "tsconfig*.json"
-      - "vercel.json"
-      - "ngsw-config.json"
-      - "ngsw-config.template.json"
-      - ".releaserc.json"
-      - "tools/**"
-      - "src/**"
-      - "public/**"
-      - "mock-server/**"
+      - '.github/**'
+      - 'angular.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'vercel.json'
+      - 'ngsw-config.json'
+      - 'ngsw-config.template.json'
+      - '.releaserc.json'
+      - 'tools/**'
+      - 'src/**'
+      - 'public/**'
+      - 'mock-server/**'
   pull_request:
     branches:
       - main
     paths:
-      - ".github/**"
-      - "angular.json"
-      - "package.json"
-      - "package-lock.json"
-      - "tsconfig*.json"
-      - "vercel.json"
-      - "ngsw-config.json"
-      - "ngsw-config.template.json"
-      - ".releaserc.json"
-      - "tools/**"
-      - "src/**"
-      - "public/**"
-      - "mock-server/**"
+      - '.github/**'
+      - 'angular.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig*.json'
+      - 'vercel.json'
+      - 'ngsw-config.json'
+      - 'ngsw-config.template.json'
+      - '.releaserc.json'
+      - 'tools/**'
+      - 'src/**'
+      - 'public/**'
+      - 'mock-server/**'
 
 jobs:
   build-and-test:
@@ -49,8 +49,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -100,8 +100,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci

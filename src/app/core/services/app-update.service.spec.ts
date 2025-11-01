@@ -9,21 +9,21 @@ import { Subject } from 'rxjs';
 import { AppUpdateService } from './app-update.service';
 import { LoggerService } from './logger.service';
 
-type LoggerSpies = {
+interface LoggerSpies {
   debug: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   info: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   warn: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   error: jasmine.Spy<
     (message: string, error?: unknown, ...args: unknown[]) => void
   >;
-};
+}
 
-type MutableSwUpdate = {
+interface MutableSwUpdate {
   isEnabled: boolean;
   versionUpdates: Subject<VersionEvent>;
   checkForUpdate: jasmine.Spy<() => Promise<boolean>>;
   activateUpdate: jasmine.Spy<() => Promise<boolean>>;
-};
+}
 
 const createSwUpdate = (
   overrides: Partial<MutableSwUpdate> = {}

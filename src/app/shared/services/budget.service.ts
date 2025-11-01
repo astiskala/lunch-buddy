@@ -333,7 +333,7 @@ export class BudgetService {
       );
     }
 
-    type SplitResult = {
+    interface SplitResult {
       summary: BudgetSummaryItem;
       expense?: {
         total: number;
@@ -346,7 +346,7 @@ export class BudgetService {
         transactionList: Transaction[];
       };
       fallback?: BudgetProgress;
-    };
+    }
 
     // Only one API call for all uncategorized transactions
     const uncategorisedSummary = uncategorisedSummaries[0];

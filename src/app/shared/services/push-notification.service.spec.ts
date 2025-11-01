@@ -11,7 +11,7 @@ interface MockNotificationCtor {
   requestPermission: jasmine.Spy<
     () => NotificationPermission | Promise<NotificationPermission>
   >;
-  instances: Array<{ title: string; options?: NotificationOptions }>;
+  instances: { title: string; options?: NotificationOptions }[];
   new (title: string, options?: NotificationOptions): unknown;
 }
 
@@ -149,10 +149,10 @@ describe('default notification channel', () => {
     class TestNotification {
       static readonly permission: NotificationPermission = 'default';
       static readonly requestPermission = requestPermissionSpy;
-      static readonly instances: Array<{
+      static readonly instances: {
         title: string;
         options?: NotificationOptions;
-      }> = [];
+      }[] = [];
 
       constructor(
         public title: string,

@@ -8,8 +8,7 @@
         class="action-btn customize-btn"
         (click)="customize.emit()"
         title="Customise dashboard"
-        aria-label="Customise dashboard"
-      >
+        aria-label="Customise dashboard">
         <mat-icon>settings</mat-icon>
         <span class="btn-label">Customise</span>
       </button>
@@ -19,8 +18,7 @@
         class="action-btn logout-btn"
         (click)="logout.emit()"
         title="Logout"
-        aria-label="Logout"
-      >
+        aria-label="Logout">
         <mat-icon>logout</mat-icon>
         <span class="btn-label">Logout</span>
       </button>
@@ -36,13 +34,16 @@
 
       <div class="progress-bars">
         <div class="progress-bar-wrapper">
-          <div class="progress-bar spent" [style.width.%]="expenseSpentPercent()"></div>
-          <div class="progress-bar projected" [style.width.%]="expenseProjectedPercent()"></div>
+          <div
+            class="progress-bar spent"
+            [style.width.%]="expenseSpentPercent()"></div>
+          <div
+            class="progress-bar projected"
+            [style.width.%]="expenseProjectedPercent()"></div>
           <div
             class="month-indicator"
             [style.left.%]="monthProgressPercent()"
-            title="Month progress: {{ monthProgressPercent() }}%"
-          >
+            title="Month progress: {{ monthProgressPercent() }}%">
             <div class="indicator-line"></div>
           </div>
         </div>
@@ -59,7 +60,9 @@
         </div>
         <div class="metric">
           <span class="metric-label">Remaining</span>
-          <span class="metric-value highlight" [class.negative]="expenseRemaining() < 0">
+          <span
+            class="metric-value highlight"
+            [class.negative]="expenseRemaining() < 0">
             {{ expenseRemainingFormatted() }}
           </span>
         </div>
@@ -74,13 +77,16 @@
 
       <div class="progress-bars">
         <div class="progress-bar-wrapper">
-          <div class="progress-bar spent" [style.width.%]="incomeSpentPercent()"></div>
-          <div class="progress-bar projected" [style.width.%]="incomeProjectedPercent()"></div>
+          <div
+            class="progress-bar spent"
+            [style.width.%]="incomeSpentPercent()"></div>
+          <div
+            class="progress-bar projected"
+            [style.width.%]="incomeProjectedPercent()"></div>
           <div
             class="month-indicator"
             [style.left.%]="monthProgressPercent()"
-            title="Month progress: {{ monthProgressPercent() }}%"
-          >
+            title="Month progress: {{ monthProgressPercent() }}%">
             <div class="indicator-line"></div>
           </div>
         </div>
@@ -97,7 +103,9 @@
         </div>
         <div class="metric">
           <span class="metric-label">Remaining</span>
-          <span class="metric-value highlight" [class.negative]="incomeRemaining() < 0">
+          <span
+            class="metric-value highlight"
+            [class.negative]="incomeRemaining() < 0">
             {{ incomeRemainingFormatted() }}
           </span>
         </div>

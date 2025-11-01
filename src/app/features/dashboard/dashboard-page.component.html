@@ -21,21 +21,21 @@
           height="40"
           alt="Lunch Buddy logo"
           priority
-          class="brand-logo"
-        />
+          class="brand-logo" />
         <span class="brand-name">Lunch Buddy</span>
       </div>
       <div class="header-status">
         <div class="status-row">
-          <span class="last-refresh" aria-live="polite">{{ lastRefreshText() }}</span>
+          <span class="last-refresh" aria-live="polite">{{
+            lastRefreshText()
+          }}</span>
           <button
             mat-icon-button
             type="button"
             class="refresh-button"
             (click)="refresh()"
             [disabled]="isLoading()"
-            aria-label="Refresh data"
-          >
+            aria-label="Refresh data">
             <mat-icon [class.spin]="isRefreshing()">refresh</mat-icon>
           </button>
         </div>
@@ -53,18 +53,20 @@
       [totalIncomeUpcoming]="totalIncomeUpcoming()"
       [currency]="currency()"
       (customize)="openPreferencesDialog()"
-      (logout)="logout()"
-    />
+      (logout)="logout()" />
 
     <mat-button-toggle-group
       class="segmented-control"
       appearance="standard"
       [value]="activeTab()"
       (valueChange)="handleTabChange($event)"
-      aria-label="Budget category toggle"
-    >
-      <mat-button-toggle class="segmented-option" value="expenses">Expenses</mat-button-toggle>
-      <mat-button-toggle class="segmented-option" value="income">Income</mat-button-toggle>
+      aria-label="Budget category toggle">
+      <mat-button-toggle class="segmented-option" value="expenses"
+        >Expenses</mat-button-toggle
+      >
+      <mat-button-toggle class="segmented-option" value="income"
+        >Income</mat-button-toggle
+      >
     </mat-button-toggle-group>
 
     <div class="filter-chips">
@@ -72,24 +74,21 @@
         class="chip"
         [class.active]="statusFilter() === 'over'"
         [class.over]="statusFilter() === 'over'"
-        (click)="handleStatusFilterChange('over')"
-      >
+        (click)="handleStatusFilterChange('over')">
         Over Budget ({{ statusCounts().over }})
       </button>
       <button
         class="chip"
         [class.active]="statusFilter() === 'at-risk'"
         [class.at-risk]="statusFilter() === 'at-risk'"
-        (click)="handleStatusFilterChange('at-risk')"
-      >
+        (click)="handleStatusFilterChange('at-risk')">
         At Risk ({{ statusCounts().atRisk }})
       </button>
       <button
         class="chip"
         [class.active]="statusFilter() === 'on-track'"
         [class.on-track]="statusFilter() === 'on-track'"
-        (click)="handleStatusFilterChange('on-track')"
-      >
+        (click)="handleStatusFilterChange('on-track')">
         On Track ({{ statusCounts().onTrack }})
       </button>
     </div>
@@ -98,8 +97,7 @@
       <recurring-expenses-panel
         [expenses]="recurringByCategory().unassigned"
         [defaultCurrency]="currency() ?? 'USD'"
-        [referenceDate]="referenceDate()"
-      />
+        [referenceDate]="referenceDate()" />
     }
 
     @if (!showInitialLoading()) {
@@ -112,8 +110,7 @@
         [monthProgressRatio]="monthProgressRatio()"
         [emptyMessage]="visibleEmptyMessage()"
         [referenceDate]="referenceDate()"
-        [includeAllTransactions]="preferences().includeAllTransactions"
-      />
+        [includeAllTransactions]="preferences().includeAllTransactions" />
     }
 
     @if (filteredHiddenItems().length > 0) {
@@ -141,8 +138,7 @@
             [monthProgressRatio]="monthProgressRatio()"
             [emptyMessage]="hiddenEmptyMessage()"
             [referenceDate]="referenceDate()"
-            [includeAllTransactions]="preferences().includeAllTransactions"
-          />
+            [includeAllTransactions]="preferences().includeAllTransactions" />
         }
       </div>
     }
@@ -153,7 +149,6 @@
       [hiddenItems]="filteredHiddenItems()"
       [preferences]="preferences()"
       (dialogClose)="closePreferencesDialog()"
-      (preferencesChange)="handlePreferencesChange($event)"
-    />
+      (preferencesChange)="handlePreferencesChange($event)" />
   }
 </div>

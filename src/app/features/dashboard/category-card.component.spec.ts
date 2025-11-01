@@ -191,11 +191,11 @@ describe('CategoryCardComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const label = (
-      compiled.querySelector('.metrics .metric .label')?.textContent || ''
+      compiled.querySelector('.metrics .metric .label')?.textContent ?? ''
     ).trim();
     expect(label).toBe('Received');
     const value =
-      compiled.querySelector('.metrics .metric .value')?.textContent || '';
+      compiled.querySelector('.metrics .metric .value')?.textContent ?? '';
     expect(value).toContain('$650.00');
   });
 
@@ -271,7 +271,7 @@ describe('CategoryCardComponent', () => {
     fixture.componentRef.setInput('recurringExpenses', []);
     fixture.detectChanges();
 
-    expect(component['showDetails']()).toBeFalse();
+    expect(component.showDetails()).toBeFalse();
 
     const hostElement = fixture.nativeElement as HTMLElement;
     const card = hostElement.querySelector<HTMLElement>('.category-card');
@@ -279,7 +279,7 @@ describe('CategoryCardComponent', () => {
     card?.click();
     fixture.detectChanges();
 
-    expect(component['showDetails']()).toBeTrue();
+    expect(component.showDetails()).toBeTrue();
   });
 
   it('should collapse when clicking details on expanded card', () => {
@@ -306,7 +306,7 @@ describe('CategoryCardComponent', () => {
     details?.click();
     fixture.detectChanges();
 
-    expect(component['showDetails']()).toBeFalse();
+    expect(component.showDetails()).toBeFalse();
   });
 
   it('should exclude cleared recurring instances from upcoming totals', () => {

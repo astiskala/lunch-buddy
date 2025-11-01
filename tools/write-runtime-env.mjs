@@ -23,11 +23,12 @@ const collectRuntimeEnv = () => {
   return Object.fromEntries(entries);
 };
 
-const buildFileContents = (values) => {
+const buildFileContents = values => {
   const entries = Object.entries(values);
   const serialized = entries
     .map(
-      ([key, value]) => `  ${key}: ${value === undefined ? 'undefined' : JSON.stringify(value)},`,
+      ([key, value]) =>
+        `  ${key}: ${value === undefined ? 'undefined' : JSON.stringify(value)},`
     )
     .join('\n');
   const objectLiteral = entries.length === 0 ? '{}' : `{\n${serialized}\n}`;

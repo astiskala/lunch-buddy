@@ -4,11 +4,21 @@ import ngeslint from 'angular-eslint';
 import rxjsXPlugin from 'eslint-plugin-rxjs-x';
 import prettierPlugin from 'eslint-plugin-prettier';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 
 export default tseslint.config(
   {
     // Global ignores
-    ignores: ['projects/**/*', 'playwright.config.ts', 'e2e/**/*'],
+    ignores: [
+      'projects/**/*',
+      'playwright.config.ts',
+      'e2e/**/*',
+      'dist/**/*',
+      'coverage/**/*',
+      'playwright-report/**/*',
+      'test-results/**/*',
+      '**/.angular/**/*',
+    ],
   },
   // Base config for all files
   js.configs.recommended,
@@ -16,10 +26,16 @@ export default tseslint.config(
   // TypeScript files
   {
     files: ['**/*.ts'],
-    extends: [...tseslint.configs.strictTypeChecked, ...ngeslint.configs.tsRecommended, eslintConfigPrettier],
+    extends: [
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+      ...ngeslint.configs.tsRecommended,
+      eslintConfigPrettier,
+    ],
     plugins: {
       'rxjs-x': rxjsXPlugin,
       prettier: prettierPlugin,
+      'unused-imports': unusedImportsPlugin,
     },
     languageOptions: {
       parserOptions: {
@@ -30,6 +46,20 @@ export default tseslint.config(
     rules: {
       ...rxjsXPlugin.configs.recommended.rules,
       'prettier/prettier': 'error',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+      'no-unused-vars': 'off',
+      'no-undef': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
       '@angular-eslint/directive-selector': [
         'error',
         {
@@ -48,12 +78,6 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-        },
-      ],
       '@typescript-eslint/unified-signatures': 'off', // Disabled due to bug with TypeScript 5.9+
       '@angular-eslint/prefer-standalone': 'error',
       '@angular-eslint/use-lifecycle-interface': 'error',
@@ -75,7 +99,11 @@ export default tseslint.config(
   // HTML files
   {
     files: ['**/*.html'],
-    extends: [...ngeslint.configs.templateRecommended, ...ngeslint.configs.templateAccessibility, eslintConfigPrettier],
+    extends: [
+      ...ngeslint.configs.templateRecommended,
+      ...ngeslint.configs.templateAccessibility,
+      eslintConfigPrettier,
+    ],
     rules: {},
   },
 
@@ -174,4 +202,32 @@ export default tseslint.config(
       },
     },
   },
+
+  // Tooling scripts (CommonJS)
+  {
+    files: ['tools/**/*.js'],
+    languageOptions: {
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'writable',
+        __dirname: 'readonly',
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+      },
+    },
+  },
+
+  // Tooling scripts (ESM)
+  {
+    files: ['tools/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+  }
 );

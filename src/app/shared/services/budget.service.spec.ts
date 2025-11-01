@@ -101,31 +101,31 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
   );
 };
 
-type LoggerSpies = {
+interface LoggerSpies {
   debug: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   info: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   warn: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   error: jasmine.Spy<
     (message: string, error?: unknown, ...args: unknown[]) => void
   >;
-};
+}
 
 describe('BudgetService background sync', () => {
   let lunchMoney: MockLunchMoneyService;
   let logger: LoggerService;
   let loggerSpies: LoggerSpies;
-  type BackgroundPreferencesPayload = {
+  interface BackgroundPreferencesPayload {
     hiddenCategoryIds: number[];
     notificationsEnabled: boolean;
     warnAtRatio: number;
     currency: string | null;
-  };
+  }
 
-  type BackgroundSyncStub = {
+  interface BackgroundSyncStub {
     updateBudgetPreferences: (
       payload: BackgroundPreferencesPayload
     ) => Promise<void>;
-  };
+  }
 
   let backgroundSync: jasmine.SpyObj<BackgroundSyncStub>;
   let service: BudgetService;

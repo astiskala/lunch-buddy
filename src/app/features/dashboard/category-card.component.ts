@@ -100,9 +100,7 @@ export class CategoryCardComponent {
     Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100)))
   );
 
-  readonly hasBudget = computed(
-    () => Math.abs(this.item().budgetAmount || 0) > 0
-  );
+  readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount) > 0);
 
   readonly monthProgressPercent = computed(() =>
     Math.round(this.monthProgressRatio() * 100)
@@ -129,9 +127,9 @@ export class CategoryCardComponent {
     for (const transaction of txns) {
       const amount = Number.parseFloat(transaction.amount);
       const date = new Date(transaction.date);
-      const label = decodeHtmlEntities(
-        transaction.display_name || transaction.payee || 'Unnamed transaction'
-      );
+      const rawLabel =
+        transaction.display_name ?? transaction.payee ?? 'Unnamed transaction';
+      const label = decodeHtmlEntities(rawLabel);
       const notes = decodeHtmlEntities(transaction.notes);
 
       entries.push({
@@ -141,7 +139,7 @@ export class CategoryCardComponent {
         label,
         notes,
         amount,
-        currency: transaction.currency || item.budgetCurrency,
+        currency: transaction.currency,
       });
     }
 
@@ -163,8 +161,8 @@ export class CategoryCardComponent {
       }
 
       const amount = Number.parseFloat(instance.expense.amount);
-      const label =
-        decodeHtmlEntities(instance.expense.payee) || 'Recurring expense';
+      const payee = decodeHtmlEntities(instance.expense.payee).trim();
+      const label = payee.length > 0 ? payee : 'Recurring expense';
       const notes = decodeHtmlEntities(instance.expense.description);
 
       entries.push({
@@ -174,7 +172,7 @@ export class CategoryCardComponent {
         label,
         notes,
         amount,
-        currency: instance.expense.currency || item.budgetCurrency,
+        currency: instance.expense.currency,
       });
     }
 

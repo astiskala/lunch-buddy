@@ -8,15 +8,15 @@ import { AuthService } from './auth.service';
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-type PeriodicSyncManager = {
+interface PeriodicSyncManager {
   getTags(): Promise<string[]>;
   register(tag: string, options: { minInterval: number }): Promise<void>;
   unregister(tag: string): Promise<void>;
-};
+}
 
-type SyncManager = {
+interface SyncManager {
   register(tag: string): Promise<void>;
-};
+}
 
 interface BudgetPreferencesPayload {
   hiddenCategoryIds: (number | null)[];

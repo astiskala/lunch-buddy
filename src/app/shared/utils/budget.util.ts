@@ -81,9 +81,9 @@ export const buildBudgetProgress = (
   const monthData = pickMonthData(summary, monthKey);
   const budgetAmount = parseBudgetAmount(monthData);
   const spent = parseSpentAmount(monthData);
-  const recurringItems: BudgetRecurringItem[] = summary.recurring?.data || [];
+  const recurringItems: BudgetRecurringItem[] = summary.recurring?.data ?? [];
   const recurringTotal = recurringItems.reduce((total, item) => {
-    const amount = item.to_base || item.amount || 0;
+    const amount = item.to_base ?? item.amount ?? 0;
     return total + amount;
   }, 0);
   const actualValue = summary.is_income ? Math.abs(spent) : spent;

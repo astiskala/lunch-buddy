@@ -5,11 +5,18 @@
   "scripts": {
     "analyze": "npm run build && source-map-explorer dist/lunch-buddy/browser/**/*.js",
     "build": "ng build",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
     "generate:env": "node tools/write-runtime-env.mjs",
-    "lint": "ng lint --fix && stylelint \"**/*.scss\" --fix",
+    "lint:check": "npm run lint:eslint && npm run lint:styles && npm run format:check",
+    "lint:eslint:fix": "eslint . --max-warnings=0 --fix",
+    "lint:eslint": "eslint . --max-warnings=0",
+    "lint:styles:fix": "stylelint \"src/**/*.scss\" --fix",
+    "lint:styles": "stylelint \"src/**/*.scss\"",
+    "lint": "npm run lint:eslint:fix && npm run lint:styles:fix && npm run format",
     "mock:server": "node mock-server/server.js",
+    "postinstall": "node tools/install-playwright.mjs",
     "prepare": "husky",
-    "postinstall": "playwright install --with-deps chromium",
     "prestart": "npm run generate:env",
     "pretest": "npm run generate:env",
     "prewatch": "node tools/write-version.js && node tools/write-pwa-version.js",
@@ -43,7 +50,15 @@
     ]
   },
   "lint-staged": {
-    "*.{ts,js,scss,html,json,md}": "prettier --write"
+    "*.{ts,js,html}": [
+      "eslint --cache --fix --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.scss": [
+      "stylelint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": "prettier --write"
   },
   "overrides": {
     "tar": "7.5.2",

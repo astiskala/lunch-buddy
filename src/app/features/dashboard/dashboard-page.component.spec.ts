@@ -7,20 +7,20 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 
 describe('DashboardPageComponent - Unit Tests', () => {
-  type BudgetServiceStub = {
+  interface BudgetServiceStub {
     refresh: () => void;
     updatePreferences: (
       updater: (current: CategoryPreferences) => CategoryPreferences
     ) => void;
-  };
+  }
 
-  type AuthServiceStub = {
+  interface AuthServiceStub {
     clearApiKey: () => void;
-  };
+  }
 
-  type RouterStub = {
+  interface RouterStub {
     navigate: (commands: unknown[]) => Promise<boolean>;
-  };
+  }
 
   let mockBudgetService: jasmine.SpyObj<BudgetServiceStub>;
   let mockAuthService: jasmine.SpyObj<AuthServiceStub>;
