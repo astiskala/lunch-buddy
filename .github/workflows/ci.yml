@@ -66,7 +66,7 @@ jobs:
 
       - name: Setup Chrome
         id: chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@c785b87e244131f27c9f19c1a33e2ead956ab7ce
 
       - name: Run unit tests
         run: npm test -- --browsers=ChromeHeadlessNoSandbox
