@@ -1,3 +1,8 @@
 {
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "sonarlint.connectedMode.project": {
+    "connectionId": "astiskala",
+    "projectKey": "astiskala_lunch-buddy"
+  },
+  "mcp.servers.sonarqube.disabled": true
 }

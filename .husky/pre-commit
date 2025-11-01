@@ -1,3 +1,12 @@
+#!/bin/sh
+
+# Format staged files
 npx lint-staged
-npm run lint:ci
-npm run lint:styles:ci
+
+# Type check
+echo "🔍 Type checking..."
+npx tsc --noEmit --pretty
+
+# Run tests
+echo "🧪 Running tests..."
+npm test

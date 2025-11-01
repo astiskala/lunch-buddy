@@ -7,36 +7,36 @@ on:
     branches:
       - main
     paths:
-      - '.github/**'
-      - 'angular.json'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig*.json'
-      - 'vercel.json'
-      - 'ngsw-config.json'
-      - 'ngsw-config.template.json'
-      - '.releaserc.json'
-      - 'tools/**'
-      - 'src/**'
-      - 'public/**'
-      - 'mock-server/**'
+      - ".github/**"
+      - "angular.json"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - "vercel.json"
+      - "ngsw-config.json"
+      - "ngsw-config.template.json"
+      - ".releaserc.json"
+      - "tools/**"
+      - "src/**"
+      - "public/**"
+      - "mock-server/**"
   pull_request:
     branches:
       - main
     paths:
-      - '.github/**'
-      - 'angular.json'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig*.json'
-      - 'vercel.json'
-      - 'ngsw-config.json'
-      - 'ngsw-config.template.json'
-      - '.releaserc.json'
-      - 'tools/**'
-      - 'src/**'
-      - 'public/**'
-      - 'mock-server/**'
+      - ".github/**"
+      - "angular.json"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - "vercel.json"
+      - "ngsw-config.json"
+      - "ngsw-config.template.json"
+      - ".releaserc.json"
+      - "tools/**"
+      - "src/**"
+      - "public/**"
+      - "mock-server/**"
 
 jobs:
   build-and-test:
@@ -49,26 +49,37 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint (TypeScript & templates)
-        run: npm run lint:ci
+        run: npm run lint -- --fix=false
 
       - name: Lint styles
-        run: npm run lint:styles:ci
+        run: npm run lint -- --fix=false && npx stylelint "**/*.scss" --max-warnings=0
+
+      - name: Security audit
+        run: npm audit --audit-level=high
 
       - name: Setup Chrome
         id: chrome
         uses: browser-actions/setup-chrome@v1
 
       - name: Run unit tests
-        run: npm run test -- --watch=false --browsers=ChromeHeadlessNoSandbox --progress=false
+        run: npm test -- --browsers=ChromeHeadlessNoSandbox
         env:
           CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lunch-buddy/lcov.info
+          fail_ci_if_error: false
+          flags: unittests
+          name: codecov-umbrella
 
       - name: Build
         run: npm run build
@@ -89,8 +100,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

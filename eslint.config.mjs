@@ -8,7 +8,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 export default tseslint.config(
   {
     // Global ignores
-    ignores: ['projects/**/*'],
+    ignores: ['projects/**/*', 'playwright.config.ts', 'e2e/**/*'],
   },
   // Base config for all files
   js.configs.recommended,
@@ -54,6 +54,7 @@ export default tseslint.config(
           argsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/unified-signatures': 'off', // Disabled due to bug with TypeScript 5.9+
       '@angular-eslint/prefer-standalone': 'error',
       '@angular-eslint/use-lifecycle-interface': 'error',
     },
@@ -156,6 +157,20 @@ export default tseslint.config(
         clearInterval: 'readonly',
         setImmediate: 'readonly',
         clearImmediate: 'readonly',
+      },
+    },
+  },
+
+  // Karma configuration (Node.js)
+  {
+    files: ['karma.conf.js'],
+    languageOptions: {
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'writable',
+        __dirname: 'readonly',
+        process: 'readonly',
       },
     },
   },

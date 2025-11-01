@@ -26,6 +26,9 @@ pnpm-debug.log*
 
 # Testing
 /coverage
+/playwright-report
+/test-results
+bundle-analysis.json
 
 # Hosting
 .vercel

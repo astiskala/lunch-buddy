@@ -19,11 +19,6 @@ Thanks for helping improve Lunch Buddy! These guidelines outline the expectation
 - Fork or branch from `main` and keep your branch focused on a single change.
 - Explain the problem, the solution, and any alternatives considered in the pull request description. Reference related issues.
 - Update documentation and tests as needed—especially when behavior changes or new features ship.
-- Run the local verification commands before pushing:
-  - `npm run lint:ci`
-  - `npm run lint:styles:ci`
-  - `npm run test`
-  - `npm run build` when build-impacting changes are introduced
 - Ensure commits are meaningful and leave the codebase in a working state. Squash if requested during review.
 
 ## Development Workflow
@@ -33,13 +28,165 @@ Thanks for helping improve Lunch Buddy! These guidelines outline the expectation
 - Launch the mock Lunch Money API locally with `npm run mock:server` when you need realistic data without touching production.
 - Keep pull requests small and iterative. When a change spans multiple subsystems, break it into reviewable chunks.
 
+### Using the Mock API
+
+For local development without touching production:
+
+```bash
+# Terminal 1: Start mock API
+npm run mock:server
+
+# Terminal 2: Configure and run app
+export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v1
+npm start
+```
+
+### Available Commands
+
+- `npm start` - Development server with hot reload
+- `npm test` - Run unit tests (headless, with coverage)
+- `npm run test:watch` - Run unit tests in watch mode (with UI)
+- `npm run test:e2e` - Run Playwright E2E tests
+- `npm run lint` - Lint and auto-fix TypeScript + SCSS
+- `npm run build` - Production build
+- `npm run analyze` - Analyze bundle sizes
+- `npm run mock:server` - Start mock Lunch Money API
+
+## Commit Message Format
+
+We use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>: <description>
+
+[optional body]
+```
+
+**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+
+**Examples**:
+
+```bash
+feat: add category sorting options
+fix: prevent token expiration on refresh
+docs: update README installation steps
+refactor: simplify budget state management
+```
+
+Commitlint enforces this automatically on every commit.
+
+## Code Style & Architecture
+
+### Angular Best Practices
+
+**Signals for State**:
+
+```typescript
+export class ExampleComponent {
+  // Input signals
+  readonly data = input.required<string>();
+
+  // Output functions
+  readonly action = output<void>();
+
+  // Computed state
+  readonly displayValue = computed(() => this.data().toUpperCase());
+}
+```
+
+**Modern Templates**:
+
+```html
+<!-- ✅ Use @if, @for -->
+@if (isVisible()) {
+<div>Content</div>
+} @for (item of items(); track item.id) {
+<div>{{ item.name }}</div>
+}
+
+<!-- ❌ Avoid *ngIf, *ngFor -->
+```
+
+**Dependency Injection**:
+
+```typescript
+export class ExampleService {
+  private readonly http = inject(HttpClient);
+  // Avoid constructor injection
+}
+```
+
+### Key Conventions
+
+- **Standalone components** - No NgModules
+- **OnPush change detection** - Except root component
+- **Signals** - For all state management
+- **Strict TypeScript** - No `any` without justification
+- **Functional inject()** - No constructor DI
+
+### Testing
+
+**Unit Tests** (alongside source files as `*.spec.ts`):
+
+```typescript
+describe('YourService', () => {
+  let service: YourService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(YourService);
+  });
+
+  it('should work', () => {
+    expect(service.getData()).toEqual(expected);
+  });
+});
+```
+
+**E2E Tests** (in `e2e/` directory):
+
+```typescript
+test('should display login page', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveURL(/.*login/);
+});
+```
+
+**Coverage Requirements**: 80% minimum (statements, branches, functions, lines)
+
+## Automated Quality Checks
+
+### Pre-commit (Runs Automatically)
+
+When you commit, Husky automatically runs:
+
+1. ✅ Prettier formatting
+2. ✅ TypeScript type checking
+3. ✅ Unit tests for changed files
+4. ✅ Commit message validation
+
+If anything fails, the commit is blocked—just fix and try again.
+
+### CI Pipeline (Runs on Push/PR)
+
+GitHub Actions automatically runs:
+
+1. ✅ ESLint + Stylelint
+2. ✅ Security audit
+3. ✅ Unit tests with coverage
+4. ✅ E2E tests (on PRs)
+5. ✅ Production build
+6. ✅ Coverage upload to Codecov
+
+All checks must pass before merging.
+
 ## Architecture & Code Style
 
 These conventions were already in place—follow them for new code so the project stays consistent.
 
 ### Component Architecture
 
-- All feature and shared components are standalone and list their own `imports`; Angular 20’s default `standalone` flag keeps decorators concise.
+- All feature and shared components are standalone and list their own `imports`; Angular 20's default `standalone` flag keeps decorators concise.
 - Templates use the modern control-flow syntax (`@if`, `@for`) and favor class/style bindings over `ngClass`/`ngStyle`.
 - Local state leans on signals, while component inputs/outputs use the `input()`/`output()` helpers to stay type-safe and ergonomic.
 
@@ -75,8 +222,8 @@ export class SummaryHeroComponent {
 ### Networking & Offline Experience
 
 - `lunchmoney.interceptor.ts` attaches the API key only for `*.lunchmoney.app` requests, falling back to environment-provided credentials if no stored key exists.
-- `public/custom-service-worker.js` layers on top of Angular’s worker to:
-  - cache Lunch Money API responses with a network-first strategy and a 10 s timeout,
+- `public/custom-service-worker.js` layers on top of Angular's worker to:
+  - cache Lunch Money API responses with a network-first strategy and a 10 s timeout,
   - prune obsolete caches during activation,
   - coordinate periodic budget checks and push notifications when categories go over budget.
 - `ngsw-config.json` prefetches core assets and serves navigation requests with the `performance` (cache-first) strategy, so the app shell opens offline. API responses are cached under `dataGroups` for up to 24 hours.
@@ -84,7 +231,7 @@ export class SummaryHeroComponent {
 ### Performance & Quality Tooling
 
 - `provideZonelessChangeDetection()` removes Zone.js overhead; derived values use `computed()` to avoid redundant work, and effects update data reactively.
-- TypeScript runs in strict mode. ESLint (`npm run lint:ci`) and Stylelint (`npm run lint:styles:ci`) enforce Angular, TypeScript, and accessibility rules; Prettier maintains formatting.
+- TypeScript runs in strict mode. ESLint (`npm run lint`) and Stylelint enforce Angular, TypeScript, and accessibility rules; Prettier maintains formatting.
 - Unit tests cover core flows across services, guards, utilities, and UI widgets (e.g., `AuthService`, `BudgetService`, dashboard components, offline indicator, push notification service). Run them with `npm run test`.
 - `.github/workflows/ci.yml` installs dependencies with Node 20, runs both lint suites, executes the Karma suite headlessly, and builds the production bundle.
 
@@ -92,3 +239,16 @@ export class SummaryHeroComponent {
 
 - Open questions, design proposals, or larger refactors can be shared via issues or discussions so maintainers and other contributors can weigh in early.
 - When in doubt, ask—maintainers would rather help ahead of time than request large changes during review.
+
+## Getting Help
+
+- **Questions**: Open a [discussion](https://github.com/astiskala/lunch-buddy/discussions)
+- **Bugs**: Create an [issue](https://github.com/astiskala/lunch-buddy/issues)
+- **Security**: See [SECURITY.md](./SECURITY.md)
+
+## Resources
+
+- [Angular 20 Documentation](https://angular.dev)
+- [Signals Guide](https://angular.dev/guide/signals)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Playwright Testing](https://playwright.dev)

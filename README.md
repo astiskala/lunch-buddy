@@ -23,85 +23,130 @@ Lunch Buddy is a progressive web app that visualises your Lunch Money budgets wi
 
 ### Prerequisites
 
-- Node.js 22 or newer (see `package.json`→`engines`)
-- npm 10+ (ships with current Node releases)
+- Node.js 22+ and npm 10+
 
-### Install dependencies
+### Install and Run
 
 ```bash
 npm install
+npm start  # Dev server at http://localhost:4200
 ```
 
-### Configure your environment
-
-1. Generate the runtime environment file before your first run:
-   ```bash
-   npm run generate:env
-   ```
-2. (Optional) Export Lunch Money credentials so the app can authenticate without prompting:
-   ```bash
-   export NG_APP_LUNCHMONEY_API_KEY=<your-token>
-   export NG_APP_LUNCHMONEY_API_BASE=https://dev.lunchmoney.app/v1   # optional override
-   ```
-   These variables are convenience shortcuts during development—the app also supports entering your API key in the login screen, where it is stored safely in local browser storage. You can skip the environment export entirely if you prefer that flow. After unsetting or changing overrides, rerun `npm run generate:env` to refresh `src/environments/runtime-env.generated.ts`.
-
-### Run the web app
+### Optional: Configure Environment
 
 ```bash
+export NG_APP_LUNCHMONEY_API_KEY=<your-token>
 npm start
 ```
 
-The dev server runs at `http://localhost:4200/` with hot reload. On first load you will be prompted for your Lunch Money API key; the key is stored client-side and synchronised with the background worker.
+Or enter your API key in the login screen—it's stored securely in your browser.
 
-## Mock Lunch Money API
-
-Launch the bundled mock server for deterministic fixtures:
+## Mock API for Development
 
 ```bash
+# Terminal 1
 npm run mock:server
+
+# Terminal 2
+export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v1
+npm start
 ```
 
-- Default base URL: `http://localhost:4600/v1` (override with `MOCK_API_PORT`).
-- When using the mock, point the Angular app at it:
-  ```bash
-  export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v1
-  npm start
-  ```
-- The fixtures simulate current-month budgets, recurring expenses, and transactions without requiring an API key. Run `npm run generate:env` after swapping back to real credentials.
+## Commands
 
-## Useful npm Scripts
+- `npm start` - Development server
+- `npm test` - Unit tests
+- `npm run test:e2e` - E2E tests
+- `npm run lint` - Lint and fix
+- `npm run build` - Production build
+- `npm run analyze` - Bundle analysis
 
-- `npm run lint:ci` – Angular + TypeScript linting (read-only).
-- `npm run lint:styles:ci` – Stylelint with zero-warning threshold.
-- `npm run test` – Karma unit tests in headless Chrome.
-- `npm run build` – Production bundle written to `dist/lunch-buddy/browser`.
-- `npm run watch` – Continuous build pipeline for integration environments.
-- `npm run generate:env` – Regenerate runtime environment file from current `NG_APP_*` variables.
-- `npm run mock:server` – Start the local Lunch Money mock API.
+## Development
 
-## Development Workflow Notes
+- **Pre-commit hooks**: Automatically run formatting, type-checking, and tests on every commit
+- **Code quality**: TypeScript strict mode, ESLint, Stylelint, Prettier
+- **Testing**: Unit tests (Karma/Jasmine) + E2E tests (Playwright) with 80% coverage requirement
+- **CI/CD**: Automated testing, linting, security audits, and builds on every push
 
-- Keep pull requests scoped; the reactive architecture makes incremental changes safer and easier to review.
-- Prefer signals and the `input()`/`output()` helpers for component APIs so typing stays strict.
-- Background work and notifications should go through `BackgroundSyncService` to avoid competing service-worker channels.
-- Accessibility matters: interactive cards expose keyboard handlers, state changes rely on text + colour, and the offline banner uses `role="alert"`. Carry these patterns forward for new UI.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and architecture details.
+
+## Deployment
+
+Ready for Vercel (see `vercel.json`):
+
+1. Import repository
+2. Set `NG_APP_LUNCHMONEY_API_KEY` environment variable
+3. Deploy
+
+Works with any static host—serve `dist/lunch-buddy/browser` with fallback to `index.html`.
+
+## Documentation
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - Development guide and architecture
+- [SECURITY.md](./SECURITY.md) - Security policy
 
 ## Testing & Quality
 
-- TypeScript runs in strict mode; ESLint, Stylelint, and Prettier enforce consistency.
-- Unit tests cover authentication, guards, dashboard widgets, offline flows, and notification helpers.
-- Add or update tests whenever behaviour changes—see `CONTRIBUTING.md` for expectations.
-- Consider end-to-end coverage (Playwright or Cypress) for the login flow and category management; this remains an open roadmap item.
+### Code Quality Tools
+
+- **TypeScript**: Strict mode with comprehensive type checking
+- **ESLint**: Angular-specific rules with Prettier integration
+- **Stylelint**: SCSS best practices enforcement
+- **Commitlint**: Conventional commit format validation
+
+### Testing Strategy
+
+- **Unit Tests**: Karma + Jasmine with 80% coverage thresholds
+- **E2E Tests**: Playwright with multi-browser support and accessibility checks
+- **Coverage Reporting**: Integrated with Codecov
+- **Code Quality**: SonarCloud analysis on every PR
+
+### Test Coverage
+
+Run `npm run test:coverage` to generate coverage reports. Minimum thresholds:
+
+- Statements: 80%
+- Branches: 80%
+- Functions: 80%
+- Lines: 80%
+
+### Pre-commit Hooks
+
+Husky enforces quality checks before commits:
+
+- Prettier formatting via lint-staged
+- TypeScript type checking
+- Unit tests for changed files
+- Conventional commit message format
+
+See `DEVELOPMENT.md` for detailed testing guidelines.
 
 ## Continuous Integration
 
 GitHub Actions (`.github/workflows/ci.yml`) validates every push and pull request targeting `main`:
 
-- Uses Node.js 22 with cached npm dependencies.
-- Runs `npm run lint:ci` and `npm run lint:styles:ci`.
-- Executes unit tests in headless Chrome via `npm run test -- --browsers=ChromeHeadlessNoSandbox --progress=false`.
-- Builds the production bundle with `npm run build`.
-- On pushes to `main`, a follow-up job runs `semantic-release` to publish changelog entries and version tags.
+1. **Dependency installation** with Node.js 22 and npm caching
+2. **Linting** - TypeScript, templates, and SCSS
+3. **Security audit** - npm audit for vulnerabilities
+4. **Unit tests** - Headless Chrome with code coverage
+5. **Coverage upload** - Results sent to Codecov
+6. **SonarCloud analysis** - Code quality and security scanning
+7. **Production build** - Verify bundle creation
+
+### Quality Gates
+
+- All linting must pass (zero warnings)
+- All tests must pass
+- No high/critical security vulnerabilities
+- Code coverage thresholds maintained
+- SonarCloud quality gate passed
+
+On successful merge to `main`, semantic-release automatically:
+
+- Generates changelog from conventional commits
+- Updates version in package.json
+- Creates GitHub release with notes
+- Publishes git tags
 
 ## Deployment
 
@@ -115,5 +160,8 @@ You can adapt the same build artefacts for other hosts—serve `dist/lunch-buddy
 
 ## Additional Documentation
 
-- `CONTRIBUTING.md` – Contribution workflow, coding conventions, and best practices.
-- `SECURITY.md` – Responsible disclosure process for vulnerabilities.
+- `DEVELOPMENT.md` – Comprehensive development guide with testing, debugging, and best practices
+- `CONTRIBUTING.md` – Contribution workflow, coding conventions, and PR guidelines
+- `SECURITY.md` – Responsible disclosure process for vulnerabilities
+- `.github/pull_request_template.md` – PR checklist and standards
+- `.github/ISSUE_TEMPLATE/` – Standardized bug reports and feature requests

@@ -83,7 +83,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.scss"],
+            "codeCoverage": true,
+            "karmaConfig": "karma.conf.js"
           }
         },
         "lint": {
