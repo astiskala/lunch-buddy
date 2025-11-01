@@ -56,10 +56,10 @@ jobs:
         run: npm ci
 
       - name: Lint (TypeScript & templates)
-        run: npm run lint -- --fix=false
+        run: npx ng lint --fix=false
 
       - name: Lint styles
-        run: npm run lint -- --fix=false && npx stylelint "**/*.scss" --max-warnings=0
+        run: npx stylelint "**/*.scss" --max-warnings=0
 
       - name: Security audit
         run: npm audit --audit-level=high
