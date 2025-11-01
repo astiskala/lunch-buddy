@@ -6,7 +6,7 @@ test.describe('Login Flow', () => {
     await page.goto('/');
 
     // Should redirect to login
-    await expect(page).toHaveURL(/.*login/);
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/login');
 
     // Check for key elements
     await expect(page.locator('h1')).toContainText(/login|sign in/i);
