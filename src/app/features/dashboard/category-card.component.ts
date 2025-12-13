@@ -24,6 +24,7 @@ import {
   resolveAmount,
 } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
+import { startOfDay } from '../../shared/utils/date.util';
 import {
   hasFoundTransactionForOccurrence,
   isRecurringInstancePending,
@@ -39,6 +40,13 @@ interface ActivityEntry {
   currency: string | null;
   originalCurrency?: string | null;
 }
+
+/**
+ * Relative tolerance threshold for amount comparison when matching recurring expenses to transactions.
+ * If the absolute amount difference is less than this percentage of the recurring amount,
+ * the amounts are considered to align.
+ */
+const AMOUNT_RELATIVE_TOLERANCE = 0.2;
 
 @Component({
   selector: 'category-card',
@@ -423,7 +431,7 @@ export class CategoryCardComponent {
     reference.setHours(0, 0, 0, 0);
     const occurrence = new Date(entry.date);
     occurrence.setHours(0, 0, 0, 0);
-    return occurrence.getTime() <= reference.getTime();
+    return occurrence.getTime() < reference.getTime();
   }
 
   private safeItem(): BudgetProgress | null {
@@ -494,7 +502,7 @@ export class CategoryCardComponent {
       return true;
     }
 
-    const occurrence = this.startOfDay(instance.occurrenceDate);
+    const occurrence = startOfDay(instance.occurrenceDate);
     const recurringAmount = Math.abs(
       resolveAmount(instance.expense.amount, instance.expense.to_base ?? null)
     );
@@ -543,12 +551,6 @@ export class CategoryCardComponent {
       return null;
     }
     return num.toString();
-  }
-
-  private startOfDay(date: Date): Date {
-    const result = new Date(date);
-    result.setHours(0, 0, 0, 0);
-    return result;
   }
 
   private getWindowRange(): { start: Date; end: Date } | null {
@@ -647,7 +649,7 @@ export class CategoryCardComponent {
     occurrence: Date,
     toleranceMs: number
   ): boolean {
-    const txnDate = this.startOfDay(new Date(txn.date));
+    const txnDate = startOfDay(new Date(txn.date));
     return (
       this.isDateUsable(txnDate) &&
       this.isWithinDateTolerance(txnDate, occurrence, toleranceMs)
@@ -701,7 +703,10 @@ export class CategoryCardComponent {
   ): boolean {
     const txnAmount = Math.abs(resolveAmount(txn.amount, txn.to_base ?? null));
     const amountDelta = Math.abs(txnAmount - recurringAmount);
-    const relativeTolerance = Math.max(tolerance, recurringAmount * 0.2);
+    const relativeTolerance = Math.max(
+      tolerance,
+      recurringAmount * AMOUNT_RELATIVE_TOLERANCE
+    );
     return amountDelta <= relativeTolerance;
   }
 
