@@ -447,3 +447,39 @@ export const hasFoundTransactionForOccurrence = (
     return diff <= toleranceMs;
   });
 };
+
+export interface WindowRangeConfig {
+  start?: Date;
+  end?: Date;
+}
+
+export interface FilterPendingOptions {
+  referenceDate?: Date;
+  windowRange?: WindowRangeConfig;
+}
+
+/**
+ * Filters recurring instances to only those that are pending within the specified window.
+ * This helper eliminates duplication of the common pattern:
+ * ```
+ * instances.filter(instance =>
+ *   isRecurringInstancePending(instance, {
+ *     referenceDate,
+ *     windowStart: windowRange?.start,
+ *     windowEnd: windowRange?.end,
+ *   })
+ * )
+ * ```
+ */
+export const filterPendingInstances = (
+  instances: RecurringInstance[],
+  options: FilterPendingOptions = {}
+): RecurringInstance[] => {
+  return instances.filter(instance =>
+    isRecurringInstancePending(instance, {
+      referenceDate: options.referenceDate,
+      windowStart: options.windowRange?.start,
+      windowEnd: options.windowRange?.end,
+    })
+  );
+};

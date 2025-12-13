@@ -24,7 +24,7 @@ import {
 import {
   getRecurringDate,
   hasFoundTransactionForOccurrence,
-  isRecurringInstancePending,
+  filterPendingInstances,
 } from '../utils/recurring.util';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
@@ -583,15 +583,11 @@ export class BudgetService {
 
     const updated = items.map(item => {
       const instances = assigned.get(item.categoryId) ?? [];
-      const upcomingTotal = instances
-        .filter(
-          instance =>
-            isRecurringInstancePending(instance, {
-              referenceDate,
-              windowStart: windowRange?.start,
-              windowEnd: windowRange?.end,
-            }) && !hasFoundTransactionForOccurrence(instance)
-        )
+      const upcomingTotal = filterPendingInstances(instances, {
+        referenceDate,
+        windowRange: windowRange ?? undefined,
+      })
+        .filter(instance => !hasFoundTransactionForOccurrence(instance))
         .reduce((total, instance) => {
           const amount =
             typeof instance.expense.to_base === 'number'
