@@ -425,7 +425,7 @@ function mergeSummaryWithCategories(summaryResponse, categories) {
       category_id: entry.category_id ?? null,
       category_name: metadata?.name ?? 'Uncategorized',
       category_group_name:
-        groupId !== null ? (groupNameMap.get(groupId) ?? null) : null,
+        groupId === null ? null : (groupNameMap.get(groupId) ?? null),
       group_id: groupId,
       is_group: metadata?.is_group ?? false,
       is_income: metadata?.is_income ?? false,
@@ -443,9 +443,9 @@ function mergeSummaryWithCategories(summaryResponse, categories) {
       category_id: category.id,
       category_name: category.name,
       category_group_name:
-        category.group_id !== null
-          ? (groupNameMap.get(category.group_id) ?? null)
-          : null,
+        category.group_id === null
+          ? null
+          : (groupNameMap.get(category.group_id) ?? null),
       group_id: category.group_id,
       is_group: category.is_group,
       is_income: category.is_income,
