@@ -513,7 +513,7 @@ export class BudgetService {
     const remaining = budgetAmount - actualValue;
     const recurringTotal = baseSummary.totals.recurring_expected;
     const progressRatio =
-      budgetAmount && budgetAmount > 0
+      budgetAmount > 0
         ? Math.min(1, Math.max(0, actualValue / budgetAmount))
         : 0;
     const label = isIncome
