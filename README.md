@@ -61,6 +61,29 @@ npm start
 - `npm run build` - Production build
 - `npm run analyze` - Bundle analysis
 
+## Angular MCP Server
+
+- Angular CLI v21 ships with a Model Context Protocol server (`ng mcp`). Use it so AI copilots can query workspace-aware tools instead of shelling out.
+- Quick health check: `npm run mcp:check` starts the MCP server in local-only mode and verifies it sees this workspace.
+- Example MCP host config (set `cwd` to your clone path):
+
+```json
+{
+  "mcpServers": {
+    "angular-cli": {
+      "command": "npm",
+      "args": ["exec", "--", "ng", "mcp"],
+      "cwd": "/Users/adam/Source/lunch-buddy",
+      "env": {
+        "NG_CLI_ANALYTICS": "false"
+      }
+    }
+  }
+}
+```
+
+Add `--read-only` to the args to register only read-only tools, or `--local-only` to disable tools that need internet access (e.g., documentation search).
+
 ## Development
 
 ### Getting Started

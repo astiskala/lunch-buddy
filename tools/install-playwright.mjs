@@ -21,9 +21,8 @@ const isLinux = process.platform === 'linux';
 const shouldInstallDeps = isLinux && !isVercel;
 
 const runInstall = args =>
-  spawnSync('playwright', args, {
+  spawnSync('npx', ['playwright', ...args], {
     stdio: 'inherit',
-    env: process.env,
   });
 
 const tryInstall = (args, allowFallback) => {
