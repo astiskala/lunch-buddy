@@ -45,72 +45,106 @@ test.describe('Dashboard', () => {
     const monthKey = `${now.getFullYear()}-${String(
       now.getMonth() + 1
     ).padStart(2, '0')}-01`;
-    const budgetSummary = [
-      {
-        category_name: 'Dining',
-        category_id: 101,
-        category_group_name: 'Food',
-        group_id: null,
-        is_group: false,
-        is_income: false,
-        exclude_from_budget: false,
-        exclude_from_totals: false,
-        order: 1,
-        archived: false,
-        data: {
-          [monthKey]: {
-            num_transactions: 4,
-            spending_to_base: 150,
-            budget_to_base: 400,
-            budget_amount: 400,
-            budget_currency: 'USD',
-            is_automated: false,
-          },
+    const categories = {
+      categories: [
+        {
+          id: 101,
+          name: 'Dining',
+          description: null,
+          is_income: false,
+          exclude_from_budget: false,
+          exclude_from_totals: false,
+          archived: false,
+          archived_at: null,
+          updated_at: now.toISOString(),
+          created_at: now.toISOString(),
+          is_group: false,
+          group_id: null,
+          order: 1,
+          collapsed: false,
         },
-        config: {
-          config_id: 1,
-          cadence: 'monthly',
-          amount: 400,
-          currency: 'USD',
-          to_base: 400,
-          auto_suggest: 'fixed',
+        {
+          id: 201,
+          name: 'Salary',
+          description: null,
+          is_income: true,
+          exclude_from_budget: false,
+          exclude_from_totals: false,
+          archived: false,
+          archived_at: null,
+          updated_at: now.toISOString(),
+          created_at: now.toISOString(),
+          is_group: false,
+          group_id: null,
+          order: 2,
+          collapsed: false,
         },
-        recurring: { data: [] },
-      },
-      {
-        category_name: 'Salary',
-        category_id: 201,
-        category_group_name: 'Income',
-        group_id: null,
-        is_group: false,
-        is_income: true,
-        exclude_from_budget: false,
-        exclude_from_totals: false,
-        order: 2,
-        archived: false,
-        data: {
-          [monthKey]: {
-            num_transactions: 1,
-            spending_to_base: -3000,
-            budget_to_base: -3000,
-            budget_amount: -3000,
-            budget_currency: 'USD',
-            is_automated: false,
-          },
-        },
-        config: {
-          config_id: 2,
-          cadence: 'monthly',
-          amount: -3000,
-          currency: 'USD',
-          to_base: -3000,
-          auto_suggest: 'fixed',
-        },
-        recurring: { data: [] },
-      },
-    ];
+      ],
+    };
 
-    await page.route('**/v1/budgets**', route =>
+    const budgetSummary = {
+      aligned: true,
+      categories: [
+        {
+          category_id: 101,
+          totals: {
+            other_activity: 150,
+            recurring_activity: 0,
+            budgeted: 400,
+            available: 250,
+            recurring_remaining: 0,
+            recurring_expected: 0,
+          },
+          occurrences: [
+            {
+              current: true,
+              start_date: monthKey,
+              end_date: monthKey,
+              other_activity: 150,
+              recurring_activity: 0,
+              budgeted: 400,
+              budgeted_amount: '400.00',
+              budgeted_currency: 'USD',
+              notes: null,
+            },
+          ],
+        },
+        {
+          category_id: 201,
+          totals: {
+            other_activity: -3000,
+            recurring_activity: 0,
+            budgeted: 3000,
+            available: 0,
+            recurring_remaining: 0,
+            recurring_expected: 0,
+          },
+          occurrences: [
+            {
+              current: true,
+              start_date: monthKey,
+              end_date: monthKey,
+              other_activity: -3000,
+              recurring_activity: 0,
+              budgeted: 3000,
+              budgeted_amount: '3000.00',
+              budgeted_currency: 'USD',
+              notes: null,
+            },
+          ],
+        },
+      ],
+    };
+
+    await page.route('**/v2/categories**', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(categories),
+      })
+    );
+
+    await page.route('**/v2/summary**', route =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -118,15 +152,15 @@ test.describe('Dashboard', () => {
       })
     );
 
-    await page.route('**/v1/recurring_expenses**', route =>
+    await page.route('**/v2/recurring_items**', route =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ recurring_expenses: [] }),
+        body: JSON.stringify({ recurring_items: [] }),
       })
     );
 
-    await page.route('**/v1/transactions**', route =>
+    await page.route('**/v2/transactions**', route =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',

@@ -23,7 +23,7 @@ import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
         <div class="expenses-list">
           @for (
             entry of sortedExpenses();
-            track entry.expense.id + '-' + entry.expense.billing_date
+            track entry.expense.id + '-' + entry.occurrenceDate.toISOString()
           ) {
             <div class="expense-item">
               <div class="expense-info">

@@ -93,24 +93,24 @@ describe('buildBudgetProgress status evaluation', () => {
     exclude_from_totals: false,
     order: 0,
     archived: false,
-    data: {
-      [monthKey]: {
-        num_transactions: 0,
-        spending_to_base: spent,
-        budget_to_base: budget,
-        budget_amount: budget,
-        budget_currency: 'USD',
-        is_automated: false,
-      },
+    totals: {
+      other_activity: spent,
+      recurring_activity: 0,
+      budgeted: budget,
+      available: null,
+      recurring_remaining: 0,
+      recurring_expected: recurring.reduce((total, value) => total + value, 0),
     },
-    config: null,
-    recurring: {
-      data: recurring.map((amount, index) => ({
-        payee: `Recurring ${(index + 1).toString()}`,
-        amount,
-        currency: 'USD',
-        to_base: amount,
-      })),
+    occurrence: {
+      current: true,
+      start_date: '2025-10-01',
+      end_date: '2025-10-31',
+      other_activity: 0,
+      recurring_activity: 0,
+      budgeted: budget,
+      budgeted_amount: budget.toString(),
+      budgeted_currency: 'USD',
+      notes: null,
     },
   });
 

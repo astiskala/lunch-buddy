@@ -307,7 +307,8 @@ const adjustCandidateToReference = (
 export const getRecurringDate = (
   expense: {
     next_occurrence?: string | null;
-    billing_date: string;
+    billing_date?: string | null;
+    anchor_date?: string | null;
     start_date: string | null;
     cadence: string;
   },
@@ -316,6 +317,7 @@ export const getRecurringDate = (
   let candidate =
     parseDate(expense.next_occurrence) ??
     parseDate(expense.billing_date) ??
+    parseDate(expense.anchor_date) ??
     parseDate(expense.start_date);
 
   if (!candidate) {

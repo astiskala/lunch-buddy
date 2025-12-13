@@ -1,12 +1,14 @@
 const currency = 'USD';
 
 const user = {
-  user_id: 101,
-  user_name: 'Alex Martin',
-  user_email: 'alex.martin@example.com',
+  id: 101,
+  name: 'Alex Martin',
+  email: 'alex.martin@example.com',
   api_key_label: 'Mock Developer Key',
   account_id: 55501,
-  default_currency: currency,
+  budget_name: 'Primary Budget',
+  primary_currency: currency.toLowerCase(),
+  debits_as_negative: true,
 };
 
 const categories = [
@@ -18,13 +20,14 @@ const categories = [
     exclude_from_budget: false,
     exclude_from_totals: false,
     archived: false,
-    archived_on: null,
+    archived_at: null,
     updated_at: '2024-11-01T10:00:00Z',
     created_at: '2021-01-12T18:45:00Z',
     is_group: false,
     group_id: 9001,
     group_category_name: 'Household',
     order: 1,
+    collapsed: false,
   },
   {
     id: 202,
@@ -34,13 +37,14 @@ const categories = [
     exclude_from_budget: false,
     exclude_from_totals: false,
     archived: false,
-    archived_on: null,
+    archived_at: null,
     updated_at: '2024-11-01T10:00:00Z',
     created_at: '2021-08-04T14:20:00Z',
     is_group: false,
     group_id: 9001,
     group_category_name: 'Household',
     order: 2,
+    collapsed: false,
   },
   {
     id: 203,
@@ -50,13 +54,14 @@ const categories = [
     exclude_from_budget: false,
     exclude_from_totals: false,
     archived: false,
-    archived_on: null,
+    archived_at: null,
     updated_at: '2024-11-01T10:00:00Z',
     created_at: '2020-05-10T13:00:00Z',
     is_group: false,
     group_id: 9002,
     group_category_name: 'Monthly Bills',
     order: 3,
+    collapsed: false,
   },
   {
     id: 204,
@@ -66,13 +71,14 @@ const categories = [
     exclude_from_budget: false,
     exclude_from_totals: false,
     archived: false,
-    archived_on: null,
+    archived_at: null,
     updated_at: '2024-11-01T10:00:00Z',
     created_at: '2021-04-21T12:30:00Z',
     is_group: false,
     group_id: 9003,
     group_category_name: 'Transportation',
     order: 4,
+    collapsed: false,
   },
   {
     id: 301,
@@ -82,13 +88,14 @@ const categories = [
     exclude_from_budget: false,
     exclude_from_totals: false,
     archived: false,
-    archived_on: null,
+    archived_at: null,
     updated_at: '2024-11-01T10:00:00Z',
     created_at: '2019-11-01T10:00:00Z',
     is_group: false,
     group_id: 9004,
     group_category_name: 'Income',
     order: 1,
+    collapsed: false,
   },
 ];
 
@@ -544,20 +551,34 @@ const scaleExpenseAmounts = (templates, target) => {
 const buildTransaction = (template, amountValue, monthStart, category) => {
   const transactionDate = clampDayToMonth(monthStart, template.day);
   const amount = formatAmount(amountValue);
+  const numericAmount = Number(amount);
   return {
     id: createTransactionId(category.id, monthStart, template.sequence),
     date: formatDate(transactionDate),
     amount,
-    currency,
+    currency: currency.toLowerCase(),
+    to_base: numericAmount,
     payee: template.payee,
-    display_name: null,
     category_id: category.id,
-    category_name: category.name,
     notes: template.notes ?? null,
     recurring_id: template.recurringId ?? null,
-    recurring_payee: template.recurringPayee ?? null,
-    recurring_description: template.recurringDescription ?? null,
-    tags: [],
+    plaid_account_id: null,
+    manual_account_id: null,
+    external_id: null,
+    tag_ids: [],
+    status: 'reviewed',
+    is_pending: false,
+    created_at: `${formatDate(transactionDate)}T00:00:00Z`,
+    updated_at: `${formatDate(transactionDate)}T00:00:00Z`,
+    is_parent: false,
+    parent_id: null,
+    is_group: false,
+    group_id: null,
+    children: [],
+    plaid_metadata: null,
+    custom_metadata: null,
+    files: [],
+    source: null,
   };
 };
 
@@ -685,54 +706,67 @@ const buildBudgetSummaries = ({ startDate, endDate }) => {
   const rangeEnd = toDate(endDate) ?? endOfMonth(rangeStart);
   const months = enumerateMonths(rangeStart, rangeEnd);
 
-  return categories.map(category => {
+  const summaries = categories.map(category => {
     const settings = categorySettings[category.id];
     const data = months.reduce((acc, monthStart) => {
       const snapshot = generateMonthSnapshot(category, monthStart, now);
       acc[snapshot.monthKey] = snapshot.data;
       return acc;
     }, {});
+    const key = monthKey(rangeStart);
+    const monthData = data[key] ?? {
+      num_transactions: 0,
+      spending_to_base: 0,
+      budget_to_base: 0,
+      budget_amount: 0,
+      budget_currency: currency.toLowerCase(),
+    };
 
-    const recurring =
-      settings?.recurringSummary?.length > 0
-        ? {
-            data: settings.recurringSummary.map(item => ({
-              payee: item.payee,
-              amount: item.amount,
-              currency: item.currency,
-              to_base: item.to_base ?? item.amount,
-            })),
-          }
-        : null;
+    const recurringExpected =
+      settings?.recurringSummary?.reduce(
+        (sum, item) => sum + (item.to_base ?? item.amount ?? 0),
+        0
+      ) ?? 0;
+    const budgeted = category.is_income
+      ? 0
+      : (monthData?.budget_amount ?? monthData?.budget_to_base ?? 0);
+    const otherActivity = category.is_income
+      ? -Math.abs(monthData?.spending_to_base ?? 0)
+      : Math.abs(monthData?.spending_to_base ?? 0);
+    const recurringActivity = 0;
 
     return {
-      category_name: category.name,
       category_id: category.id,
-      category_group_name: category.group_category_name,
-      group_id: category.group_id,
-      is_group: category.is_group,
-      is_income: category.is_income,
-      exclude_from_budget: category.exclude_from_budget,
-      exclude_from_totals: category.exclude_from_totals,
-      order: category.order ?? 0,
-      archived: category.archived ?? false,
-      data,
-      config: settings?.config ?? null,
-      recurring,
+      totals: {
+        other_activity: Number(otherActivity.toFixed(2)),
+        recurring_activity: Number(recurringActivity.toFixed(2)),
+        budgeted: Number(budgeted.toFixed(2)),
+        available: Number((budgeted - Math.abs(otherActivity)).toFixed(2)),
+        recurring_remaining: 0,
+        recurring_expected: Number(recurringExpected.toFixed(2)),
+      },
+      occurrences: [
+        {
+          current: true,
+          start_date: formatDate(rangeStart),
+          end_date: formatDate(rangeEnd),
+          other_activity: Number(otherActivity.toFixed(2)),
+          recurring_activity: Number(recurringActivity.toFixed(2)),
+          budgeted: Number(budgeted.toFixed(2)),
+          budgeted_amount: formatAmount(budgeted),
+          budgeted_currency: (
+            monthData?.budget_currency ?? currency
+          ).toLowerCase(),
+          notes: null,
+        },
+      ],
     };
   });
-};
 
-const addMonths = (date, count) => {
-  const result = new Date(date);
-  result.setMonth(result.getMonth() + count);
-  return result;
-};
-
-const addDays = (date, count) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + count);
-  return result;
+  return {
+    aligned: true,
+    categories: summaries,
+  };
 };
 
 const buildRecurringExpenses = ({ startDate }) => {
@@ -744,33 +778,39 @@ const buildRecurringExpenses = ({ startDate }) => {
   const expenses = recurringExpenseTemplates.map(template => {
     const billingDate = clampDayToMonth(monthStart, template.billingDay ?? 1);
 
-    const nextOccurrence =
-      template.cadence === 'weekly'
-        ? addDays(billingDate, 7)
-        : addMonths(billingDate, 1);
-
     return {
       id: template.id,
-      start_date: template.startDate,
-      end_date: template.endDate,
-      cadence: template.cadence,
-      payee: template.payee,
-      amount: formatAmount(template.amount),
-      currency: template.currency ?? currency,
       description: template.description ?? null,
-      billing_date: formatDate(billingDate),
-      next_occurrence: formatDate(nextOccurrence),
-      type: template.type ?? 'cleared',
-      original_name: template.originalName ?? template.payee,
-      source: template.source ?? null,
-      plaid_account_id: template.plaidAccountId ?? null,
-      asset_id: template.assetId ?? null,
-      category_id: template.categoryId ?? null,
-      created_at: template.createdAt ?? '2024-01-01T00:00:00Z',
+      status: template.type === 'cleared' ? 'reviewed' : 'suggested',
+      transaction_criteria: {
+        start_date: template.startDate,
+        end_date: template.endDate,
+        granularity: template.cadence.includes('week') ? 'week' : 'month',
+        quantity: 1,
+        anchor_date: formatDate(billingDate),
+        payee: template.payee,
+        amount: formatAmount(template.amount),
+        to_base: template.amount,
+        currency: (template.currency ?? currency).toLowerCase(),
+        plaid_account_id: template.plaidAccountId ?? null,
+        manual_account_id: template.assetId ?? null,
+      },
+      overrides: {
+        payee: template.payee,
+        notes: template.description ?? null,
+        category_id: template.categoryId ?? null,
+      },
+      matches: {
+        expected_occurrence_dates: [formatDate(billingDate)],
+      },
     };
   });
 
-  return expenses.sort((a, b) => (a.billing_date < b.billing_date ? -1 : 1));
+  return expenses.sort((a, b) =>
+    a.transaction_criteria.anchor_date < b.transaction_criteria.anchor_date
+      ? -1
+      : 1
+  );
 };
 
 const buildTransactions = ({ categoryId, startDate, endDate }) => {
