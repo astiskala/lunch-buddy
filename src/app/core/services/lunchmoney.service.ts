@@ -141,7 +141,7 @@ export class LunchMoneyService {
 
     const includeAll = options?.includeAllTransactions ?? true;
     if (!includeAll) {
-      // Include cleared/posted transactions when filtering, to avoid hiding real charges
+      // Filter to 'cleared' status (API query parameter) to exclude pending/unreviewed transactions
       params = params.set('status', 'cleared');
     }
 

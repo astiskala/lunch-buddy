@@ -28,6 +28,12 @@ export const startOfToday = (): Date => {
   return today;
 };
 
+export const startOfDay = (date: Date): Date => {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
 export const deriveReferenceDate = (
   windowStart: string,
   windowEnd: string,
