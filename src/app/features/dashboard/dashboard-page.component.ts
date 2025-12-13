@@ -15,7 +15,10 @@ import {
   CategoryPreferences,
 } from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
-import { BudgetProgress } from '../../core/models/lunchmoney.types';
+import {
+  BudgetProgress,
+  RecurringInstance,
+} from '../../core/models/lunchmoney.types';
 import { CategoryProgressListComponent } from './category-progress-list.component';
 import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
@@ -148,13 +151,18 @@ export class DashboardPageComponent {
   protected readonly totalExpenseUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
     const referenceDate = this.referenceDate();
+    const windowRange = this.getWindowRange();
     const allExpenses = [...this.expenses(), ...this.hiddenExpenses()];
     const expenseMap = new Map(allExpenses.map(exp => [exp.categoryId, exp]));
 
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
       const pendingInstances = instances.filter(instance =>
-        isRecurringInstancePending(instance, { referenceDate })
+        isRecurringInstancePending(instance, {
+          referenceDate,
+          windowStart: windowRange?.start,
+          windowEnd: windowRange?.end,
+        })
       );
       if (pendingInstances.length === 0) {
         continue;
@@ -162,7 +170,7 @@ export class DashboardPageComponent {
       const category = expenseMap.get(categoryId);
       if (category && !category.isIncome) {
         for (const inst of pendingInstances) {
-          total += Math.abs(Number.parseFloat(inst.expense.amount));
+          total += Math.abs(this.resolveRecurringAmount(inst));
         }
       }
     }
@@ -172,13 +180,18 @@ export class DashboardPageComponent {
   protected readonly totalIncomeUpcoming = computed(() => {
     const recurring = this.recurringByCategory();
     const referenceDate = this.referenceDate();
+    const windowRange = this.getWindowRange();
     const allIncomes = [...this.incomes(), ...this.hiddenIncomes()];
     const incomeMap = new Map(allIncomes.map(inc => [inc.categoryId, inc]));
 
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
       const pendingInstances = instances.filter(instance =>
-        isRecurringInstancePending(instance, { referenceDate })
+        isRecurringInstancePending(instance, {
+          referenceDate,
+          windowStart: windowRange?.start,
+          windowEnd: windowRange?.end,
+        })
       );
       if (pendingInstances.length === 0) {
         continue;
@@ -186,7 +199,7 @@ export class DashboardPageComponent {
       const category = incomeMap.get(categoryId);
       if (category?.isIncome) {
         for (const inst of pendingInstances) {
-          total += Math.abs(Number.parseFloat(inst.expense.amount));
+          total += Math.abs(this.resolveRecurringAmount(inst));
         }
       }
     }
@@ -328,5 +341,24 @@ export class DashboardPageComponent {
     } finally {
       await this.router.navigate(['/login']);
     }
+  }
+
+  private getWindowRange(): { start: Date; end: Date } | null {
+    const start = new Date(this.startDate());
+    const end = new Date(this.endDate());
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  private resolveRecurringAmount(instance: RecurringInstance): number {
+    const fallback = Number.parseFloat(instance.expense.amount);
+    if (typeof instance.expense.to_base === 'number') {
+      return instance.expense.to_base;
+    }
+    return Number.isFinite(fallback) ? fallback : 0;
   }
 }

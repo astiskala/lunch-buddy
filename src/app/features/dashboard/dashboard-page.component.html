@@ -97,6 +97,8 @@
       <recurring-expenses-panel
         [expenses]="recurringByCategory().unassigned"
         [defaultCurrency]="currency() ?? 'USD'"
+        [windowStart]="startDate()"
+        [windowEnd]="endDate()"
         [referenceDate]="referenceDate()" />
     }
 

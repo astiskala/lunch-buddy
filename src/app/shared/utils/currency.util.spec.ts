@@ -1,6 +1,21 @@
-import { formatCurrency } from './currency.util';
+import {
+  formatCurrency,
+  formatCurrencyWithCode,
+  normalizeCurrencyCode,
+} from './currency.util';
 
 describe('Currency Utils', () => {
+  describe('normalizeCurrencyCode', () => {
+    it('normalises casing and whitespace', () => {
+      expect(normalizeCurrencyCode(' usd ')).toBe('USD');
+    });
+
+    it('returns null for empty values', () => {
+      expect(normalizeCurrencyCode('   ')).toBeNull();
+      expect(normalizeCurrencyCode(undefined)).toBeNull();
+    });
+  });
+
   describe('formatCurrency', () => {
     it('should format positive number with USD', () => {
       expect(formatCurrency(1234.56, 'USD')).toBe('$1,234.56');
@@ -30,6 +45,27 @@ describe('Currency Utils', () => {
 
     it('should round to 2 decimal places', () => {
       expect(formatCurrency(10.999, 'USD')).toBe('$11.00');
+    });
+
+    it('normalises lowercase currency codes', () => {
+      expect(formatCurrency(25, 'aud')).toContain('$25.00');
+    });
+  });
+
+  describe('formatCurrencyWithCode', () => {
+    it('appends original currency code when different from display currency', () => {
+      const result = formatCurrencyWithCode(100, 'USD', {
+        originalCurrency: 'eur',
+      });
+      expect(result).toContain('USD');
+      expect(result).toContain('EUR');
+    });
+
+    it('omits code when currencies align', () => {
+      const result = formatCurrencyWithCode(50, 'USD', {
+        originalCurrency: 'usd',
+      });
+      expect(result.endsWith('USD')).toBeFalse();
     });
   });
 });

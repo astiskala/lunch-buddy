@@ -6,9 +6,16 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
-import { formatCurrency } from '../../shared/utils/currency.util';
+import {
+  formatCurrency,
+  formatCurrencyWithCode,
+  normalizeCurrencyCode,
+} from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
-import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
+import {
+  hasFoundTransactionForOccurrence,
+  isRecurringInstancePending,
+} from '../../shared/utils/recurring.util';
 
 @Component({
   selector: 'recurring-expenses-panel',
@@ -32,7 +39,9 @@ import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
                   <div class="description">{{ getDescription(entry) }}</div>
                 }
                 <div class="badges">
-                  <span class="badge upcoming">Upcoming</span>
+                  <span class="badge upcoming">
+                    {{ isPastDue(entry) ? 'Due' : 'Upcoming' }}
+                  </span>
                   @if (entry.expense.type === 'suggested') {
                     <span class="badge suggested">Suggested</span>
                   }
@@ -160,24 +169,36 @@ export class RecurringExpensesPanelComponent {
   readonly currency = input<string | null>(null);
   readonly defaultCurrency = input.required<string>();
   readonly referenceDate = input.required<Date>();
+  readonly windowStart = input.required<string>();
+  readonly windowEnd = input.required<string>();
 
   readonly sortedExpenses = computed(() => {
     const referenceDate = this.referenceDate();
+    const windowRange = this.getWindowRange();
     return this.expenses()
-      .filter(instance =>
-        isRecurringInstancePending(instance, { referenceDate })
+      .filter(
+        instance =>
+          isRecurringInstancePending(instance, {
+            referenceDate,
+            includePastOccurrences: true,
+            windowStart: windowRange?.start,
+            windowEnd: windowRange?.end,
+          }) && !hasFoundTransactionForOccurrence(instance)
       )
       .sort((a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime());
   });
 
   readonly totalFormatted = computed(() => {
     const total = this.sortedExpenses().reduce((sum, entry) => {
-      const amount = Math.abs(Number.parseFloat(entry.expense.amount));
+      const amount = Math.abs(
+        this.resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
+      );
       return sum + amount;
     }, 0);
 
-    return formatCurrency(total, this.currency(), {
-      fallbackCurrency: this.defaultCurrency(),
+    const displayCurrency = this.displayCurrency();
+    return formatCurrency(total, displayCurrency, {
+      fallbackCurrency: displayCurrency,
     });
   });
 
@@ -192,9 +213,13 @@ export class RecurringExpensesPanelComponent {
   }
 
   getFormattedAmount(entry: RecurringInstance): string {
-    const value = Math.abs(Number.parseFloat(entry.expense.amount));
-    return formatCurrency(value, entry.expense.currency || this.currency(), {
-      fallbackCurrency: this.defaultCurrency(),
+    const value = Math.abs(
+      this.resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
+    );
+    const displayCurrency = this.displayCurrency();
+    return formatCurrencyWithCode(value, displayCurrency, {
+      fallbackCurrency: displayCurrency,
+      originalCurrency: entry.expense.currency,
     });
   }
 
@@ -215,5 +240,38 @@ export class RecurringExpensesPanelComponent {
     ];
     const date = entry.occurrenceDate;
     return `${months[date.getMonth()]} ${date.getDate().toString()}`;
+  }
+
+  isPastDue(entry: RecurringInstance): boolean {
+    const reference = new Date(this.referenceDate());
+    reference.setHours(0, 0, 0, 0);
+    const occurrence = new Date(entry.occurrenceDate);
+    occurrence.setHours(0, 0, 0, 0);
+    return occurrence.getTime() < reference.getTime();
+  }
+
+  private resolveAmount(amount: string, toBase: number | null): number {
+    const converted =
+      typeof toBase === 'number' ? toBase : Number.parseFloat(amount);
+    return Number.isFinite(converted) ? converted : 0;
+  }
+
+  private getWindowRange(): { start: Date; end: Date } | null {
+    const start = new Date(this.windowStart());
+    const end = new Date(this.windowEnd());
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  private displayCurrency(): string {
+    const preferred =
+      normalizeCurrencyCode(this.currency()) ??
+      normalizeCurrencyCode(this.defaultCurrency()) ??
+      null;
+    return preferred ?? 'USD';
   }
 }

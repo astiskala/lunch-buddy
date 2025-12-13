@@ -97,10 +97,12 @@ export interface RecurringExpense {
   status: 'reviewed' | 'suggested';
   payee: string;
   amount: string;
+  to_base: number | null;
   currency: string;
   description: string | null;
   anchor_date: string | null;
   next_occurrence?: string | null;
+  found_transactions?: { date: string; transaction_id: number }[];
   type: 'cleared' | 'suggested';
   category_id: number | null;
 }
@@ -129,6 +131,7 @@ export interface RecurringItemResponse {
   };
   matches?: {
     expected_occurrence_dates?: string[];
+    found_transactions?: { date: string; transaction_id: number }[];
   };
 }
 

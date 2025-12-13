@@ -27,6 +27,8 @@ describe('RecurringExpensesPanelComponent', () => {
       payee: 'Test',
       description: null,
       amount: '-10.00',
+      to_base:
+        overrides?.to_base ?? Number.parseFloat(overrides?.amount ?? '-10.00'),
       currency: 'USD',
       anchor_date: occurrence,
       next_occurrence: occurrence,
@@ -61,6 +63,8 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('currency', 'USD');
     fixture.componentRef.setInput('defaultCurrency', 'USD');
     fixture.componentRef.setInput('referenceDate', new Date('2025-11-01'));
+    fixture.componentRef.setInput('windowStart', '2025-11-01');
+    fixture.componentRef.setInput('windowEnd', '2025-11-30');
     fixture.detectChanges();
 
     const sorted = component.sortedExpenses();
@@ -79,9 +83,32 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('currency', 'USD');
     fixture.componentRef.setInput('defaultCurrency', 'USD');
     fixture.componentRef.setInput('referenceDate', new Date('2025-11-01'));
+    fixture.componentRef.setInput('windowStart', '2025-11-01');
+    fixture.componentRef.setInput('windowEnd', '2025-11-30');
 
     const total = component.totalFormatted();
     expect(total).toContain('26'); // 15.50 + 10.50
+  });
+
+  it('includes occurrences earlier in the current window', () => {
+    const mockExpenses: RecurringInstance[] = [
+      buildInstance(3, '2025-11-05', {
+        amount: '-12.00',
+        to_base: -12,
+        payee: 'Nest Aware',
+      }),
+    ];
+
+    fixture.componentRef.setInput('expenses', mockExpenses);
+    fixture.componentRef.setInput('currency', 'USD');
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput('referenceDate', new Date('2025-11-10'));
+    fixture.componentRef.setInput('windowStart', '2025-11-01');
+    fixture.componentRef.setInput('windowEnd', '2025-11-30');
+    fixture.detectChanges();
+
+    expect(component.sortedExpenses().length).toBe(1);
+    expect(component.totalFormatted()).toContain('12');
   });
 
   it('should get payee name', () => {
@@ -129,8 +156,12 @@ describe('RecurringExpensesPanelComponent', () => {
     });
 
     fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput('windowStart', '2025-11-01');
+    fixture.componentRef.setInput('windowEnd', '2025-11-30');
+    fixture.componentRef.setInput('referenceDate', new Date('2025-11-01'));
     const formatted = component.getFormattedAmount(mockExpense);
     expect(formatted).toContain('25.99');
+    expect(formatted).toContain('EUR');
   });
 
   it('should handle empty expenses list', () => {
@@ -138,9 +169,32 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('currency', 'USD');
     fixture.componentRef.setInput('defaultCurrency', 'USD');
     fixture.componentRef.setInput('referenceDate', new Date('2025-11-01'));
+    fixture.componentRef.setInput('windowStart', '2025-11-01');
+    fixture.componentRef.setInput('windowEnd', '2025-11-30');
     fixture.detectChanges();
 
     expect(component.sortedExpenses().length).toBe(0);
     expect(component.totalFormatted()).toContain('0');
+  });
+
+  it('filters out expenses with found transactions', () => {
+    const mockExpenses: RecurringInstance[] = [
+      buildInstance(3, '2025-11-10', {
+        amount: '-12.00',
+      }),
+    ];
+    mockExpenses[0].expense.found_transactions = [
+      { date: '2025-11-10', transaction_id: 555 },
+    ];
+
+    fixture.componentRef.setInput('expenses', mockExpenses);
+    fixture.componentRef.setInput('currency', 'USD');
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput('referenceDate', new Date('2025-11-12'));
+    fixture.componentRef.setInput('windowStart', '2025-11-01');
+    fixture.componentRef.setInput('windowEnd', '2025-11-30');
+    fixture.detectChanges();
+
+    expect(component.sortedExpenses().length).toBe(0);
   });
 });

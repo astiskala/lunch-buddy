@@ -298,7 +298,7 @@ const adjustCandidateToReference = (
     }
   }
 
-  return candidateAdjustedByWindow ? candidate : null;
+  return candidate;
 };
 
 /**
@@ -313,7 +313,6 @@ const adjustCandidateToReference = (
  * @returns The calculated occurrence date, or null if:
  * - All date fields are null/undefined/invalid
  * - The calculated date falls outside the specified window
- * - The date cannot be adjusted to meet the reference date constraint
  */
 export const getRecurringDate = (
   expense: {
@@ -383,6 +382,9 @@ export const getRecurringDate = (
 
 export interface RecurringPendingOptions {
   referenceDate?: Date;
+  includePastOccurrences?: boolean;
+  windowStart?: Date;
+  windowEnd?: Date;
 }
 
 export const isRecurringInstancePending = (
@@ -390,9 +392,58 @@ export const isRecurringInstancePending = (
   options?: RecurringPendingOptions
 ): boolean => {
   const type = instance.expense.type.toLowerCase().trim();
+  const occurrence = startOfDay(instance.occurrenceDate);
+  const reference = startOfDay(options?.referenceDate ?? new Date());
+  const windowStart = options?.windowStart ?? null;
+  const windowEnd = options?.windowEnd ?? null;
+  const withinWindow =
+    !windowStart ||
+    !windowEnd ||
+    isWithinInterval(occurrence, {
+      start: startOfDay(windowStart),
+      end: startOfDay(windowEnd),
+    });
+
+  if (
+    (options?.includePastOccurrences ?? false) &&
+    withinWindow &&
+    occurrence.getTime() <= reference.getTime()
+  ) {
+    return true;
+  }
+
   if (type === 'cleared') {
-    const reference = startOfDay(options?.referenceDate ?? new Date());
-    return instance.occurrenceDate.getTime() > reference.getTime();
+    return occurrence.getTime() > reference.getTime();
   }
   return true;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export interface FoundTransactionOptions {
+  toleranceDays?: number;
+}
+
+export const hasFoundTransactionForOccurrence = (
+  instance: RecurringInstance,
+  options: FoundTransactionOptions = {}
+): boolean => {
+  const found = instance.expense.found_transactions;
+  if (!found || found.length === 0) {
+    return false;
+  }
+
+  const toleranceDays = Math.max(0, options.toleranceDays ?? 7);
+  const toleranceMs = toleranceDays * DAY_MS;
+  const target = startOfDay(instance.occurrenceDate);
+
+  return found.some(entry => {
+    const entryDate = parseDate(entry.date);
+    if (!entryDate) {
+      return false;
+    }
+    const normalized = startOfDay(entryDate);
+    const diff = Math.abs(normalized.getTime() - target.getTime());
+    return diff <= toleranceMs;
+  });
 };
