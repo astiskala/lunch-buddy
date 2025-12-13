@@ -10,7 +10,7 @@ describe('getRecurringDate', () => {
     const result = getRecurringDate(
       {
         next_occurrence: '2025-10-15T00:00:00.000Z',
-        billing_date: '2025-10-15',
+        anchor_date: '2025-10-15',
         start_date: '2020-01-15',
         cadence: 'monthly',
       },
@@ -24,7 +24,7 @@ describe('getRecurringDate', () => {
     const result = getRecurringDate(
       {
         next_occurrence: '2025-11-01T00:00:00.000Z',
-        billing_date: '2025-11-01',
+        anchor_date: '2025-11-01',
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
@@ -38,7 +38,7 @@ describe('getRecurringDate', () => {
     const result = getRecurringDate(
       {
         next_occurrence: '2025-09-01T00:00:00.000Z',
-        billing_date: '2025-09-01',
+        anchor_date: '2025-09-01',
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
@@ -52,7 +52,7 @@ describe('getRecurringDate', () => {
     const result = getRecurringDate(
       {
         next_occurrence: '2025-10-06T00:00:00.000Z',
-        billing_date: '2025-10-06',
+        anchor_date: '2025-10-06',
         start_date: '2020-01-01',
         cadence: 'monthly',
       },
@@ -72,14 +72,10 @@ describe('isRecurringInstancePending', () => {
     amount: '100.00',
     currency: 'USD',
     description: null,
-    billing_date: '15',
+    anchor_date: '15',
     next_occurrence: '2025-10-15',
-    original_name: null,
-    source: 'manual' as const,
-    plaid_account_id: null,
-    asset_id: null,
     category_id: 1,
-    created_at: '2024-01-01',
+    status: 'reviewed' as const,
   };
 
   it('returns true for suggested instances', () => {

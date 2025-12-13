@@ -1,6 +1,6 @@
 import { runtimeEnv } from './runtime-env.generated';
 
-const DEFAULT_API_BASE = 'https://dev.lunchmoney.app/v1';
+const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 
 type MaybeEnv = Record<string, string | undefined>;
 

@@ -1,15 +1,8 @@
 import {
-  BudgetMonthData,
   BudgetProgress,
-  BudgetRecurringItem,
   BudgetSummaryItem,
 } from '../../core/models/lunchmoney.types';
 import { decodeHtmlEntities } from './text.util';
-
-const pickMonthData = (
-  summary: BudgetSummaryItem,
-  monthKey: string
-): BudgetMonthData | null => summary.data[monthKey] ?? null;
 
 export const calculateBudgetStatus = (
   spent: number,
@@ -66,41 +59,33 @@ export const calculateBudgetStatus = (
   return 'on-track';
 };
 
-const parseBudgetAmount = (data: BudgetMonthData | null | undefined): number =>
-  data?.budget_to_base ?? data?.budget_amount ?? 0;
-
-const parseSpentAmount = (data: BudgetMonthData | null | undefined): number =>
-  data?.spending_to_base ?? 0;
-
 export const buildBudgetProgress = (
   summary: BudgetSummaryItem,
   monthKey: string,
   monthProgress: number,
   warnAtRatio: number
 ): BudgetProgress => {
-  const monthData = pickMonthData(summary, monthKey);
-  const budgetAmount = parseBudgetAmount(monthData);
-  const spent = parseSpentAmount(monthData);
-  const recurringItems: BudgetRecurringItem[] = summary.recurring?.data ?? [];
-  const recurringTotal = recurringItems.reduce((total, item) => {
-    const amount = item.to_base ?? item.amount ?? 0;
-    return total + amount;
-  }, 0);
+  const totals = summary.totals;
+  const occurrence = summary.occurrence;
+  const budgetAmount = occurrence?.budgeted ?? totals.budgeted ?? 0;
+  const spent = totals.other_activity + totals.recurring_activity;
+  const recurringTotal = totals.recurring_expected;
   const actualValue = summary.is_income ? Math.abs(spent) : spent;
   const remaining = budgetAmount - actualValue;
-  const numTransactions = monthData?.num_transactions ?? 0;
-  const isAutomated = Boolean(monthData?.is_automated);
+  const numTransactions = 0;
+  const isAutomated = false;
   const progressRatio =
-    budgetAmount > 0 ? Math.min(1, Math.max(0, actualValue / budgetAmount)) : 0;
-  const budgetCurrency =
-    monthData?.budget_currency ?? summary.config?.currency ?? null;
+    budgetAmount && budgetAmount > 0
+      ? Math.min(1, Math.max(0, actualValue / budgetAmount))
+      : 0;
+  const budgetCurrency = occurrence?.budgeted_currency ?? null;
 
   return {
     categoryId: summary.category_id,
     categoryName: decodeHtmlEntities(summary.category_name),
     categoryGroupName: decodeHtmlEntities(summary.category_group_name),
     groupId: summary.group_id,
-    isGroup: Boolean(summary.is_group),
+    isGroup: summary.is_group,
     isIncome: summary.is_income,
     excludeFromBudget: summary.exclude_from_budget,
     budgetAmount,
@@ -111,7 +96,7 @@ export const buildBudgetProgress = (
     numTransactions,
     isAutomated,
     recurringTotal,
-    recurringItems,
+    recurringItems: [],
     status: calculateBudgetStatus(
       spent,
       budgetAmount,

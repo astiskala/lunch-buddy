@@ -9,8 +9,8 @@ const STATE_STORE = 'state';
 const CONFIG_KEY = 'config';
 const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
-const DEFAULT_API_BASE = 'https://dev.lunchmoney.app/v1';
-const API_CACHE_NAME = 'lunchbuddy-api-cache-v1';
+const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
+const API_CACHE_NAME = 'lunchbuddy-api-cache-v2';
 
 const defaultConfig = () => ({
   apiKey: null,
@@ -78,8 +78,10 @@ globalThis.addEventListener('activate', event => {
 
 function isApiRequest(url) {
   return (
+    url.hostname === 'api.lunchmoney.dev' ||
     url.hostname === 'dev.lunchmoney.app' ||
-    (url.hostname === 'localhost' && url.port === '3000')
+    (url.hostname === 'localhost' &&
+      (url.port === '3000' || url.port === '4600'))
   );
 }
 
@@ -187,14 +189,18 @@ async function handleBudgetSync(trigger) {
     const warnAtRatio = config.preferences.warnAtRatio ?? 0.85;
 
     const budgetsUrl = buildBudgetsUrl(config.apiBaseUrl, startIso, endIso);
-    const response = await fetch(budgetsUrl, {
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        Accept: 'application/json',
-      },
-    });
+    const categoriesUrl = buildCategoriesUrl(config.apiBaseUrl);
+    const headers = {
+      Authorization: `Bearer ${config.apiKey}`,
+      Accept: 'application/json',
+    };
 
-    if (!response.ok) {
+    const [summaryResponse, categoriesResponse] = await Promise.all([
+      fetch(budgetsUrl, { headers }),
+      fetch(categoriesUrl, { headers }),
+    ]);
+
+    if (!summaryResponse.ok || !categoriesResponse.ok) {
       await storeState({
         lastRunMs: now.getTime(),
         lastAlertSignature: state.lastAlertSignature,
@@ -202,7 +208,13 @@ async function handleBudgetSync(trigger) {
       return;
     }
 
-    const summaries = await response.json();
+    const summaryPayload = await summaryResponse.json();
+    const categoriesPayload = await categoriesResponse.json();
+    const categories = Array.isArray(categoriesPayload?.categories)
+      ? categoriesPayload.categories
+      : [];
+
+    const summaries = mergeSummaryWithCategories(summaryPayload, categories);
     if (!Array.isArray(summaries)) {
       await storeState({
         lastRunMs: now.getTime(),
@@ -294,7 +306,15 @@ function buildBudgetsUrl(baseUrl, startIso, endIso) {
   while (base.endsWith('/')) {
     base = base.slice(0, -1);
   }
-  return `${base}/budgets?start_date=${startIso}&end_date=${endIso}`;
+  return `${base}/summary?start_date=${startIso}&end_date=${endIso}&include_occurrences=true&include_exclude_from_budgets=true`;
+}
+
+function buildCategoriesUrl(baseUrl) {
+  let base = baseUrl || DEFAULT_API_BASE;
+  while (base.endsWith('/')) {
+    base = base.slice(0, -1);
+  }
+  return `${base}/categories?format=flattened`;
 }
 
 async function isAnyClientVisible() {
@@ -310,11 +330,13 @@ async function isAnyClientVisible() {
 }
 
 function buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio) {
-  const monthData = summary.data?.[monthKey] ?? null;
-  const budgetAmount = parseBudgetAmount(monthData);
-  const spent = parseSpentAmount(monthData);
-  const budgetCurrency =
-    monthData?.budget_currency ?? summary.config?.currency ?? null;
+  const budgetAmount =
+    summary.occurrence?.budgeted ?? summary.totals?.budgeted ?? 0;
+  const spent =
+    (summary.totals?.other_activity ?? 0) +
+    (summary.totals?.recurring_activity ?? 0);
+  const budgetCurrency = summary.occurrence?.budgeted_currency ?? null;
+  const recurringTotal = summary.totals?.recurring_expected ?? 0;
 
   return {
     categoryId: summary.category_id,
@@ -323,17 +345,50 @@ function buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio) {
     budgetAmount,
     budgetCurrency,
     spent,
-    status: calculateStatus(spent, budgetAmount, monthProgress, warnAtRatio),
+    status: calculateStatus(
+      spent,
+      budgetAmount,
+      monthProgress,
+      warnAtRatio,
+      !!summary.is_income,
+      recurringTotal
+    ),
   };
 }
 
-function calculateStatus(spent, budget, monthProgress, warnAtRatio) {
+function calculateStatus(
+  spent,
+  budget,
+  monthProgress,
+  warnAtRatio,
+  isIncome,
+  recurringTotal
+) {
   if (!budget || budget <= 0) {
     return 'on-track';
   }
 
-  const ratio = spent / budget;
   const epsilon = 0.005;
+
+  if (isIncome) {
+    const actual = Math.abs(spent);
+    const projected = actual + Math.max(0, recurringTotal ?? 0);
+    if (projected >= budget * (1 - epsilon)) {
+      return 'on-track';
+    }
+    const projectedRatio = budget > 0 ? projected / budget : 1;
+    const projectedShortfallRatio = Math.max(0, 1 - projectedRatio);
+    const warnShortfallRatio = Math.max(
+      0,
+      1 - Math.min(Math.max(warnAtRatio, 0), 1)
+    );
+    if (projectedShortfallRatio > warnShortfallRatio + epsilon) {
+      return 'at-risk';
+    }
+    return 'on-track';
+  }
+
+  const ratio = spent / budget;
 
   if (ratio > 1 + epsilon) {
     return 'over';
@@ -350,26 +405,75 @@ function calculateStatus(spent, budget, monthProgress, warnAtRatio) {
   return 'on-track';
 }
 
-function parseBudgetAmount(monthData) {
-  if (!monthData) {
-    return 0;
+function mergeSummaryWithCategories(summaryResponse, categories) {
+  const categoryMap = new Map();
+  const groupNameMap = new Map();
+
+  for (const category of categories ?? []) {
+    categoryMap.set(category.id, category);
+    if (category.is_group) {
+      groupNameMap.set(category.id, category.name);
+    }
   }
-  const { budget_to_base, budget_amount } = monthData;
-  if (typeof budget_to_base === 'number') {
-    return budget_to_base;
+
+  const items = [];
+  const summaries = summaryResponse?.categories ?? [];
+  for (const entry of summaries) {
+    const metadata = categoryMap.get(entry.category_id);
+    const groupId = metadata?.group_id ?? null;
+    items.push({
+      category_id: entry.category_id ?? null,
+      category_name: metadata?.name ?? `Category ${entry.category_id ?? ''}`,
+      category_group_name:
+        groupId !== null ? (groupNameMap.get(groupId) ?? null) : null,
+      group_id: groupId,
+      is_group: metadata?.is_group ?? false,
+      is_income: metadata?.is_income ?? false,
+      exclude_from_budget: metadata?.exclude_from_budget ?? false,
+      totals: entry.totals ?? emptyTotals(),
+      occurrence: pickOccurrence(entry.occurrences),
+    });
   }
-  if (typeof budget_amount === 'number') {
-    return budget_amount;
+
+  for (const category of categories ?? []) {
+    if (items.some(item => item.category_id === category.id)) {
+      continue;
+    }
+    items.push({
+      category_id: category.id,
+      category_name: category.name,
+      category_group_name:
+        category.group_id !== null
+          ? (groupNameMap.get(category.group_id) ?? null)
+          : null,
+      group_id: category.group_id,
+      is_group: category.is_group,
+      is_income: category.is_income,
+      exclude_from_budget: category.exclude_from_budget,
+      totals: emptyTotals(),
+      occurrence: undefined,
+    });
   }
-  return 0;
+
+  return items;
 }
 
-function parseSpentAmount(monthData) {
-  if (!monthData) {
-    return 0;
+function pickOccurrence(occurrences) {
+  if (!occurrences || !occurrences.length) {
+    return undefined;
   }
-  const { spending_to_base } = monthData;
-  return typeof spending_to_base === 'number' ? spending_to_base : 0;
+  return occurrences.find(item => item.current) ?? occurrences[0];
+}
+
+function emptyTotals() {
+  return {
+    other_activity: 0,
+    recurring_activity: 0,
+    budgeted: null,
+    available: null,
+    recurring_remaining: 0,
+    recurring_expected: 0,
+  };
 }
 
 function filterAlerts(progress, hiddenCategoryIds) {

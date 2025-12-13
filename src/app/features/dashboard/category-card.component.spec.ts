@@ -10,35 +10,55 @@ import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { of } from 'rxjs';
 
 describe('CategoryCardComponent', () => {
+  const buildTransaction = (overrides: Partial<Transaction>): Transaction => ({
+    id: 1,
+    date: '2025-10-01',
+    amount: '-10.00',
+    currency: 'usd',
+    to_base: -10,
+    payee: 'Test',
+    category_id: null,
+    plaid_account_id: null,
+    manual_account_id: null,
+    external_id: null,
+    tag_ids: [],
+    notes: null,
+    recurring_id: null,
+    status: 'reviewed',
+    is_pending: false,
+    created_at: '2025-10-01T00:00:00Z',
+    updated_at: '2025-10-01T00:00:00Z',
+    is_parent: false,
+    parent_id: null,
+    is_group: false,
+    group_id: null,
+    children: [],
+    plaid_metadata: null,
+    custom_metadata: null,
+    files: [],
+    source: null,
+    ...overrides,
+  });
+
   it('should only show uncategorised income transactions in income group', () => {
-    const incomeTxn: Transaction = {
+    const incomeTxn = buildTransaction({
       id: 301,
       date: '2025-10-19',
       amount: '1641.88',
       currency: 'sgd',
       to_base: -1641.88,
       payee: 'DBS',
-      category_id: null,
       notes: 'Credit Card Payment',
-      recurring_id: null,
-      recurring_payee: null,
-      recurring_description: null,
-      tags: [],
-    };
-    const expenseTxn: Transaction = {
+    });
+    const expenseTxn = buildTransaction({
       id: 302,
       date: '2025-10-19',
       amount: '100.00',
       currency: 'sgd',
       to_base: 100,
       payee: 'Food',
-      category_id: null,
       notes: 'Lunch',
-      recurring_id: null,
-      recurring_payee: null,
-      recurring_description: null,
-      tags: [],
-    };
+    });
     const incomeItem: BudgetProgress = {
       ...mockItem,
       isIncome: true,
@@ -335,15 +355,11 @@ describe('CategoryCardComponent', () => {
         amount,
         currency: 'USD',
         description: null,
-        billing_date: '15',
+        anchor_date: '2025-10-15',
         next_occurrence: '2025-10-15',
         type,
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
+        status: type === 'cleared' ? 'reviewed' : 'suggested',
         category_id: mockItem.categoryId,
-        created_at: '2024-01-01',
       },
       occurrenceDate: new Date('2025-10-15T00:00:00.000Z'),
     });
@@ -385,15 +401,11 @@ describe('CategoryCardComponent', () => {
         amount: '200',
         currency: 'USD',
         description: null,
-        billing_date: '25',
+        anchor_date: '2025-10-25',
         next_occurrence: '2025-10-25',
         type: 'cleared',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
+        status: 'reviewed',
         category_id: mockItem.categoryId,
-        created_at: '2024-01-01',
       },
       occurrenceDate: new Date('2025-10-25T00:00:00.000Z'),
     };

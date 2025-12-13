@@ -49,12 +49,12 @@ describe('lunchmoneyInterceptor', () => {
   });
 
   it('should add Authorization header for Lunch Money API requests', async () => {
-    httpClient.get('https://dev.lunchmoney.app/v1/me').subscribe();
+    httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
     // Wait for the interceptor to process
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const req = httpMock.expectOne('https://dev.lunchmoney.app/v1/me');
+    const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
     expect(req.request.headers.has('Authorization')).toBe(true);
     expect(req.request.headers.get('Authorization')).toBe(
       'Bearer test-api-key'
@@ -75,12 +75,12 @@ describe('lunchmoneyInterceptor', () => {
   it('should handle missing API key gracefully', async () => {
     authServiceSpy.getApiKey.and.returnValue(null);
 
-    httpClient.get('https://dev.lunchmoney.app/v1/me').subscribe();
+    httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
     // Wait for the interceptor to process
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const req = httpMock.expectOne('https://dev.lunchmoney.app/v1/me');
+    const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
@@ -96,12 +96,12 @@ describe('lunchmoneyInterceptor', () => {
       })
     );
 
-    httpClient.get('https://dev.lunchmoney.app/v1/me').subscribe();
+    httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
     // Wait for the auth service and interceptor to process
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    const req = httpMock.expectOne('https://dev.lunchmoney.app/v1/me');
+    const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
     expect(readyResolved).toBe(true);
     req.flush({});
   });

@@ -37,7 +37,7 @@ For local development without touching production:
 npm run mock:server
 
 # Terminal 2: Configure and run app
-export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v1
+export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v2
 npm start
 ```
 
@@ -225,7 +225,7 @@ export class SummaryHeroComponent {
 
 ### Networking & Offline Experience
 
-- `lunchmoney.interceptor.ts` attaches the API key only for `*.lunchmoney.app` requests, falling back to environment-provided credentials if no stored key exists.
+- `lunchmoney.interceptor.ts` attaches the API key only for `*.lunchmoney.dev` (and legacy `*.lunchmoney.app`) requests, falling back to environment-provided credentials if no stored key exists.
 - `public/custom-service-worker.js` layers on top of Angular's worker to:
   - cache Lunch Money API responses with a network-first strategy and a 10 s timeout,
   - prune obsolete caches during activation,

@@ -48,7 +48,7 @@ Or enter your API key in the login screen—it's stored securely in your browser
 npm run mock:server
 
 # Terminal 2
-export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v1
+export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v2
 npm start
 ```
 

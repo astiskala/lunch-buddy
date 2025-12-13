@@ -17,54 +17,44 @@ describe('RecurringExpensesPanelComponent', () => {
     component = fixture.componentInstance;
   });
 
+  const buildInstance = (
+    id: number,
+    occurrence: string,
+    overrides?: Partial<RecurringInstance['expense']>
+  ): RecurringInstance => ({
+    expense: {
+      id,
+      payee: 'Test',
+      description: null,
+      amount: '-10.00',
+      currency: 'USD',
+      anchor_date: occurrence,
+      next_occurrence: occurrence,
+      type: 'cleared',
+      status: 'reviewed',
+      cadence: 'monthly',
+      start_date: '2025-01-01',
+      end_date: null,
+      category_id: null,
+      ...overrides,
+    },
+    occurrenceDate: new Date(occurrence),
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
   it('should filter and sort expenses by occurrence date', () => {
     const mockExpenses: RecurringInstance[] = [
-      {
-        expense: {
-          id: 2,
-          payee: 'Later Expense',
-          description: null,
-          amount: '-20.00',
-          currency: 'USD',
-          billing_date: '2025-11-20',
-          type: 'cleared',
-          cadence: 'monthly',
-          start_date: '2025-01-01',
-          end_date: null,
-          created_at: '2025-01-01',
-          original_name: null,
-          source: 'manual',
-          plaid_account_id: null,
-          asset_id: null,
-          category_id: null,
-        },
-        occurrenceDate: new Date('2025-11-20'),
-      },
-      {
-        expense: {
-          id: 1,
-          payee: 'Earlier Expense',
-          description: null,
-          amount: '-10.00',
-          currency: 'USD',
-          billing_date: '2025-11-15',
-          type: 'cleared',
-          cadence: 'monthly',
-          start_date: '2025-01-01',
-          end_date: null,
-          created_at: '2025-01-01',
-          original_name: null,
-          source: 'manual',
-          plaid_account_id: null,
-          asset_id: null,
-          category_id: null,
-        },
-        occurrenceDate: new Date('2025-11-15'),
-      },
+      buildInstance(2, '2025-11-20', {
+        payee: 'Later Expense',
+        amount: '-20.00',
+      }),
+      buildInstance(1, '2025-11-15', {
+        payee: 'Earlier Expense',
+        amount: '-10.00',
+      }),
     ];
 
     fixture.componentRef.setInput('expenses', mockExpenses);
@@ -81,48 +71,8 @@ describe('RecurringExpensesPanelComponent', () => {
 
   it('should calculate total formatted amount', () => {
     const mockExpenses: RecurringInstance[] = [
-      {
-        expense: {
-          id: 1,
-          payee: 'Test',
-          description: null,
-          amount: '-15.50',
-          currency: 'USD',
-          billing_date: '2025-11-15',
-          type: 'cleared',
-          cadence: 'monthly',
-          start_date: '2025-01-01',
-          end_date: null,
-          created_at: '2025-01-01',
-          original_name: null,
-          source: 'manual',
-          plaid_account_id: null,
-          asset_id: null,
-          category_id: null,
-        },
-        occurrenceDate: new Date('2025-11-15'),
-      },
-      {
-        expense: {
-          id: 2,
-          payee: 'Test2',
-          description: null,
-          amount: '-10.50',
-          currency: 'USD',
-          billing_date: '2025-11-20',
-          type: 'cleared',
-          cadence: 'monthly',
-          start_date: '2025-01-01',
-          end_date: null,
-          created_at: '2025-01-01',
-          original_name: null,
-          source: 'manual',
-          plaid_account_id: null,
-          asset_id: null,
-          category_id: null,
-        },
-        occurrenceDate: new Date('2025-11-20'),
-      },
+      buildInstance(1, '2025-11-15', { amount: '-15.50' }),
+      buildInstance(2, '2025-11-20', { amount: '-10.50' }),
     ];
 
     fixture.componentRef.setInput('expenses', mockExpenses);
@@ -135,157 +85,48 @@ describe('RecurringExpensesPanelComponent', () => {
   });
 
   it('should get payee name', () => {
-    const mockExpense: RecurringInstance = {
-      expense: {
-        id: 1,
-        payee: 'Netflix',
-        description: null,
-        amount: '-15.00',
-        currency: 'USD',
-        billing_date: '2025-11-15',
-        type: 'cleared',
-        cadence: 'monthly',
-        start_date: '2025-01-01',
-        end_date: null,
-        created_at: '2025-01-01',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-      },
-      occurrenceDate: new Date('2025-11-15'),
-    };
+    const mockExpense = buildInstance(1, '2025-11-15', {
+      payee: 'Netflix',
+    });
 
     expect(component.getPayee(mockExpense)).toBe('Netflix');
   });
 
   it('should return default text for empty payee', () => {
-    const mockExpense: RecurringInstance = {
-      expense: {
-        id: 1,
-        payee: '',
-        description: null,
-        amount: '-15.00',
-        currency: 'USD',
-        billing_date: '2025-11-15',
-        type: 'cleared',
-        cadence: 'monthly',
-        start_date: '2025-01-01',
-        end_date: null,
-        created_at: '2025-01-01',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-      },
-      occurrenceDate: new Date('2025-11-15'),
-    };
+    const mockExpense = buildInstance(1, '2025-11-15', {
+      payee: '',
+    });
 
     expect(component.getPayee(mockExpense)).toBe('Unnamed recurring expense');
   });
 
   it('should format date correctly', () => {
-    const mockExpense: RecurringInstance = {
-      expense: {
-        id: 1,
-        payee: 'Test',
-        description: null,
-        amount: '-15.00',
-        currency: 'USD',
-        billing_date: '2025-11-15',
-        type: 'cleared',
-        cadence: 'monthly',
-        start_date: '2025-01-01',
-        end_date: null,
-        created_at: '2025-01-01',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-      },
-      occurrenceDate: new Date('2025-11-15'),
-    };
+    const mockExpense = buildInstance(1, '2025-11-15');
 
     expect(component.getFormattedDate(mockExpense)).toBe('Nov 15');
   });
 
   it('should get description when available', () => {
-    const mockExpense: RecurringInstance = {
-      expense: {
-        id: 1,
-        payee: 'Test',
-        description: 'Monthly Subscription',
-        amount: '-15.00',
-        currency: 'USD',
-        billing_date: '2025-11-15',
-        type: 'cleared',
-        cadence: 'monthly',
-        start_date: '2025-01-01',
-        end_date: null,
-        created_at: '2025-01-01',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-      },
-      occurrenceDate: new Date('2025-11-15'),
-    };
+    const mockExpense = buildInstance(1, '2025-11-15', {
+      description: 'Monthly Subscription',
+    });
 
     expect(component.getDescription(mockExpense)).toBe('Monthly Subscription');
   });
 
   it('should return null for null description', () => {
-    const mockExpense: RecurringInstance = {
-      expense: {
-        id: 1,
-        payee: 'Test',
-        description: null,
-        amount: '-15.00',
-        currency: 'USD',
-        billing_date: '2025-11-15',
-        type: 'cleared',
-        cadence: 'monthly',
-        start_date: '2025-01-01',
-        end_date: null,
-        created_at: '2025-01-01',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-      },
-      occurrenceDate: new Date('2025-11-15'),
-    };
+    const mockExpense = buildInstance(1, '2025-11-15', {
+      description: null,
+    });
 
     expect(component.getDescription(mockExpense)).toBeNull();
   });
 
   it('should format amount with currency', () => {
-    const mockExpense: RecurringInstance = {
-      expense: {
-        id: 1,
-        payee: 'Test',
-        description: null,
-        amount: '-25.99',
-        currency: 'EUR',
-        billing_date: '2025-11-15',
-        type: 'cleared',
-        cadence: 'monthly',
-        start_date: '2025-01-01',
-        end_date: null,
-        created_at: '2025-01-01',
-        original_name: null,
-        source: 'manual',
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-      },
-      occurrenceDate: new Date('2025-11-15'),
-    };
+    const mockExpense = buildInstance(1, '2025-11-15', {
+      amount: '-25.99',
+      currency: 'EUR',
+    });
 
     fixture.componentRef.setInput('defaultCurrency', 'USD');
     const formatted = component.getFormattedAmount(mockExpense);

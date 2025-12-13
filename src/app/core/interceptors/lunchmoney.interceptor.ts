@@ -6,7 +6,10 @@ import { environment } from '../../../environments/environment';
 
 export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
   // Only add auth header for Lunch Money API requests
-  if (!req.url.includes('lunchmoney.app')) {
+  if (
+    !req.url.includes('lunchmoney.dev') &&
+    !req.url.includes('lunchmoney.app')
+  ) {
     return next(req);
   }
 

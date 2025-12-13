@@ -15,7 +15,7 @@ Storage & Processing:
 - Offline support comes from the service worker, which caches static assets and the most recent API responses on your device.
 
 Third Parties:
-- Network requests go only to the Lunch Money API base (`https://dev.lunchmoney.app/v1`).
+ - Network requests go only to the Lunch Money API base (`https://api.lunchmoney.dev/v2`).
 - Our third party hosts (Vercel and CloudFlare) may create standard access logs containing IP address, user agent, and timestamps.
 
 User Control:

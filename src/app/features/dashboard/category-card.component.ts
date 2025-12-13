@@ -114,74 +114,23 @@ export class CategoryCardComponent {
   });
 
   readonly activityEntries = computed(() => {
-    // Use filtered transactionList for uncategorised categories
     const item = this.item();
     const txns = Array.isArray(item.transactionList)
       ? item.transactionList
       : this.transactions();
     const recurring = this.recurringExpenses();
     const referenceDate = this.referenceDate();
-    const entries: ActivityEntry[] = [];
 
-    // Add transactions
-    for (const transaction of txns) {
-      const amount = Number.parseFloat(transaction.amount);
-      const date = new Date(transaction.date);
-      const rawLabel =
-        transaction.display_name ?? transaction.payee ?? 'Unnamed transaction';
-      const label = decodeHtmlEntities(rawLabel);
-      const notes = decodeHtmlEntities(transaction.notes);
+    const transactionEntries = this.convertTransactionsToEntries(txns);
+    const recordedRecurringIds = this.getRecordedRecurringIds(txns);
+    const recurringEntries = this.convertRecurringToEntries(
+      recurring,
+      referenceDate,
+      recordedRecurringIds
+    );
 
-      entries.push({
-        id: `txn-${transaction.id.toString()}`,
-        kind: 'transaction',
-        date: Number.isNaN(date.getTime()) ? null : date,
-        label,
-        notes,
-        amount,
-        currency: transaction.currency,
-      });
-    }
-
-    // Track recurring expenses already recorded
-    const recordedRecurringIds = new Set<number>();
-    for (const transaction of txns) {
-      if (transaction.recurring_id) {
-        recordedRecurringIds.add(transaction.recurring_id);
-      }
-    }
-
-    // Add upcoming recurring expenses
-    for (const instance of recurring) {
-      if (!isRecurringInstancePending(instance, { referenceDate })) {
-        continue;
-      }
-      if (recordedRecurringIds.has(instance.expense.id)) {
-        continue;
-      }
-
-      const amount = Number.parseFloat(instance.expense.amount);
-      const payee = decodeHtmlEntities(instance.expense.payee).trim();
-      const label = payee.length > 0 ? payee : 'Recurring expense';
-      const notes = decodeHtmlEntities(instance.expense.description);
-
-      entries.push({
-        id: `recurring-${instance.expense.id.toString()}`,
-        kind: 'upcoming',
-        date: instance.occurrenceDate,
-        label,
-        notes,
-        amount,
-        currency: instance.expense.currency,
-      });
-    }
-
-    // Sort by date descending
-    return entries.sort((a, b) => {
-      const timeA = a.date ? a.date.getTime() : -Infinity;
-      const timeB = b.date ? b.date.getTime() : -Infinity;
-      return timeB - timeA;
-    });
+    const entries = [...transactionEntries, ...recurringEntries];
+    return this.sortEntriesByDateDescending(entries);
   });
 
   readonly upcomingRecurringTotal = computed(() => {
@@ -288,6 +237,84 @@ export class CategoryCardComponent {
           this.transactionsLoadError.set(true);
         },
       });
+  }
+
+  private convertTransactionsToEntries(
+    transactions: Transaction[]
+  ): ActivityEntry[] {
+    return transactions.map(transaction => {
+      const amount = Number.parseFloat(transaction.amount);
+      const date = new Date(transaction.date);
+      const rawLabel = transaction.payee;
+      const label = decodeHtmlEntities(rawLabel);
+      const notes = transaction.notes
+        ? decodeHtmlEntities(transaction.notes)
+        : null;
+
+      return {
+        id: `txn-${transaction.id.toString()}`,
+        kind: 'transaction',
+        date: Number.isNaN(date.getTime()) ? null : date,
+        label,
+        notes,
+        amount,
+        currency: transaction.currency,
+      };
+    });
+  }
+
+  private getRecordedRecurringIds(transactions: Transaction[]): Set<number> {
+    const recordedIds = new Set<number>();
+    for (const transaction of transactions) {
+      if (transaction.recurring_id) {
+        recordedIds.add(transaction.recurring_id);
+      }
+    }
+    return recordedIds;
+  }
+
+  private convertRecurringToEntries(
+    recurring: RecurringInstance[],
+    referenceDate: Date,
+    recordedRecurringIds: Set<number>
+  ): ActivityEntry[] {
+    const entries: ActivityEntry[] = [];
+
+    for (const instance of recurring) {
+      if (!isRecurringInstancePending(instance, { referenceDate })) {
+        continue;
+      }
+      if (recordedRecurringIds.has(instance.expense.id)) {
+        continue;
+      }
+
+      const amount = Number.parseFloat(instance.expense.amount);
+      const payee = decodeHtmlEntities(instance.expense.payee).trim();
+      const label = payee.length > 0 ? payee : 'Recurring expense';
+      const notes = decodeHtmlEntities(instance.expense.description);
+
+      entries.push({
+        id: `recurring-${instance.expense.id.toString()}`,
+        kind: 'upcoming',
+        date: instance.occurrenceDate,
+        label,
+        notes,
+        amount,
+        currency: instance.expense.currency,
+      });
+    }
+
+    return entries;
+  }
+
+  private sortEntriesByDateDescending(
+    entries: ActivityEntry[]
+  ): ActivityEntry[] {
+    return entries.sort((a, b) => {
+      const timeA = a.date ? a.date.getTime() : -Infinity;
+      const timeB = b.date ? b.date.getTime() : -Infinity;
+      return timeB - timeA;
+    });
   }
 
   formatAmount(entry: ActivityEntry): string {

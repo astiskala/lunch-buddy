@@ -10,7 +10,7 @@ import { LunchMoneyService } from './lunchmoney.service';
 describe('LunchMoneyService', () => {
   let service: LunchMoneyService;
   let httpMock: HttpTestingController;
-  const baseUrl = 'https://dev.lunchmoney.app/v1';
+  const baseUrl = 'https://api.lunchmoney.dev/v2';
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -35,12 +35,13 @@ describe('LunchMoneyService', () => {
 
   it('should get user information', () => {
     const mockUser = {
-      user_id: 1,
-      user_name: 'Test User',
-      user_email: 'test@example.com',
+      id: 1,
+      name: 'Test User',
+      email: 'test@example.com',
       api_key_label: null,
       account_id: 1,
-      default_currency: 'USD',
+      budget_name: 'Primary',
+      primary_currency: 'usd',
     };
 
     service.getUser().subscribe(user => {
@@ -63,12 +64,13 @@ describe('LunchMoneyService', () => {
         exclude_from_budget: false,
         exclude_from_totals: false,
         archived: false,
-        archived_on: null,
-        updated_at: null,
-        created_at: null,
+        archived_at: null,
+        updated_at: '2025-01-01T00:00:00Z',
+        created_at: '2024-01-01T00:00:00Z',
         is_group: false,
         group_id: null,
         order: 1,
+        collapsed: false,
       },
     ];
 
@@ -76,72 +78,155 @@ describe('LunchMoneyService', () => {
       expect(categories).toEqual(mockCategories);
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/categories`);
+    const req = httpMock.expectOne(`${baseUrl}/categories?format=flattened`);
     expect(req.request.method).toBe('GET');
     req.flush({ categories: mockCategories });
   });
 
-  it('should get budget summary with date range', () => {
-    const mockBudget = [
+  it('should merge summary data with categories', () => {
+    const mockCategories = [
       {
-        category_name: 'Food',
-        category_id: 1,
-        category_group_name: null,
-        group_id: null,
-        is_group: false,
+        id: 1,
+        name: 'Food',
+        description: null,
         is_income: false,
         exclude_from_budget: false,
         exclude_from_totals: false,
-        order: 1,
         archived: false,
-        data: {},
-        config: null,
-        recurring: null,
+        archived_at: null,
+        updated_at: '2025-01-01T00:00:00Z',
+        created_at: '2024-01-01T00:00:00Z',
+        is_group: false,
+        group_id: null,
+        order: 1,
+        collapsed: false,
       },
     ];
+    const mockSummary = {
+      aligned: true,
+      categories: [
+        {
+          category_id: 1,
+          totals: {
+            other_activity: 100,
+            recurring_activity: 50,
+            budgeted: 300,
+            available: 150,
+            recurring_remaining: 0,
+            recurring_expected: 20,
+          },
+          occurrences: [
+            {
+              current: true,
+              start_date: '2025-11-01',
+              end_date: '2025-11-30',
+              other_activity: 100,
+              recurring_activity: 50,
+              budgeted: 300,
+              budgeted_amount: '300.0000',
+              budgeted_currency: 'usd',
+              notes: null,
+            },
+          ],
+        },
+      ],
+    };
 
     service.getBudgetSummary('2025-11-01', '2025-11-30').subscribe(budget => {
-      expect(budget).toEqual(mockBudget);
+      expect(budget).toEqual([
+        {
+          category_id: 1,
+          category_name: 'Food',
+          category_group_name: null,
+          group_id: null,
+          is_group: false,
+          is_income: false,
+          exclude_from_budget: false,
+          exclude_from_totals: false,
+          totals: mockSummary.categories[0].totals,
+          occurrence: mockSummary.categories[0].occurrences[0],
+          order: 1,
+          archived: false,
+        },
+      ]);
     });
 
-    const req = httpMock.expectOne(
-      `${baseUrl}/budgets?start_date=2025-11-01&end_date=2025-11-30`
+    const requests = httpMock.match(() => true);
+    expect(requests.length).toBe(2);
+
+    const summaryReq = requests.find(req =>
+      req.request.urlWithParams.startsWith(`${baseUrl}/summary`)
     );
-    expect(req.request.method).toBe('GET');
-    req.flush(mockBudget);
+    const categoriesReq = requests.find(req =>
+      req.request.urlWithParams.startsWith(`${baseUrl}/categories`)
+    );
+
+    expect(summaryReq).toBeDefined();
+    expect(categoriesReq).toBeDefined();
+
+    categoriesReq?.flush({ categories: mockCategories });
+    summaryReq?.flush(mockSummary);
   });
 
   it('should get recurring expenses', () => {
-    const mockRecurring = [
-      {
-        id: 1,
-        start_date: '2025-01-01',
-        end_date: null,
-        cadence: 'monthly',
-        payee: 'Netflix',
-        amount: '-15.99',
-        currency: 'USD',
-        description: 'Streaming',
-        billing_date: '2025-11-15',
-        type: 'cleared' as const,
-        original_name: null,
-        source: 'manual' as const,
-        plaid_account_id: null,
-        asset_id: null,
-        category_id: null,
-        created_at: '2025-01-01',
-      },
-    ];
+    const mockRecurring = {
+      recurring_items: [
+        {
+          id: 1,
+          description: 'Streaming',
+          status: 'reviewed' as const,
+          transaction_criteria: {
+            start_date: '2025-01-01',
+            end_date: null,
+            granularity: 'month' as const,
+            quantity: 1,
+            anchor_date: '2025-11-15',
+            payee: 'Netflix',
+            amount: '-15.99',
+            to_base: -15.99,
+            currency: 'usd',
+            plaid_account_id: null,
+            manual_account_id: null,
+          },
+          overrides: {
+            payee: 'Netflix',
+            notes: null,
+            category_id: null,
+          },
+          matches: {
+            expected_occurrence_dates: ['2025-11-15'],
+          },
+        },
+      ],
+    };
 
-    service.getRecurringExpenses('2025-11-01').subscribe(expenses => {
-      expect(expenses).toEqual(mockRecurring);
-    });
+    service
+      .getRecurringExpenses('2025-11-01', '2025-11-30')
+      .subscribe(expenses => {
+        expect(expenses).toEqual([
+          {
+            id: 1,
+            start_date: '2025-01-01',
+            end_date: null,
+            cadence: '1 month',
+            status: 'reviewed',
+            payee: 'Netflix',
+            amount: '-15.99',
+            currency: 'usd',
+            description: 'Streaming',
+            anchor_date: '2025-11-15',
+            next_occurrence: '2025-11-15',
+            type: 'cleared',
+            category_id: null,
+          },
+        ]);
+      });
 
     const req = httpMock.expectOne(
-      `${baseUrl}/recurring_expenses?start_date=2025-11-01&debit_as_negative=true`
+      `${baseUrl}/recurring_items?start_date=2025-11-01&end_date=2025-11-30`
     );
     expect(req.request.method).toBe('GET');
-    req.flush({ recurring_expenses: mockRecurring });
+    req.flush(mockRecurring);
   });
 
   it('should include no-cache headers in all requests', () => {
@@ -165,26 +250,52 @@ describe('LunchMoneyService', () => {
           date: '2025-11-01',
           amount: '-10.00',
           currency: 'USD',
+          to_base: -10,
           payee: 'Coffee',
           category_id: null,
           notes: null,
           recurring_id: null,
-          recurring_payee: null,
-          recurring_description: null,
-          tags: [],
+          plaid_account_id: null,
+          manual_account_id: null,
+          external_id: null,
+          tag_ids: [],
+          status: 'reviewed' as const,
+          is_pending: false,
+          created_at: '2025-11-01T00:00:00Z',
+          updated_at: '2025-11-01T00:00:00Z',
+          is_parent: false,
+          parent_id: null,
+          is_group: false,
+          group_id: null,
+          children: [],
+          files: [],
+          source: null,
         },
         {
           id: 2,
           date: '2025-11-02',
           amount: '-20.00',
           currency: 'USD',
+          to_base: -20,
           payee: 'Groceries',
           category_id: 5,
           notes: null,
           recurring_id: null,
-          recurring_payee: null,
-          recurring_description: null,
-          tags: [],
+          plaid_account_id: null,
+          manual_account_id: null,
+          external_id: null,
+          tag_ids: [],
+          status: 'reviewed' as const,
+          is_pending: false,
+          created_at: '2025-11-02T00:00:00Z',
+          updated_at: '2025-11-02T00:00:00Z',
+          is_parent: false,
+          parent_id: null,
+          is_group: false,
+          group_id: null,
+          children: [],
+          files: [],
+          source: null,
         },
       ],
       has_more: false,
@@ -204,7 +315,6 @@ describe('LunchMoneyService', () => {
 
     expect(req.request.params.get('start_date')).toBe('2025-11-01');
     expect(req.request.params.get('end_date')).toBe('2025-11-30');
-    expect(req.request.params.get('debit_as_negative')).toBe('true');
     expect(req.request.params.has('category_id')).toBeFalse();
     req.flush(mockResponse);
   });
@@ -228,7 +338,7 @@ describe('LunchMoneyService', () => {
     });
 
     expect(req.request.params.get('category_id')).toBe('5');
-    expect(req.request.params.get('status')).toBe('cleared');
+    expect(req.request.params.get('status')).toBe('reviewed');
     req.flush(mockResponse);
   });
 

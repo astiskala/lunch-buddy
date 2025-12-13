@@ -9,7 +9,7 @@ const {
 } = require('./data');
 
 const DEFAULT_PORT = Number(process.env.MOCK_API_PORT) || 4600;
-const API_PREFIX = '/v1';
+const API_PREFIX = '/v2';
 
 const helmet = require('helmet');
 const app = express();
@@ -56,8 +56,8 @@ app.get('/health', (_req, res) => {
     endpoints: [
       `${API_PREFIX}/me`,
       `${API_PREFIX}/categories`,
-      `${API_PREFIX}/budgets`,
-      `${API_PREFIX}/recurring_expenses`,
+      `${API_PREFIX}/summary`,
+      `${API_PREFIX}/recurring_items`,
       `${API_PREFIX}/transactions`,
     ],
   });
@@ -71,17 +71,17 @@ app.get(`${API_PREFIX}/categories`, (_req, res) => {
   res.json({ categories: categories.map(category => ({ ...category })) });
 });
 
-app.get(`${API_PREFIX}/budgets`, (req, res) => {
+app.get(`${API_PREFIX}/summary`, (req, res) => {
   const { start_date: startDate, end_date: endDate } = req.query;
   const summaries = buildBudgetSummaries({ startDate, endDate });
 
   res.json(summaries);
 });
 
-app.get(`${API_PREFIX}/recurring_expenses`, (req, res) => {
+app.get(`${API_PREFIX}/recurring_items`, (req, res) => {
   const { start_date: startDate } = req.query;
   const recurringExpenses = buildRecurringExpenses({ startDate });
-  res.json({ recurring_expenses: recurringExpenses });
+  res.json({ recurring_items: recurringExpenses });
 });
 
 app.get(`${API_PREFIX}/transactions`, (req, res) => {

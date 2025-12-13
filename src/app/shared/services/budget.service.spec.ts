@@ -42,7 +42,10 @@ class MockLunchMoneyService {
     return of(this.categoryTransactionsResponse);
   }
 
-  getRecurringExpenses(): Observable<RecurringExpense[]> {
+  getRecurringExpenses(
+    _startDate: string,
+    _endDate: string
+  ): Observable<RecurringExpense[]> {
     return of([]);
   }
 }
@@ -61,18 +64,25 @@ const createSummary = (
   exclude_from_totals: false,
   order: 0,
   archived: false,
-  data: {
-    [monthKey]: {
-      num_transactions: 1,
-      spending_to_base: 150,
-      budget_to_base: 100,
-      budget_amount: 100,
-      budget_currency: 'USD',
-      is_automated: false,
-    },
+  totals: {
+    other_activity: 150,
+    recurring_activity: 0,
+    budgeted: 100,
+    available: null,
+    recurring_remaining: 0,
+    recurring_expected: 0,
   },
-  config: null,
-  recurring: { data: [] },
+  occurrence: {
+    current: true,
+    start_date: monthKey,
+    end_date: monthKey,
+    other_activity: 0,
+    recurring_activity: 0,
+    budgeted: 100,
+    budgeted_amount: '100',
+    budgeted_currency: 'USD',
+    notes: null,
+  },
   ...overrides,
 });
 
@@ -81,13 +91,30 @@ const createTransaction = (overrides: Partial<Transaction>): Transaction => ({
   date: '2025-10-01',
   amount: '-10',
   currency: 'USD',
+  to_base:
+    overrides.to_base ??
+    (Number.isNaN(Number.parseFloat(overrides.amount ?? '-10'))
+      ? 0
+      : Number.parseFloat(overrides.amount ?? '-10')),
   payee: 'Test',
   category_id: null,
   notes: null,
   recurring_id: null,
-  recurring_payee: null,
-  recurring_description: null,
-  tags: [],
+  plaid_account_id: null,
+  manual_account_id: null,
+  external_id: null,
+  tag_ids: [],
+  status: 'reviewed',
+  is_pending: false,
+  created_at: '2025-10-01T00:00:00Z',
+  updated_at: '2025-10-01T00:00:00Z',
+  is_parent: false,
+  parent_id: null,
+  is_group: false,
+  group_id: null,
+  children: [],
+  files: [],
+  source: null,
   ...overrides,
 });
 
@@ -239,15 +266,24 @@ describe('BudgetService background sync', () => {
       createSummary(monthKey, {
         category_id: null,
         category_name: 'Uncategorised',
-        data: {
-          [monthKey]: {
-            num_transactions: 2,
-            spending_to_base: 171.25,
-            budget_to_base: 0,
-            budget_amount: 0,
-            budget_currency: 'USD',
-            is_automated: false,
-          },
+        totals: {
+          other_activity: 171.25,
+          recurring_activity: 0,
+          budgeted: 0,
+          available: null,
+          recurring_remaining: 0,
+          recurring_expected: 0,
+        },
+        occurrence: {
+          current: true,
+          start_date: monthKey,
+          end_date: monthKey,
+          other_activity: 0,
+          recurring_activity: 0,
+          budgeted: 0,
+          budgeted_amount: '0',
+          budgeted_currency: 'USD',
+          notes: null,
         },
       }),
     ]);
@@ -279,15 +315,24 @@ describe('BudgetService background sync', () => {
       createSummary(monthKey, {
         category_id: null,
         category_name: 'Uncategorised',
-        data: {
-          [monthKey]: {
-            num_transactions: 3,
-            spending_to_base: 200,
-            budget_to_base: 0,
-            budget_amount: 0,
-            budget_currency: 'USD',
-            is_automated: false,
-          },
+        totals: {
+          other_activity: 200,
+          recurring_activity: 0,
+          budgeted: 0,
+          available: null,
+          recurring_remaining: 0,
+          recurring_expected: 0,
+        },
+        occurrence: {
+          current: true,
+          start_date: monthKey,
+          end_date: monthKey,
+          other_activity: 0,
+          recurring_activity: 0,
+          budgeted: 0,
+          budgeted_amount: '0',
+          budgeted_currency: 'USD',
+          notes: null,
         },
       }),
     ]);
@@ -316,30 +361,26 @@ describe('BudgetService background sync', () => {
       createSummary(monthKey, {
         category_id: 10,
         category_name: 'Dining Out',
-        data: {
-          [monthKey]: {
-            num_transactions: 1,
-            spending_to_base: 120,
-            budget_to_base: 0,
-            budget_amount: 0,
-            budget_currency: 'USD',
-            is_automated: false,
-          },
+        totals: {
+          other_activity: 120,
+          recurring_activity: 0,
+          budgeted: 0,
+          available: null,
+          recurring_remaining: 0,
+          recurring_expected: 0,
         },
       }),
       createSummary(monthKey, {
         category_id: 20,
         category_name: 'Salary',
         is_income: true,
-        data: {
-          [monthKey]: {
-            num_transactions: 1,
-            spending_to_base: -5000,
-            budget_to_base: 0,
-            budget_amount: 0,
-            budget_currency: 'USD',
-            is_automated: false,
-          },
+        totals: {
+          other_activity: -5000,
+          recurring_activity: 0,
+          budgeted: 0,
+          available: null,
+          recurring_remaining: 0,
+          recurring_expected: 0,
         },
       }),
     ]);
@@ -354,6 +395,27 @@ describe('BudgetService background sync', () => {
 
     expect(hiddenExpenses.some(item => item.categoryId === 10)).toBeTrue();
     expect(hiddenIncomes.some(item => item.categoryId === 20)).toBeTrue();
+  });
+
+  it('includes group budgets when category-level budgets are absent', () => {
+    initService();
+    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+
+    lunchMoney.budgetSummary$.next([
+      createSummary(monthKey, {
+        category_id: 99,
+        category_name: 'Household Essentials',
+        category_group_name: 'Household',
+        group_id: 99,
+        is_group: true,
+      }),
+    ]);
+
+    const expenses = service.getExpenses();
+
+    expect(expenses.length).toBe(1);
+    expect(expenses[0].isGroup).toBeTrue();
+    expect(expenses[0].categoryName).toBe('Household Essentials');
   });
 
   it('recovers from recurring expense load failures', () => {
