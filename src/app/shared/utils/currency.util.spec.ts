@@ -12,7 +12,7 @@ describe('Currency Utils', () => {
 
     it('returns null for empty values', () => {
       expect(normalizeCurrencyCode('   ')).toBeNull();
-      expect(normalizeCurrencyCode(undefined)).toBeNull();
+      expect(normalizeCurrencyCode()).toBeNull();
     });
   });
 
