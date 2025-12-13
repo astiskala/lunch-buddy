@@ -63,9 +63,41 @@ npm start
 
 ## Development
 
-- **Pre-commit hooks**: Automatically run formatting, type-checking, and tests on every commit
-- **Code quality**: TypeScript strict mode, ESLint, Stylelint, Prettier
-- **Testing**: Unit tests (Karma/Jasmine) + E2E tests (Playwright) with 80% coverage requirement
+### Getting Started
+
+```bash
+npm install          # Install dependencies (also sets up Husky hooks)
+npm start            # Start dev server (http://localhost:4200)
+npm run mock:server  # Start mock API (http://localhost:4600/v2)
+```
+
+### Before Every Commit
+
+**Pre-commit hooks automatically run** (via Husky) to ensure code quality:
+
+```bash
+# Run these manually to catch issues early:
+npm run lint    # Auto-fix linting & formatting
+npm test        # Run unit tests with coverage
+npx tsc --noEmit # Type check without building
+```
+
+**What runs automatically on commit:**
+
+1. Prettier formatting on staged files
+2. ESLint + Stylelint auto-fixes
+3. TypeScript type checking (`tsc --noEmit`)
+4. Full unit test suite
+5. Commit message validation (Conventional Commits)
+
+**If commit fails**, fix the reported issues and try again. Most linting issues are auto-fixed by `npm run lint`.
+
+### Code Quality & Testing
+
+- **TypeScript**: Strict mode with comprehensive type checking
+- **Linting**: ESLint (TypeScript/templates) + Stylelint (SCSS) + Prettier
+- **Testing**: Unit tests (Karma/Jasmine) + E2E tests (Playwright)
+- **Coverage**: 80% minimum (statements, branches, functions, lines)
 - **CI/CD**: Automated testing, linting, security audits, and builds on every push
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and architecture details.
@@ -112,39 +144,102 @@ Run `npm run test:coverage` to generate coverage reports. Minimum thresholds:
 
 ### Pre-commit Hooks
 
-Husky enforces quality checks before commits:
+Husky enforces quality checks before commits (configured in `.husky/pre-commit` and `.husky/commit-msg`):
 
-- Prettier formatting via lint-staged
-- TypeScript type checking
-- Unit tests for changed files
-- Conventional commit message format
+**Automatic checks on every commit:**
 
-See `DEVELOPMENT.md` for detailed testing guidelines.
+- **lint-staged** - Auto-formats and fixes staged files (ESLint, Stylelint, Prettier)
+- **Type checking** - `tsc --noEmit` validates TypeScript across entire codebase
+- **Unit tests** - Full test suite runs headlessly with coverage validation
+- **Commit message** - Must follow Conventional Commits format (feat, fix, docs, etc.)
+
+**Troubleshooting commit failures:**
+
+```bash
+# If lint-staged fails:
+npm run lint                    # Auto-fix most issues
+git add .                       # Stage the fixes
+
+# If type checking fails:
+npx tsc --noEmit --pretty      # See all type errors
+
+# If tests fail:
+npm run test:watch             # Interactive test runner
+npm test                       # Run full suite
+
+# If commit message fails:
+# Use format: "type: description" (e.g., "feat: add new feature")
+# Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+
+# Check for security vulnerabilities (before pushing)
+npm audit              # Check for vulnerabilities
+npm audit fix          # Auto-fix and update package-lock.json
+```
+
+**To bypass hooks** (not recommended): `git commit --no-verify`
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed development guidelines.
 
 ## Continuous Integration
 
-GitHub Actions (`.github/workflows/ci.yml`) validates every push and pull request targeting `main`:
+GitHub Actions validates every push and pull request. **Pre-commit hooks ensure local quality**, while CI enforces the same checks in the cloud.
 
-1. **Dependency installation** with Node.js 22 and npm caching
-2. **Linting** - TypeScript, templates, and SCSS
-3. **Security audit** - npm audit for vulnerabilities
-4. **Unit tests** - Headless Chrome with code coverage
+### CI Pipeline (`.github/workflows/ci.yml`)
+
+**Every push/PR to `main` runs:**
+
+1. **Dependency installation** - Node.js 22 with npm cache
+2. **Linting** - ESLint (TypeScript/templates) + Stylelint (SCSS)
+3. **Security audit** - `npm audit --audit-level=high` (fails on high/critical vulnerabilities)
+4. **Unit tests** - ChromeHeadless with code coverage
 5. **Coverage upload** - Results sent to Codecov
-6. **SonarCloud analysis** - Code quality and security scanning
-7. **Production build** - Verify bundle creation
+6. **Production build** - Verifies successful bundle creation
+
+### E2E Tests (`.github/workflows/e2e.yml`)
+
+**Runs on pull requests only:**
+
+- Playwright tests across Chrome, Firefox, Safari
+- Accessibility testing with @axe-core
+- Login flow and dashboard validation
 
 ### Quality Gates
 
-- All linting must pass (zero warnings)
-- All tests must pass
-- No high/critical security vulnerabilities
-- Code coverage thresholds maintained
-- SonarCloud quality gate passed
+**Must pass to merge:**
+
+- ✅ All linting (zero warnings)
+- ✅ All unit and E2E tests
+- ✅ No high/critical security vulnerabilities
+- ✅ 80% code coverage maintained
+- ✅ Production build succeeds
+
+**If CI fails but local pre-commit passed:**
+
+**Most common: Security vulnerabilities**
+
+```bash
+npm audit              # Check what's vulnerable
+npm audit fix          # Fix automatically (updates package-lock.json)
+git add package-lock.json
+git commit -m "fix: resolve security vulnerabilities"
+git push
+```
+
+**Other CI failures:**
+
+- E2E failures: run `npm run test:e2e` to reproduce
+- Coverage drops: add tests for new code
+- Build failures: run `npm run build` to test production mode
+
+**Note:** The CI security audit runs `npm audit --audit-level=high`, blocking merges if high/critical vulnerabilities exist. Pre-commit hooks don't check this, so always run `npm audit` before pushing.
+
+### Automated Releases
 
 On successful merge to `main`, semantic-release automatically:
 
-- Generates changelog from conventional commits
-- Updates version in package.json
+- Analyzes conventional commits to determine version bump
+- Generates CHANGELOG.md from commit messages
+- Updates package.json version
 - Creates GitHub release with notes
 - Publishes git tags
 

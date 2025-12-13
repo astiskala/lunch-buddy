@@ -28,6 +28,40 @@ Thanks for helping improve Lunch Buddy! These guidelines outline the expectation
 - Launch the mock Lunch Money API locally with `npm run mock:server` when you need realistic data without touching production.
 - Keep pull requests small and iterative. When a change spans multiple subsystems, break it into reviewable chunks.
 
+### Before You Commit
+
+**Pre-commit hooks automatically run** on every commit via Husky, but you can (and should) run these checks manually during development to catch issues early:
+
+```bash
+# Run all quality checks at once
+npm run lint        # Auto-fixes TypeScript, SCSS, and formatting
+npm test            # Runs unit tests with coverage
+
+# Or run individual checks
+npm run lint:check  # Check without auto-fixing
+npx tsc --noEmit    # Type check without building
+```
+
+**What happens on commit:**
+
+1. **lint-staged** - Prettier formats staged files, ESLint fixes TypeScript/template issues
+2. **tsc --noEmit** - Type checks entire codebase (no compilation)
+3. **npm test** - Runs full unit test suite headlessly
+4. **commitlint** - Validates commit message format (Conventional Commits)
+
+**If pre-commit checks fail:**
+
+- Review error messages carefully
+- Fix the issues (many are auto-fixed by `npm run lint`)
+- Stage fixed files with `git add`
+- Try committing again
+
+**Pro tips:**
+
+- Run `npm run lint && npm test` before staging files to catch issues before the commit hook runs
+- The VS Code settings include a 100-character ruler for commit messages to help you stay within limits
+- **Check for security vulnerabilities** before pushing: `npm audit` (see Security Audit section below)
+
 ### Using the Mock API
 
 For local development without touching production:
@@ -160,29 +194,99 @@ test('should display login page', async ({ page }) => {
 
 ## Automated Quality Checks
 
-### Pre-commit (Runs Automatically)
+### Pre-commit Hooks (Local)
 
-When you commit, Husky automatically runs:
+Husky runs automatically on every commit (see `.husky/pre-commit`):
 
-1. ✅ Prettier formatting
-2. ✅ TypeScript type checking
-3. ✅ Unit tests for changed files
-4. ✅ Commit message validation
+1. **lint-staged** - Formats and lints staged files:
+   - `*.{ts,js,html}` → ESLint fix + Prettier format
+   - `*.scss` → Stylelint fix + Prettier format
+   - `*.{json,md,yml,yaml}` → Prettier format
 
-If anything fails, the commit is blocked—just fix and try again.
+2. **TypeScript type checking** - `tsc --noEmit` validates types across entire codebase
 
-### CI Pipeline (Runs on Push/PR)
+3. **Unit tests** - `npm test` runs full test suite headlessly with coverage
 
-GitHub Actions automatically runs:
+4. **Commit message validation** - `commitlint` enforces Conventional Commits format (see `.husky/commit-msg`)
 
-1. ✅ ESLint + Stylelint
-2. ✅ Security audit
-3. ✅ Unit tests with coverage
-4. ✅ E2E tests (on PRs)
-5. ✅ Production build
-6. ✅ Coverage upload to Codecov
+**If pre-commit fails:**
 
-All checks must pass before merging.
+```bash
+# Check what failed
+git status  # See which files need fixing
+
+# Fix linting issues
+npm run lint
+
+# Fix type errors
+npx tsc --noEmit  # Shows all type errors
+
+# Fix test failures
+npm run test:watch  # Interactive test runner
+
+# Stage fixes and retry
+git add .
+git commit -m "fix: your message"
+```
+
+### CI Pipeline (GitHub Actions)
+
+Runs on every push and pull request to `main` (see `.github/workflows/ci.yml`):
+
+**Build and Test Job:**
+
+1. ✅ **ESLint** - `ng lint --fix=false` (no auto-fixing in CI)
+2. ✅ **Stylelint** - Checks all SCSS files with zero warnings
+3. ✅ **Security audit** - `npm audit --audit-level=high` fails on high/critical vulnerabilities
+4. ✅ **Unit tests** - Full suite with ChromeHeadless (Node 22)
+5. ✅ **Coverage upload** - Results sent to Codecov
+6. ✅ **Production build** - `npm run build` verifies successful bundle creation
+
+**E2E Tests Job** (separate workflow `.github/workflows/e2e.yml`):
+
+- Runs on pull requests only
+- Uses Playwright for multi-browser testing
+- Includes accessibility checks with @axe-core
+
+**Release Job** (only on main branch):
+
+- Runs semantic-release after successful build
+- Auto-generates changelog from conventional commits
+- Creates GitHub releases and tags
+- Updates package.json version
+
+**All checks must pass before merging.** If CI fails but pre-commit passed, it's usually due to:
+
+- **Security vulnerabilities** in dependencies (most common - see below)
+- Missing test coverage for new code
+- E2E test failures (run `npm run test:e2e` locally)
+- Build issues specific to production mode
+
+### Security Audit Failures (Common CI Issue)
+
+**The CI pipeline runs `npm audit --audit-level=high`** which fails if any high or critical vulnerabilities are found. Pre-commit hooks don't check this, so you might not see issues until CI runs.
+
+**To prevent CI failures, check for vulnerabilities before pushing:**
+
+```bash
+# Check for vulnerabilities
+npm audit
+
+# Fix automatically (updates package-lock.json)
+npm audit fix
+
+# If automatic fixes aren't available, try force updates
+npm audit fix --force  # ⚠️ May introduce breaking changes
+
+# Review what changed
+git diff package-lock.json
+
+# Commit the security fixes
+git add package-lock.json
+git commit -m "fix: update dependencies to resolve security vulnerabilities"
+```
+
+**Best practice:** Run `npm audit` before pushing any PR. If CI fails with security audit errors, run `npm audit fix` locally, test that everything still works, and push the updated `package-lock.json`.
 
 ## Architecture & Code Style
 
