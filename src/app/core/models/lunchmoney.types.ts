@@ -105,6 +105,33 @@ export interface RecurringExpense {
   category_id: number | null;
 }
 
+export interface RecurringItemResponse {
+  id: number;
+  description: string | null;
+  status: 'suggested' | 'reviewed';
+  transaction_criteria: {
+    start_date: string | null;
+    end_date: string | null;
+    granularity: 'day' | 'week' | 'month' | 'year';
+    quantity: number;
+    anchor_date: string | null;
+    payee: string | null;
+    amount: string;
+    to_base: number;
+    currency: string;
+    plaid_account_id: number | null;
+    manual_account_id: number | null;
+  };
+  overrides?: {
+    payee?: string | null;
+    notes?: string | null;
+    category_id?: number | null;
+  };
+  matches?: {
+    expected_occurrence_dates?: string[];
+  };
+}
+
 export interface Transaction {
   id: number;
   date: string;

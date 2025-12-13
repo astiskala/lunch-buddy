@@ -7,6 +7,7 @@ import {
   BudgetSummaryItem,
   TransactionsResponse,
   RecurringExpense,
+  RecurringItemResponse,
   SummaryCategory,
   SummaryCategoryOccurrence,
   SummaryCategoryTotals,
@@ -256,13 +257,22 @@ export class LunchMoneyService {
     const quantity = criteria.quantity;
     const cadence = `${String(quantity)} ${criteria.granularity}`;
 
+    const overridePayee = overrides?.payee?.trim();
+    const criteriaPayee = criteria.payee?.trim();
+    let payee = 'Unknown payee';
+    if (overridePayee && overridePayee.length > 0) {
+      payee = overridePayee;
+    } else if (criteriaPayee && criteriaPayee.length > 0) {
+      payee = criteriaPayee;
+    }
+
     return {
       id: item.id,
       start_date: criteria.start_date,
       end_date: criteria.end_date,
       cadence,
       status: item.status,
-      payee: overrides?.payee ?? criteria.payee ?? '',
+      payee,
       amount: criteria.amount,
       currency: criteria.currency,
       description: item.description ?? overrides?.notes ?? null,
@@ -272,31 +282,4 @@ export class LunchMoneyService {
       category_id: overrides?.category_id ?? null,
     };
   }
-}
-
-interface RecurringItemResponse {
-  id: number;
-  description: string | null;
-  status: 'suggested' | 'reviewed';
-  transaction_criteria: {
-    start_date: string | null;
-    end_date: string | null;
-    granularity: 'day' | 'week' | 'month' | 'year';
-    quantity: number;
-    anchor_date: string | null;
-    payee: string | null;
-    amount: string;
-    to_base: number;
-    currency: string;
-    plaid_account_id: number | null;
-    manual_account_id: number | null;
-  };
-  overrides?: {
-    payee?: string | null;
-    notes?: string | null;
-    category_id?: number | null;
-  };
-  matches?: {
-    expected_occurrence_dates?: string[];
-  };
 }

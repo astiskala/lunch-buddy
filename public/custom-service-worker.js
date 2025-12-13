@@ -423,7 +423,7 @@ function mergeSummaryWithCategories(summaryResponse, categories) {
     const groupId = metadata?.group_id ?? null;
     items.push({
       category_id: entry.category_id ?? null,
-      category_name: metadata?.name ?? `Category ${entry.category_id ?? ''}`,
+      category_name: metadata?.name ?? 'Uncategorized',
       category_group_name:
         groupId !== null ? (groupNameMap.get(groupId) ?? null) : null,
       group_id: groupId,
