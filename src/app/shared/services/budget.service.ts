@@ -534,7 +534,7 @@ export class BudgetService {
       remaining,
       monthKey,
       numTransactions: transactions,
-      isAutomated: false,
+      isAutomated: baseSummary.occurrence?.is_automated ?? false,
       recurringTotal,
       recurringItems: [],
       status: calculateBudgetStatus(

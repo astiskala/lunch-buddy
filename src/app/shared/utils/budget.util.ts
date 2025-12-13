@@ -72,12 +72,10 @@ export const buildBudgetProgress = (
   const recurringTotal = totals.recurring_expected;
   const actualValue = summary.is_income ? Math.abs(spent) : spent;
   const remaining = budgetAmount - actualValue;
-  const numTransactions = 0;
-  const isAutomated = false;
+  const numTransactions = occurrence?.num_transactions ?? 0;
+  const isAutomated = occurrence?.is_automated ?? false;
   const progressRatio =
-    budgetAmount > 0
-      ? Math.min(1, Math.max(0, actualValue / budgetAmount))
-      : 0;
+    budgetAmount > 0 ? Math.min(1, Math.max(0, actualValue / budgetAmount)) : 0;
   const budgetCurrency = occurrence?.budgeted_currency ?? null;
 
   return {

@@ -758,6 +758,8 @@ const buildBudgetSummaries = ({ startDate, endDate }) => {
             monthData?.budget_currency ?? currency
           ).toLowerCase(),
           notes: null,
+          num_transactions: monthData?.num_transactions ?? 0,
+          is_automated: monthData?.is_automated ?? false,
         },
       ],
     };

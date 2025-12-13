@@ -53,6 +53,8 @@ export interface SummaryCategoryOccurrence {
   budgeted_amount: string | null;
   budgeted_currency: string | null;
   notes: string | null;
+  num_transactions?: number;
+  is_automated?: boolean;
 }
 
 export interface SummaryCategory {
