@@ -81,7 +81,7 @@
   },
   "devDependencies": {
     "@angular-eslint/builder": "20.5.0",
-    "@angular-eslint/eslint-plugin": "20.5.0",
+    "@angular-eslint/eslint-plugin": "21.1.0",
     "@angular-eslint/eslint-plugin-template": "20.5.0",
     "@angular-eslint/schematics": "20.5.0",
     "@angular-eslint/template-parser": "20.5.0",
