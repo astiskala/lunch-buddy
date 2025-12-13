@@ -75,7 +75,7 @@ export const buildBudgetProgress = (
   const numTransactions = 0;
   const isAutomated = false;
   const progressRatio =
-    budgetAmount && budgetAmount > 0
+    budgetAmount > 0
       ? Math.min(1, Math.max(0, actualValue / budgetAmount))
       : 0;
   const budgetCurrency = occurrence?.budgeted_currency ?? null;
