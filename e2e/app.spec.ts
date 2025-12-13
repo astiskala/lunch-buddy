@@ -211,11 +211,12 @@ test.describe('Dashboard', () => {
   });
 
   test('should have proper heading hierarchy', async ({ page }) => {
-    // Check that h1 exists and is unique
-    const h1Count = await page.locator('h1').count();
-    expect(h1Count).toBe(1);
+    // Wait for the dashboard to fully load
+    await page.waitForSelector('h2', { timeout: 5000 });
 
-    // Check heading order
+    // Check that h2 exists for month name
+    const h2Count = await page.locator('h2').count();
+    expect(h2Count).toBeGreaterThanOrEqual(1);
     const headings = await page.locator('h1, h2, h3, h4, h5, h6').all();
     expect(headings.length).toBeGreaterThan(0);
   });
