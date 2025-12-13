@@ -246,13 +246,7 @@ export class CategoryCardComponent {
       const amount = Number.parseFloat(transaction.amount);
       const date = new Date(transaction.date);
       const rawLabel = transaction.payee;
-      let label = decodeHtmlEntities(rawLabel);
-      if (!label || !label.trim()) {
-        // Fallback to display_name if available, otherwise use a default
-        label = transaction['display_name']
-          ? decodeHtmlEntities(transaction['display_name'])
-          : 'Unknown payee';
-      }
+      const label = decodeHtmlEntities(rawLabel) || 'Unknown payee';
       const notes = transaction.notes
         ? decodeHtmlEntities(transaction.notes)
         : null;

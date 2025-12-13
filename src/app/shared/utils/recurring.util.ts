@@ -303,6 +303,17 @@ const adjustCandidateToReference = (
 
 /**
  * Returns the expected date for a recurring expense within a given window.
+ *
+ * Uses the first available date from the following priority order:
+ * 1. next_occurrence
+ * 2. billing_date
+ * 3. anchor_date
+ * 4. start_date
+ *
+ * @returns The calculated occurrence date, or null if:
+ * - All date fields are null/undefined/invalid
+ * - The calculated date falls outside the specified window
+ * - The date cannot be adjusted to meet the reference date constraint
  */
 export const getRecurringDate = (
   expense: {
