@@ -21,6 +21,7 @@ import {
   formatCurrency,
   formatCurrencyWithCode,
   normalizeCurrencyCode,
+  resolveAmount,
 } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
 import {
@@ -181,7 +182,7 @@ export class CategoryCardComponent {
         continue;
       }
 
-      const amount = this.resolveAmount(
+      const amount = resolveAmount(
         instance.expense.amount,
         instance.expense.to_base ?? null
       );
@@ -279,7 +280,7 @@ export class CategoryCardComponent {
     const defaultCurrency = this.normalizedDefaultCurrency();
     const isIncomeCategory = this.safeItem()?.isIncome ?? false;
     return transactions.map(transaction => {
-      const rawAmount = this.resolveAmount(
+      const rawAmount = resolveAmount(
         transaction.amount,
         transaction.to_base ?? null
       );
@@ -334,7 +335,7 @@ export class CategoryCardComponent {
         continue;
       }
 
-      const rawAmount = this.resolveAmount(
+      const rawAmount = resolveAmount(
         instance.expense.amount,
         instance.expense.to_base ?? null
       );
@@ -425,12 +426,6 @@ export class CategoryCardComponent {
     return occurrence.getTime() <= reference.getTime();
   }
 
-  private resolveAmount(value: string, toBase: number | null): number {
-    const converted =
-      typeof toBase === 'number' ? toBase : Number.parseFloat(value);
-    return Number.isFinite(converted) ? converted : 0;
-  }
-
   private safeItem(): BudgetProgress | null {
     try {
       return this.item();
@@ -454,7 +449,7 @@ export class CategoryCardComponent {
         continue;
       }
 
-      const rawAmount = this.resolveAmount(
+      const rawAmount = resolveAmount(
         instance.expense.amount,
         instance.expense.to_base ?? null
       );
@@ -501,10 +496,7 @@ export class CategoryCardComponent {
 
     const occurrence = this.startOfDay(instance.occurrenceDate);
     const recurringAmount = Math.abs(
-      this.resolveAmount(
-        instance.expense.amount,
-        instance.expense.to_base ?? null
-      )
+      resolveAmount(instance.expense.amount, instance.expense.to_base ?? null)
     );
     const recurringPayee = this.normalizeText(instance.expense.payee);
     const recurringId = this.normalizeRecurringId(instance.expense.id);
@@ -707,9 +699,7 @@ export class CategoryCardComponent {
     txn: Transaction,
     tolerance: number
   ): boolean {
-    const txnAmount = Math.abs(
-      this.resolveAmount(txn.amount, txn.to_base ?? null)
-    );
+    const txnAmount = Math.abs(resolveAmount(txn.amount, txn.to_base ?? null));
     const amountDelta = Math.abs(txnAmount - recurringAmount);
     const relativeTolerance = Math.max(tolerance, recurringAmount * 0.2);
     return amountDelta <= relativeTolerance;

@@ -15,15 +15,15 @@ import {
   CategoryPreferences,
 } from '../../shared/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
-import {
-  BudgetProgress,
-  RecurringInstance,
-} from '../../core/models/lunchmoney.types';
+import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryProgressListComponent } from './category-progress-list.component';
 import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
-import { formatCurrency } from '../../shared/utils/currency.util';
+import {
+  formatCurrency,
+  resolveAmount,
+} from '../../shared/utils/currency.util';
 import { filterPendingInstances } from '../../shared/utils/recurring.util';
 
 type StatusFilter = 'all' | 'over' | 'at-risk' | 'on-track';
@@ -167,7 +167,9 @@ export class DashboardPageComponent {
       const category = expenseMap.get(categoryId);
       if (category && !category.isIncome) {
         for (const inst of pendingInstances) {
-          total += Math.abs(this.resolveRecurringAmount(inst));
+          total += Math.abs(
+            resolveAmount(inst.expense.amount, inst.expense.to_base ?? null)
+          );
         }
       }
     }
@@ -193,7 +195,9 @@ export class DashboardPageComponent {
       const category = incomeMap.get(categoryId);
       if (category?.isIncome) {
         for (const inst of pendingInstances) {
-          total += Math.abs(this.resolveRecurringAmount(inst));
+          total += Math.abs(
+            resolveAmount(inst.expense.amount, inst.expense.to_base ?? null)
+          );
         }
       }
     }
@@ -346,13 +350,5 @@ export class DashboardPageComponent {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
     return { start, end };
-  }
-
-  private resolveRecurringAmount(instance: RecurringInstance): number {
-    const fallback = Number.parseFloat(instance.expense.amount);
-    if (typeof instance.expense.to_base === 'number') {
-      return instance.expense.to_base;
-    }
-    return Number.isFinite(fallback) ? fallback : 0;
   }
 }
