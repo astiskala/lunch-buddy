@@ -13,6 +13,17 @@ export const normalizeCurrencyCode = (
   return normalized.length > 0 ? normalized : null;
 };
 
+/**
+ * Resolves an amount from a string value and optional numeric conversion.
+ * Prefers the numeric `toBase` value when available, otherwise parses the string amount.
+ * Returns 0 if the result is not a finite number.
+ */
+export const resolveAmount = (value: string, toBase: number | null): number => {
+  const converted =
+    typeof toBase === 'number' ? toBase : Number.parseFloat(value);
+  return Number.isFinite(converted) ? converted : 0;
+};
+
 const resolveCurrency = (
   currency: string | null,
   fallback?: string | null
