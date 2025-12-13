@@ -20,6 +20,52 @@ describe('CategoryCardComponent', () => {
     currency: string | null;
   }
 
+  interface ComponentInputs {
+    item: BudgetProgress;
+    startDate?: string;
+    endDate?: string;
+    monthProgressRatio?: number;
+    defaultCurrency?: string;
+    referenceDate?: Date;
+    recurringExpenses?: RecurringInstance[];
+    includeAllTransactions?: boolean;
+  }
+
+  const setupComponent = (
+    fixture: ComponentFixture<CategoryCardComponent>,
+    inputs: ComponentInputs
+  ): void => {
+    fixture.componentRef.setInput('item', inputs.item);
+    fixture.componentRef.setInput(
+      'startDate',
+      inputs.startDate ?? '2025-10-01'
+    );
+    fixture.componentRef.setInput('endDate', inputs.endDate ?? '2025-10-31');
+    fixture.componentRef.setInput(
+      'monthProgressRatio',
+      inputs.monthProgressRatio ?? 0.5
+    );
+    fixture.componentRef.setInput(
+      'defaultCurrency',
+      inputs.defaultCurrency ?? 'USD'
+    );
+    fixture.componentRef.setInput(
+      'referenceDate',
+      inputs.referenceDate ?? new Date('2025-10-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput(
+      'recurringExpenses',
+      inputs.recurringExpenses ?? []
+    );
+    if (inputs.includeAllTransactions !== undefined) {
+      fixture.componentRef.setInput(
+        'includeAllTransactions',
+        inputs.includeAllTransactions
+      );
+    }
+    fixture.detectChanges();
+  };
+
   const buildTransaction = (overrides: Partial<Transaction>): Transaction => ({
     id: 1,
     date: '2025-10-01',
@@ -85,30 +131,18 @@ describe('CategoryCardComponent', () => {
       transactionList: [expenseTxn],
       categoryName: 'Uncategorised Expenses',
     };
-    fixture.componentRef.setInput('item', incomeItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'SGD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-19T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: incomeItem,
+      defaultCurrency: 'SGD',
+      referenceDate: new Date('2025-10-19T00:00:00.000Z'),
+    });
     expect(component.activityEntries().length).toBe(1);
     expect(component.activityEntries()[0].amount).toBeCloseTo(1641.88, 2);
-    fixture.componentRef.setInput('item', expenseItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'SGD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-19T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: expenseItem,
+      defaultCurrency: 'SGD',
+      referenceDate: new Date('2025-10-19T00:00:00.000Z'),
+    });
     expect(component.activityEntries().length).toBe(1);
     expect(component.activityEntries()[0].amount).toBeCloseTo(100, 2);
   });
@@ -166,34 +200,14 @@ describe('CategoryCardComponent', () => {
   });
 
   it('should display category name', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: mockItem });
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h3')?.textContent).toContain('Groceries');
   });
 
   it('should display budget information', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: mockItem });
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.progress-bar')).toBeTruthy();
@@ -207,17 +221,7 @@ describe('CategoryCardComponent', () => {
       budgetAmount: 1000,
     };
 
-    fixture.componentRef.setInput('item', incomeItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: incomeItem });
 
     const compiled = fixture.nativeElement as HTMLElement;
     const label = (
@@ -237,34 +241,14 @@ describe('CategoryCardComponent', () => {
       budgetAmount: 1000,
     };
 
-    fixture.componentRef.setInput('item', incomeItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: incomeItem });
 
     // Should invert sign for income
     expect(component.remainingAfterUpcoming()).toBeCloseTo(-600, 5);
   });
 
   it('should show correct status class', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: mockItem });
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(
@@ -317,17 +301,7 @@ describe('CategoryCardComponent', () => {
   });
 
   it('should toggle details when clicked', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: mockItem });
 
     expect(component.showDetails()).toBeFalse();
 
@@ -341,17 +315,7 @@ describe('CategoryCardComponent', () => {
   });
 
   it('should collapse when clicking details on expanded card', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, { item: mockItem });
 
     const hostElement = fixture.nativeElement as HTMLElement;
     const card = hostElement.querySelector<HTMLElement>('.category-card');
@@ -368,16 +332,6 @@ describe('CategoryCardComponent', () => {
   });
 
   it('includes cleared recurring instances from the current window in upcoming totals', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-20T00:00:00.000Z')
-    );
-
     const createInstance = (
       id: number,
       type: 'cleared' | 'suggested',
@@ -403,12 +357,16 @@ describe('CategoryCardComponent', () => {
       occurrenceDate: new Date('2025-10-15T00:00:00.000Z'),
     });
 
-    fixture.componentRef.setInput('recurringExpenses', [
+    const instances = [
       createInstance(1, 'suggested', '300', 'Ministry of Manpower'),
       createInstance(2, 'cleared', '900', 'Nelda Aguinaldo'),
-    ]);
+    ];
 
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: mockItem,
+      referenceDate: new Date('2025-10-20T00:00:00.000Z'),
+      recurringExpenses: instances,
+    });
 
     expect(component.upcomingRecurringTotal()).toBeCloseTo(1200);
 
@@ -439,18 +397,12 @@ describe('CategoryCardComponent', () => {
       occurrenceDate: new Date('2025-10-05T00:00:00.000Z'),
     };
 
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [pastInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: mockItem,
+      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+      recurringExpenses: [pastInstance],
+      includeAllTransactions: true,
+    });
 
     // Expand details to render activity
     const hostElement = fixture.nativeElement as HTMLElement;
@@ -505,18 +457,12 @@ describe('CategoryCardComponent', () => {
       transactionList: [chargedTxn],
     };
 
-    fixture.componentRef.setInput('item', itemWithTxn);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: itemWithTxn,
+      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+      recurringExpenses: [chargedInstance],
+      includeAllTransactions: true,
+    });
 
     // Expand details to render activity
     const hostElement = fixture.nativeElement as HTMLElement;
@@ -570,18 +516,12 @@ describe('CategoryCardComponent', () => {
       transactionList: [chargedTxn],
     };
 
-    fixture.componentRef.setInput('item', itemWithTxn);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: itemWithTxn,
+      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+      recurringExpenses: [chargedInstance],
+      includeAllTransactions: true,
+    });
 
     const hostElement = fixture.nativeElement as HTMLElement;
     hostElement.querySelector<HTMLElement>('.category-card')?.click();
@@ -635,18 +575,16 @@ describe('CategoryCardComponent', () => {
       transactionList: [chargedTxn],
     };
 
-    fixture.componentRef.setInput('item', itemWithTxn);
-    fixture.componentRef.setInput('startDate', '2025-12-01');
-    fixture.componentRef.setInput('endDate', '2025-12-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-12-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: itemWithTxn,
+      startDate: '2025-12-01',
+      endDate: '2025-12-31',
+      monthProgressRatio: 0.5,
+      defaultCurrency: 'USD',
+      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+      recurringExpenses: [chargedInstance],
+      includeAllTransactions: true,
+    });
 
     const hostElement = fixture.nativeElement as HTMLElement;
     hostElement.querySelector<HTMLElement>('.category-card')?.click();
@@ -699,18 +637,16 @@ describe('CategoryCardComponent', () => {
       transactionList: [chargedTxn],
     };
 
-    fixture.componentRef.setInput('item', itemWithTxn);
-    fixture.componentRef.setInput('startDate', '2025-12-01');
-    fixture.componentRef.setInput('endDate', '2025-12-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-12-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: itemWithTxn,
+      startDate: '2025-12-01',
+      endDate: '2025-12-31',
+      monthProgressRatio: 0.5,
+      defaultCurrency: 'USD',
+      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+      recurringExpenses: [chargedInstance],
+      includeAllTransactions: true,
+    });
 
     const hostElement = fixture.nativeElement as HTMLElement;
     hostElement.querySelector<HTMLElement>('.category-card')?.click();
@@ -751,18 +687,16 @@ describe('CategoryCardComponent', () => {
       occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
     };
 
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-12-01');
-    fixture.componentRef.setInput('endDate', '2025-12-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-12-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: mockItem,
+      startDate: '2025-12-01',
+      endDate: '2025-12-31',
+      monthProgressRatio: 0.5,
+      defaultCurrency: 'USD',
+      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+      recurringExpenses: [chargedInstance],
+      includeAllTransactions: true,
+    });
 
     const hostElement = fixture.nativeElement as HTMLElement;
     hostElement.querySelector<HTMLElement>('.category-card')?.click();
@@ -800,18 +734,16 @@ describe('CategoryCardComponent', () => {
       occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
     };
 
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-12-01');
-    fixture.componentRef.setInput('endDate', '2025-12-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-12-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
-    fixture.componentRef.setInput('includeAllTransactions', true);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: mockItem,
+      startDate: '2025-12-01',
+      endDate: '2025-12-31',
+      monthProgressRatio: 0.5,
+      defaultCurrency: 'USD',
+      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+      recurringExpenses: [chargedInstance],
+      includeAllTransactions: true,
+    });
 
     const hostElement = fixture.nativeElement as HTMLElement;
     hostElement.querySelector<HTMLElement>('.category-card')?.click();
@@ -829,16 +761,6 @@ describe('CategoryCardComponent', () => {
   });
 
   it('should retain future cleared instances as upcoming', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-05T00:00:00.000Z')
-    );
-
     const futureCleared: RecurringInstance = {
       expense: {
         id: 5,
@@ -859,9 +781,15 @@ describe('CategoryCardComponent', () => {
       occurrenceDate: new Date('2025-10-25T00:00:00.000Z'),
     };
 
-    fixture.componentRef.setInput('recurringExpenses', [futureCleared]);
-
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: mockItem,
+      startDate: '2025-10-01',
+      endDate: '2025-10-31',
+      monthProgressRatio: 0.5,
+      defaultCurrency: 'USD',
+      referenceDate: new Date('2025-10-05T00:00:00.000Z'),
+      recurringExpenses: [futureCleared],
+    });
 
     expect(component.upcomingRecurringTotal()).toBeCloseTo(200);
     const upcomingEntries = component

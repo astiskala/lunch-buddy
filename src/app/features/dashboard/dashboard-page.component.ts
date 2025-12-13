@@ -24,7 +24,7 @@ import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
 import { formatCurrency } from '../../shared/utils/currency.util';
-import { isRecurringInstancePending } from '../../shared/utils/recurring.util';
+import { filterPendingInstances } from '../../shared/utils/recurring.util';
 
 type StatusFilter = 'all' | 'over' | 'at-risk' | 'on-track';
 type TabType = 'expenses' | 'income';
@@ -157,13 +157,10 @@ export class DashboardPageComponent {
 
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = instances.filter(instance =>
-        isRecurringInstancePending(instance, {
-          referenceDate,
-          windowStart: windowRange?.start,
-          windowEnd: windowRange?.end,
-        })
-      );
+      const pendingInstances = filterPendingInstances(instances, {
+        referenceDate,
+        windowRange: windowRange ?? undefined,
+      });
       if (pendingInstances.length === 0) {
         continue;
       }
@@ -186,13 +183,10 @@ export class DashboardPageComponent {
 
     let total = 0;
     for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = instances.filter(instance =>
-        isRecurringInstancePending(instance, {
-          referenceDate,
-          windowStart: windowRange?.start,
-          windowEnd: windowRange?.end,
-        })
-      );
+      const pendingInstances = filterPendingInstances(instances, {
+        referenceDate,
+        windowRange: windowRange ?? undefined,
+      });
       if (pendingInstances.length === 0) {
         continue;
       }
