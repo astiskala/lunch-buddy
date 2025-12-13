@@ -5,6 +5,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { accessSync, constants } from 'node:fs';
 
 const skipExplicitly =
   ['1', 'true'].includes(
@@ -20,9 +21,34 @@ const isVercel = Boolean(process.env.VERCEL);
 const isLinux = process.platform === 'linux';
 const shouldInstallDeps = isLinux && !isVercel;
 
+// Resolve the absolute path to npx to avoid PATH security issues
+// Checks common fixed installation paths without relying on PATH
+// Prioritizes standard Linux paths for CI/CD environments like Vercel
+const getNpxPath = () => {
+  const commonPaths = [
+    '/usr/bin/npx',        // Standard Linux path (Vercel, most CI)
+    '/usr/local/bin/npx',  // Common Linux alternative
+    '/opt/homebrew/bin/npx', // macOS Apple Silicon (Homebrew)
+  ];
+  
+  for (const path of commonPaths) {
+    try {
+      accessSync(path, constants.X_OK);
+      return path;
+    } catch {
+      continue;
+    }
+  }
+  
+  throw new Error('npx executable not found in common paths');
+};
+
+const npxPath = getNpxPath();
+
 const runInstall = args =>
-  spawnSync('npx', ['playwright', ...args], {
+  spawnSync(npxPath, ['playwright', ...args], {
     stdio: 'inherit',
+    shell: false,
   });
 
 const tryInstall = (args, allowFallback) => {
