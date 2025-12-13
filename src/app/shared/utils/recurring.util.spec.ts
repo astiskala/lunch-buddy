@@ -1,5 +1,9 @@
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
-import { getRecurringDate, isRecurringInstancePending } from './recurring.util';
+import {
+  getRecurringDate,
+  isRecurringInstancePending,
+  hasFoundTransactionForOccurrence,
+} from './recurring.util';
 
 describe('getRecurringDate', () => {
   const windowStart = '2025-10-01';
@@ -59,7 +63,7 @@ describe('getRecurringDate', () => {
       { windowStart, windowEnd, referenceDate }
     );
 
-    expect(result).toBeNull();
+    expect(result?.toISOString()).toBe('2025-10-06T00:00:00.000Z');
   });
 });
 
@@ -70,6 +74,7 @@ describe('isRecurringInstancePending', () => {
     cadence: 'monthly',
     payee: 'Sample',
     amount: '100.00',
+    to_base: 100,
     currency: 'USD',
     description: null,
     anchor_date: '15',
@@ -112,6 +117,26 @@ describe('isRecurringInstancePending', () => {
     ).toBeFalse();
   });
 
+  it('keeps cleared instances within the window when past allowance is enabled', () => {
+    const instance: RecurringInstance = {
+      expense: {
+        ...baseExpense,
+        id: 123,
+        type: 'cleared',
+      },
+      occurrenceDate: new Date('2025-10-10T00:00:00.000Z'),
+    };
+
+    expect(
+      isRecurringInstancePending(instance, {
+        referenceDate: new Date('2025-10-20T00:00:00.000Z'),
+        includePastOccurrences: true,
+        windowStart: new Date('2025-10-01T00:00:00.000Z'),
+        windowEnd: new Date('2025-10-31T23:59:59.000Z'),
+      })
+    ).toBeTrue();
+  });
+
   it('keeps cleared instances that are still upcoming', () => {
     const instance: RecurringInstance = {
       expense: {
@@ -144,5 +169,27 @@ describe('isRecurringInstancePending', () => {
         referenceDate: new Date('2025-10-10T00:00:00.000Z'),
       })
     ).toBeTrue();
+  });
+
+  it('detects found transactions near the occurrence date', () => {
+    const instance: RecurringInstance = {
+      expense: {
+        ...baseExpense,
+        id: 888,
+        type: 'cleared',
+        found_transactions: [
+          { date: '2025-10-06', transaction_id: 123 },
+          { date: '2025-10-20', transaction_id: 456 },
+        ],
+      },
+      occurrenceDate: new Date('2025-10-05T00:00:00.000Z'),
+    };
+
+    expect(
+      hasFoundTransactionForOccurrence(instance, { toleranceDays: 3 })
+    ).toBeTrue();
+    expect(
+      hasFoundTransactionForOccurrence(instance, { toleranceDays: 0 })
+    ).toBeFalse();
   });
 });

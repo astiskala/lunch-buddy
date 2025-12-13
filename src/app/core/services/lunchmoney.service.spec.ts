@@ -195,6 +195,7 @@ describe('LunchMoneyService', () => {
           },
           matches: {
             expected_occurrence_dates: ['2025-11-15'],
+            found_transactions: [{ date: '2025-11-15', transaction_id: 77 }],
           },
         },
       ],
@@ -212,10 +213,12 @@ describe('LunchMoneyService', () => {
             status: 'reviewed',
             payee: 'Netflix',
             amount: '-15.99',
+            to_base: -15.99,
             currency: 'usd',
             description: 'Streaming',
             anchor_date: '2025-11-15',
             next_occurrence: '2025-11-15',
+            found_transactions: [{ date: '2025-11-15', transaction_id: 77 }],
             type: 'cleared',
             category_id: null,
           },
@@ -338,7 +341,8 @@ describe('LunchMoneyService', () => {
     });
 
     expect(req.request.params.get('category_id')).toBe('5');
-    expect(req.request.params.get('status')).toBe('reviewed');
+    expect(req.request.params.get('status')).toBe('cleared');
+    expect(req.request.params.get('include_pending')).toBe('true');
     req.flush(mockResponse);
   });
 

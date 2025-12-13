@@ -14,6 +14,7 @@ import {
   calculateBudgetStatus,
   rankBudgetProgress,
 } from '../utils/budget.util';
+import { normalizeCurrencyCode } from '../utils/currency.util';
 import {
   deriveReferenceDate,
   getCurrentMonthRange,
@@ -22,6 +23,7 @@ import {
 } from '../utils/date.util';
 import {
   getRecurringDate,
+  hasFoundTransactionForOccurrence,
   isRecurringInstancePending,
 } from '../utils/recurring.util';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
@@ -122,11 +124,12 @@ export class BudgetService {
     const firstExpense = data.find(
       item => !item.isIncome && item.budgetCurrency
     );
-    if (firstExpense?.budgetCurrency) {
-      return firstExpense.budgetCurrency;
-    }
-    const firstIncome = data.find(item => item.isIncome && item.budgetCurrency);
-    return firstIncome?.budgetCurrency ?? null;
+    const candidate =
+      firstExpense?.budgetCurrency ??
+      data.find(item => item.isIncome && item.budgetCurrency)?.budgetCurrency ??
+      null;
+
+    return normalizeCurrencyCode(candidate);
   });
 
   protected readonly referenceDate = computed(() =>
@@ -145,13 +148,11 @@ export class BudgetService {
 
     const windowStart = this.startDate();
     const windowEnd = this.endDate();
-    const referenceDate = deriveReferenceDate(windowStart, windowEnd);
 
     for (const expense of expenses) {
       const occurrenceDate = getRecurringDate(expense, {
         windowStart,
         windowEnd,
-        referenceDate,
       });
 
       if (!occurrenceDate) {
@@ -576,17 +577,26 @@ export class BudgetService {
 
     const { assigned } = this.recurringByCategory();
     const referenceDate = this.referenceDate();
+    const windowRange = this.getWindowRange();
     const monthProgress = this.monthProgressRatio();
     const warnAtRatio = this.preferences().warnAtRatio;
 
     const updated = items.map(item => {
       const instances = assigned.get(item.categoryId) ?? [];
       const upcomingTotal = instances
-        .filter(instance =>
-          isRecurringInstancePending(instance, { referenceDate })
+        .filter(
+          instance =>
+            isRecurringInstancePending(instance, {
+              referenceDate,
+              windowStart: windowRange?.start,
+              windowEnd: windowRange?.end,
+            }) && !hasFoundTransactionForOccurrence(instance)
         )
         .reduce((total, instance) => {
-          const amount = Number.parseFloat(instance.expense.amount);
+          const amount =
+            typeof instance.expense.to_base === 'number'
+              ? instance.expense.to_base
+              : Number.parseFloat(instance.expense.amount);
           if (Number.isNaN(amount)) {
             return total;
           }
@@ -646,5 +656,16 @@ export class BudgetService {
     return (
       typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
     );
+  }
+
+  private getWindowRange(): { start: Date; end: Date } | null {
+    const start = new Date(this.startDate());
+    const end = new Date(this.endDate());
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
   }
 }

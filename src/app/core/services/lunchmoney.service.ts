@@ -130,7 +130,8 @@ export class LunchMoneyService {
   ): Observable<TransactionsResponse> {
     let params = new HttpParams()
       .set('start_date', startDate)
-      .set('end_date', endDate);
+      .set('end_date', endDate)
+      .set('include_pending', 'true');
 
     // For specific categories, set the category_id filter
     // For uncategorized (null), we'll filter client-side after fetching
@@ -140,7 +141,8 @@ export class LunchMoneyService {
 
     const includeAll = options?.includeAllTransactions ?? true;
     if (!includeAll) {
-      params = params.set('status', 'reviewed');
+      // Include cleared/posted transactions when filtering, to avoid hiding real charges
+      params = params.set('status', 'cleared');
     }
 
     return this.http
@@ -274,10 +276,12 @@ export class LunchMoneyService {
       status: item.status,
       payee,
       amount: criteria.amount,
+      to_base: criteria.to_base,
       currency: criteria.currency,
       description: item.description ?? overrides?.notes ?? null,
       anchor_date: criteria.anchor_date,
       next_occurrence: matches?.expected_occurrence_dates?.[0] ?? null,
+      found_transactions: matches?.found_transactions ?? [],
       type: item.status === 'reviewed' ? 'cleared' : 'suggested',
       category_id: overrides?.category_id ?? null,
     };

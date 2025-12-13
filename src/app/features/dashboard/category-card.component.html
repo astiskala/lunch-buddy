@@ -123,8 +123,10 @@
               <div class="activity-info">
                 <div class="activity-header">
                   <span class="activity-label">{{ entry.label }}</span>
-                  @if (entry.kind === 'upcoming') {
-                    <span class="badge upcoming">Upcoming</span>
+                  @if (shouldShowUpcomingBadge(entry)) {
+                    <span class="badge upcoming">{{
+                      getUpcomingLabel(entry)
+                    }}</span>
                   }
                 </div>
                 <div class="activity-meta">

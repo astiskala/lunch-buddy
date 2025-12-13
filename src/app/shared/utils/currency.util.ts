@@ -3,6 +3,22 @@ const resolveLocale = (): string =>
     ? navigator.language
     : 'en-US';
 
+export const normalizeCurrencyCode = (
+  currency?: string | null
+): string | null => {
+  if (!currency) {
+    return null;
+  }
+  const normalized = currency.trim().toUpperCase();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveCurrency = (
+  currency: string | null,
+  fallback?: string | null
+): string =>
+  normalizeCurrencyCode(currency) ?? normalizeCurrencyCode(fallback) ?? 'USD';
+
 export interface FormatCurrencyOptions {
   readonly locale?: string;
   readonly fallbackCurrency?: string;
@@ -17,8 +33,32 @@ export const formatCurrency = (
 ): string =>
   new Intl.NumberFormat(options.locale ?? resolveLocale(), {
     style: 'currency',
-    currency: currency ?? options.fallbackCurrency ?? 'USD',
+    currency: resolveCurrency(currency, options.fallbackCurrency),
     minimumFractionDigits: options.minimumFractionDigits ?? 2,
     maximumFractionDigits: options.maximumFractionDigits ?? 2,
     currencyDisplay: 'narrowSymbol',
   }).format(value);
+
+export interface FormatCurrencyWithCodeOptions extends FormatCurrencyOptions {
+  readonly originalCurrency?: string | null;
+}
+
+export const formatCurrencyWithCode = (
+  value: number,
+  currency: string | null,
+  options: FormatCurrencyWithCodeOptions = {}
+): string => {
+  const formatted = formatCurrency(value, currency, options);
+  const displayCurrency = resolveCurrency(currency, options.fallbackCurrency);
+  const originalCurrency = normalizeCurrencyCode(options.originalCurrency);
+
+  if (
+    originalCurrency &&
+    originalCurrency.length > 0 &&
+    originalCurrency !== displayCurrency
+  ) {
+    return `${formatted} ${displayCurrency} ${originalCurrency}`;
+  }
+
+  return formatted;
+};

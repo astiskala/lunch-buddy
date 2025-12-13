@@ -10,6 +10,16 @@ import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { of } from 'rxjs';
 
 describe('CategoryCardComponent', () => {
+  interface TestActivityEntry {
+    id: string;
+    kind: 'transaction' | 'upcoming';
+    date: Date | null;
+    label: string;
+    notes: string | null;
+    amount: number;
+    currency: string | null;
+  }
+
   const buildTransaction = (overrides: Partial<Transaction>): Transaction => ({
     id: 1,
     date: '2025-10-01',
@@ -278,6 +288,34 @@ describe('CategoryCardComponent', () => {
     expect(component.monthProgressPercent()).toBe(75);
   });
 
+  it('should show expenses in red and income in green', () => {
+    const expenseEntry: TestActivityEntry = {
+      id: 'txn-1',
+      kind: 'transaction',
+      date: new Date('2025-10-01T00:00:00.000Z'),
+      label: 'Dinner',
+      notes: null,
+      amount: 42,
+      currency: 'USD',
+    };
+
+    const incomeEntry: TestActivityEntry = {
+      ...expenseEntry,
+      id: 'txn-2',
+      label: 'Paycheck',
+      amount: -42,
+    };
+
+    const upcomingEntry: TestActivityEntry = {
+      ...expenseEntry,
+      kind: 'upcoming',
+    };
+
+    expect(component.getAmountColor(expenseEntry)).toBe('error');
+    expect(component.getAmountColor(incomeEntry)).toBe('success');
+    expect(component.getAmountColor(upcomingEntry)).toBe('warning');
+  });
+
   it('should toggle details when clicked', () => {
     fixture.componentRef.setInput('item', mockItem);
     fixture.componentRef.setInput('startDate', '2025-10-01');
@@ -329,7 +367,7 @@ describe('CategoryCardComponent', () => {
     expect(component.showDetails()).toBeFalse();
   });
 
-  it('should exclude cleared recurring instances from upcoming totals', () => {
+  it('includes cleared recurring instances from the current window in upcoming totals', () => {
     fixture.componentRef.setInput('item', mockItem);
     fixture.componentRef.setInput('startDate', '2025-10-01');
     fixture.componentRef.setInput('endDate', '2025-10-31');
@@ -353,6 +391,7 @@ describe('CategoryCardComponent', () => {
         cadence: 'monthly',
         payee,
         amount,
+        to_base: Number.parseFloat(amount),
         currency: 'USD',
         description: null,
         anchor_date: '2025-10-15',
@@ -371,13 +410,422 @@ describe('CategoryCardComponent', () => {
 
     fixture.detectChanges();
 
-    expect(component.upcomingRecurringTotal()).toBeCloseTo(300);
+    expect(component.upcomingRecurringTotal()).toBeCloseTo(1200);
 
     const upcomingEntries = component
       .activityEntries()
       .filter(entry => entry.kind === 'upcoming');
-    expect(upcomingEntries.length).toBe(1);
-    expect(upcomingEntries[0].label).toContain('Ministry of Manpower');
+    expect(upcomingEntries.length).toBe(2);
+  });
+
+  it('shows past-window recurring instances as due when not yet charged', () => {
+    const pastInstance: RecurringInstance = {
+      expense: {
+        id: 9,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Nest Aware',
+        amount: '12.00',
+        to_base: 12,
+        currency: 'USD',
+        description: null,
+        anchor_date: '2025-10-05',
+        next_occurrence: '2025-10-05',
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-10-05T00:00:00.000Z'),
+    };
+
+    fixture.componentRef.setInput('item', mockItem);
+    fixture.componentRef.setInput('startDate', '2025-10-01');
+    fixture.componentRef.setInput('endDate', '2025-10-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [pastInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    // Expand details to render activity
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const badgeText =
+      hostElement.querySelector<HTMLElement>('.badge.upcoming')?.textContent ??
+      '';
+    expect(badgeText).toContain('Due');
+
+    const amountColor =
+      hostElement.querySelector<HTMLElement>('.activity-amount')?.dataset[
+        'color'
+      ];
+    expect(amountColor).toBe('warning');
+  });
+
+  it('omits recurring entries that already have a matching charged transaction', () => {
+    const recurringId = 55;
+    const chargedTxn = buildTransaction({
+      id: 999,
+      amount: '12.00',
+      to_base: 12,
+      recurring_id: recurringId,
+      date: '2025-10-05',
+      payee: 'Nest Aware',
+    });
+
+    const chargedInstance: RecurringInstance = {
+      expense: {
+        id: recurringId,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Nest Aware',
+        amount: '12.00',
+        to_base: 12,
+        currency: 'USD',
+        description: null,
+        anchor_date: '2025-10-05',
+        next_occurrence: '2025-10-05',
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-10-05T00:00:00.000Z'),
+    };
+
+    const itemWithTxn: BudgetProgress = {
+      ...mockItem,
+      transactionList: [chargedTxn],
+    };
+
+    fixture.componentRef.setInput('item', itemWithTxn);
+    fixture.componentRef.setInput('startDate', '2025-10-01');
+    fixture.componentRef.setInput('endDate', '2025-10-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    // Expand details to render activity
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
+    expect(upcomingBadges.length).toBe(0);
+
+    const activityEntries = component.activityEntries();
+    expect(
+      activityEntries.filter(entry => entry.kind === 'upcoming').length
+    ).toBe(0);
+    expect(
+      activityEntries.filter(entry => entry.kind === 'transaction').length
+    ).toBe(1);
+  });
+
+  it('omits recurring entries when a matching transaction exists without a recurring id', () => {
+    const chargedTxn = buildTransaction({
+      id: 1000,
+      amount: '15.00',
+      to_base: 15,
+      recurring_id: null,
+      date: '2025-10-06',
+      payee: 'Nest Aware',
+    });
+
+    const chargedInstance: RecurringInstance = {
+      expense: {
+        id: 77,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Nest Aware',
+        amount: '15.00',
+        to_base: 15,
+        currency: 'USD',
+        description: null,
+        anchor_date: '2025-10-06',
+        next_occurrence: '2025-10-06',
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-10-06T00:00:00.000Z'),
+    };
+
+    const itemWithTxn: BudgetProgress = {
+      ...mockItem,
+      transactionList: [chargedTxn],
+    };
+
+    fixture.componentRef.setInput('item', itemWithTxn);
+    fixture.componentRef.setInput('startDate', '2025-10-01');
+    fixture.componentRef.setInput('endDate', '2025-10-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-10-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
+    expect(upcomingBadges.length).toBe(0);
+
+    const activityEntries = component.activityEntries();
+    expect(
+      activityEntries.filter(entry => entry.kind === 'upcoming').length
+    ).toBe(0);
+    expect(
+      activityEntries.filter(entry => entry.kind === 'transaction').length
+    ).toBe(1);
+  });
+
+  it('omits recurring entries when transaction recurring_id is a string', () => {
+    const recurringId = '1966261';
+    const chargedTxn = buildTransaction({
+      id: 1234,
+      amount: '15.00',
+      to_base: 12.85,
+      recurring_id: recurringId as unknown as number, // simulate stringly value
+      date: '2025-12-05',
+      payee: 'Google',
+    });
+
+    const chargedInstance: RecurringInstance = {
+      expense: {
+        id: Number(recurringId),
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Google',
+        amount: '11.50',
+        to_base: 12.85,
+        currency: 'SGD',
+        description: 'Nest Aware',
+        anchor_date: '2025-12-05',
+        next_occurrence: '2025-12-05',
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
+    };
+
+    const itemWithTxn: BudgetProgress = {
+      ...mockItem,
+      transactionList: [chargedTxn],
+    };
+
+    fixture.componentRef.setInput('item', itemWithTxn);
+    fixture.componentRef.setInput('startDate', '2025-12-01');
+    fixture.componentRef.setInput('endDate', '2025-12-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-12-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
+    expect(upcomingBadges.length).toBe(0);
+
+    const activityEntries = component.activityEntries();
+    expect(
+      activityEntries.filter(entry => entry.kind === 'upcoming').length
+    ).toBe(0);
+    expect(
+      activityEntries.filter(entry => entry.kind === 'transaction').length
+    ).toBe(1);
+  });
+
+  it('matches transactions to recurring entries when amounts differ due to currency', () => {
+    const chargedTxn = buildTransaction({
+      id: 2001,
+      amount: '15.00',
+      to_base: 12.85,
+      recurring_id: null,
+      date: '2025-12-05',
+      payee: 'Google',
+    });
+
+    const chargedInstance: RecurringInstance = {
+      expense: {
+        id: 9999,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Google',
+        amount: '11.50',
+        to_base: 11.5,
+        currency: 'SGD',
+        description: 'Nest Aware',
+        anchor_date: '2025-12-05',
+        next_occurrence: '2025-12-05',
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
+    };
+
+    const itemWithTxn: BudgetProgress = {
+      ...mockItem,
+      transactionList: [chargedTxn],
+    };
+
+    fixture.componentRef.setInput('item', itemWithTxn);
+    fixture.componentRef.setInput('startDate', '2025-12-01');
+    fixture.componentRef.setInput('endDate', '2025-12-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-12-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
+    expect(upcomingBadges.length).toBe(0);
+    const activityEntries = component.activityEntries();
+    expect(
+      activityEntries.filter(entry => entry.kind === 'upcoming').length
+    ).toBe(0);
+    expect(
+      activityEntries.filter(entry => entry.kind === 'transaction').length
+    ).toBe(1);
+  });
+
+  it('treats found transactions as charged and hides upcoming entry', () => {
+    const chargedInstance: RecurringInstance = {
+      expense: {
+        id: 8888,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Google',
+        amount: '11.50',
+        to_base: 11.5,
+        currency: 'SGD',
+        description: 'Nest Aware',
+        anchor_date: '2025-12-05',
+        next_occurrence: '2025-12-05',
+        found_transactions: [
+          { date: '2025-12-05', transaction_id: 2328343028 },
+        ],
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
+    };
+
+    fixture.componentRef.setInput('item', mockItem);
+    fixture.componentRef.setInput('startDate', '2025-12-01');
+    fixture.componentRef.setInput('endDate', '2025-12-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-12-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
+    expect(upcomingBadges.length).toBe(0);
+    expect(
+      component.activityEntries().filter(entry => entry.kind === 'upcoming')
+        .length
+    ).toBe(0);
+  });
+
+  it('renders found transactions as regular activity when no fetched txn exists', () => {
+    const chargedInstance: RecurringInstance = {
+      expense: {
+        id: 4242,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Google',
+        amount: '11.50',
+        to_base: 11.5,
+        currency: 'SGD',
+        description: 'Nest Aware',
+        anchor_date: '2025-12-05',
+        next_occurrence: '2025-12-05',
+        found_transactions: [
+          { date: '2025-12-05', transaction_id: 2328343028 },
+        ],
+        type: 'cleared',
+        status: 'reviewed',
+        category_id: mockItem.categoryId,
+      },
+      occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
+    };
+
+    fixture.componentRef.setInput('item', mockItem);
+    fixture.componentRef.setInput('startDate', '2025-12-01');
+    fixture.componentRef.setInput('endDate', '2025-12-31');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('defaultCurrency', 'USD');
+    fixture.componentRef.setInput(
+      'referenceDate',
+      new Date('2025-12-10T00:00:00.000Z')
+    );
+    fixture.componentRef.setInput('recurringExpenses', [chargedInstance]);
+    fixture.componentRef.setInput('includeAllTransactions', true);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    hostElement.querySelector<HTMLElement>('.category-card')?.click();
+    fixture.detectChanges();
+
+    const activityEntries = component.activityEntries();
+    expect(
+      activityEntries.filter(entry => entry.kind === 'upcoming').length
+    ).toBe(0);
+    expect(
+      activityEntries.filter(entry => entry.kind === 'transaction').length
+    ).toBe(1);
+    const badge = hostElement.querySelector<HTMLElement>('.badge.upcoming');
+    expect(badge).toBeNull();
   });
 
   it('should retain future cleared instances as upcoming', () => {
@@ -399,6 +847,7 @@ describe('CategoryCardComponent', () => {
         cadence: 'monthly',
         payee: 'Upcoming Tax',
         amount: '200',
+        to_base: 200,
         currency: 'USD',
         description: null,
         anchor_date: '2025-10-25',
