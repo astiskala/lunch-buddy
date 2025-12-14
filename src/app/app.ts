@@ -13,6 +13,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, map } from 'rxjs';
 import { BackgroundSyncService } from './core/services/background-sync.service';
+import { AppUpdateService } from './core/services/app-update.service';
 import { OfflineIndicatorComponent } from './shared/components/offline-indicator.component';
 @Component({
   selector: 'app-root',
@@ -30,9 +31,12 @@ import { OfflineIndicatorComponent } from './shared/components/offline-indicator
 })
 export class App implements OnInit {
   protected readonly _backgroundSyncService = inject(BackgroundSyncService);
+  protected readonly _appUpdateService = inject(AppUpdateService);
   protected readonly _swUpdate = inject(SwUpdate);
 
   public ngOnInit(): void {
+    void this._appUpdateService.init();
+
     this._swUpdate.versionUpdates
       .pipe(
         filter(

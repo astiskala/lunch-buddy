@@ -5,6 +5,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { Subject } from 'rxjs';
 import { App } from './app';
 import { routes } from './app.routes';
+import { AppUpdateService } from './core/services/app-update.service';
 
 describe('App', () => {
   let versionUpdates$: Subject<VersionReadyEvent>;
@@ -12,6 +13,8 @@ describe('App', () => {
   let swUpdateMock: Pick<SwUpdate, 'versionUpdates' | 'activateUpdate'>;
   let reloadSpy: jasmine.Spy<() => void>;
   let consoleErrorSpy: jasmine.Spy;
+  let appUpdateServiceInitSpy: jasmine.Spy<() => Promise<void>>;
+  let appUpdateServiceMock: Pick<AppUpdateService, 'init'>;
 
   beforeAll(() => {
     reloadSpy = spyOn(
@@ -26,6 +29,10 @@ describe('App', () => {
     activateUpdateSpy = jasmine
       .createSpy('activateUpdate')
       .and.returnValue(Promise.resolve(true));
+    appUpdateServiceInitSpy = jasmine
+      .createSpy('init')
+      .and.returnValue(Promise.resolve());
+    appUpdateServiceMock = { init: appUpdateServiceInitSpy };
     swUpdateMock = {
       versionUpdates: versionUpdates$.asObservable(),
       activateUpdate: activateUpdateSpy,
@@ -41,6 +48,10 @@ describe('App', () => {
         {
           provide: SwUpdate,
           useValue: swUpdateMock,
+        },
+        {
+          provide: AppUpdateService,
+          useValue: appUpdateServiceMock,
         },
       ],
     }).compileComponents();
@@ -65,6 +76,12 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
+  });
+
+  it('initializes update checks when bootstrapped', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    expect(appUpdateServiceInitSpy).toHaveBeenCalledTimes(1);
   });
 
   it('reloads the page after a successful update activation', async () => {

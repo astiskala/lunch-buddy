@@ -26,11 +26,11 @@ const shouldInstallDeps = isLinux && !isVercel;
 // Prioritizes standard Linux paths for CI/CD environments like Vercel
 const getNpxPath = () => {
   const commonPaths = [
-    '/usr/bin/npx',        // Standard Linux path (Vercel, most CI)
-    '/usr/local/bin/npx',  // Common Linux alternative
+    '/usr/bin/npx', // Standard Linux path (Vercel, most CI)
+    '/usr/local/bin/npx', // Common Linux alternative
     '/opt/homebrew/bin/npx', // macOS Apple Silicon (Homebrew)
   ];
-  
+
   for (const path of commonPaths) {
     try {
       accessSync(path, constants.X_OK);
@@ -39,7 +39,7 @@ const getNpxPath = () => {
       continue;
     }
   }
-  
+
   throw new Error('npx executable not found in common paths');
 };
 

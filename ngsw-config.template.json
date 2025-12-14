@@ -24,8 +24,20 @@
       "resources": {
         "files": [
           "/assets/**",
-          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2|ico)"
+          "/icons/**",
+          "/apple-touch-icon.png",
+          "/favicon.ico",
+          "/icon.svg",
+          "/offline.html"
         ]
+      }
+    },
+    {
+      "name": "screenshots",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": ["/screenshots/**"]
       }
     }
   ],
@@ -40,8 +52,7 @@
       "cacheConfig": {
         "maxSize": 100,
         "maxAge": "24h",
-        "timeout": "10s",
-        "strategy": "freshness"
+        "strategy": "performance"
       }
     },
     {
@@ -53,7 +64,7 @@
       "cacheConfig": {
         "maxSize": 20,
         "maxAge": "365d",
-        "strategy": "cacheFirst"
+        "strategy": "performance"
       }
     }
   ],
