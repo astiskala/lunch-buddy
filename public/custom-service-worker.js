@@ -80,6 +80,9 @@ globalThis.addEventListener('activate', event => {
   );
 });
 
+// Check if a request is for the LunchMoney API.
+// This must match the URLs configured in ngsw-config.template.json
+// to ensure consistent handling between the custom and Angular service workers.
 function isApiRequest(url) {
   return (
     url.hostname === 'api.lunchmoney.dev' ||

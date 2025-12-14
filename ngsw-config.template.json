@@ -45,8 +45,9 @@
     {
       "name": "lunchmoney-api",
       "urls": [
-        "https://api.lunchmoney.dev/v2/**",
-        "http://localhost:3000/api/**",
+        "https://api.lunchmoney.dev/**",
+        "https://dev.lunchmoney.app/**",
+        "http://localhost:3000/**",
         "http://localhost:4600/**"
       ],
       "cacheConfig": {

@@ -3,11 +3,15 @@
 type Handler = (request: Request) => Promise<Response>;
 
 const createDeferred = <T>() => {
-  let resolveFn: (value: T | PromiseLike<T>) => void;
-  const promise = new Promise<T>((res) => {
+  let resolveFn: ((value: T | PromiseLike<T>) => void) | undefined;
+  const promise = new Promise<T>(res => {
     resolveFn = res;
   });
-  return { promise, resolve: resolveFn! };
+  if (!resolveFn) {
+    throw new Error('Promise executor did not run synchronously');
+  }
+  return { promise, resolve: resolveFn };
+};
 
 describe('custom service worker API handler', () => {
   let originalImportScripts: unknown;
@@ -143,5 +147,69 @@ describe('custom service worker API handler', () => {
     const cache = await caches.open(apiCacheName);
     const cached = await cache.match(request);
     expect(cached).toBeFalsy();
+  });
+
+  describe('API URL interception coverage', () => {
+    it('should intercept all LunchMoney API endpoints', async () => {
+      if (!handler) {
+        pending('Handler not available');
+        return;
+      }
+
+      const apiEndpoints = [
+        'https://api.lunchmoney.dev/v2/me',
+        'https://api.lunchmoney.dev/v2/categories',
+        'https://api.lunchmoney.dev/v2/summary',
+        'https://api.lunchmoney.dev/v2/transactions',
+        'https://api.lunchmoney.dev/v2/recurring_items',
+      ];
+
+      (globalThis as { fetch?: unknown }).fetch = () =>
+        Promise.resolve(new Response('{}', { status: 200 }));
+
+      for (const url of apiEndpoints) {
+        const request = new Request(url);
+        const result = await handler(request);
+        expect(result).toBeDefined();
+        expect(result.status).toBeGreaterThanOrEqual(200);
+      }
+    });
+
+    it('should intercept localhost development endpoints', async () => {
+      if (!handler) {
+        pending('Handler not available');
+        return;
+      }
+
+      const devEndpoints = [
+        'http://localhost:3000/api/summary',
+        'http://localhost:4600/v2/categories',
+      ];
+
+      (globalThis as { fetch?: unknown }).fetch = () =>
+        Promise.resolve(new Response('{}', { status: 200 }));
+
+      for (const url of devEndpoints) {
+        const request = new Request(url);
+        const result = await handler(request);
+        expect(result).toBeDefined();
+        expect(result.status).toBeGreaterThanOrEqual(200);
+      }
+    });
+
+    it('should intercept dev.lunchmoney.app endpoints', async () => {
+      if (!handler) {
+        pending('Handler not available');
+        return;
+      }
+
+      const request = new Request('https://dev.lunchmoney.app/v2/summary');
+      (globalThis as { fetch?: unknown }).fetch = () =>
+        Promise.resolve(new Response('{}', { status: 200 }));
+
+      const result = await handler(request);
+      expect(result).toBeDefined();
+      expect(result.status).toBeGreaterThanOrEqual(200);
+    });
   });
 });

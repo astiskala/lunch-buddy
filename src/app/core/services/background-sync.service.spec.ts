@@ -162,11 +162,14 @@ describe('BackgroundSyncService', () => {
   };
 
   const createDeferred = <T>() => {
-    let resolve: (value: T | PromiseLike<T>) => void;
+    let resolveFn: ((value: T | PromiseLike<T>) => void) | undefined;
     const promise = new Promise<T>(res => {
-      resolve = res;
+      resolveFn = res;
     });
-    return { promise, resolve };
+    if (!resolveFn) {
+      throw new Error('Promise executor did not run synchronously');
+    }
+    return { promise, resolve: resolveFn };
   };
 
   describe('on the server platform', () => {
