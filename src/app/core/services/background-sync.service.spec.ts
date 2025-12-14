@@ -166,8 +166,7 @@ describe('BackgroundSyncService', () => {
     const promise = new Promise<T>(res => {
       resolve = res;
     });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return { promise, resolve: resolve! };
+    return { promise, resolve };
   };
 
   describe('on the server platform', () => {
