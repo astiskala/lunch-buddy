@@ -150,6 +150,12 @@ describe('custom service worker API handler', () => {
   });
 
   describe('API URL interception coverage', () => {
+    beforeEach(() => {
+      // Mock fetch to return a successful response for all API requests
+      (globalThis as { fetch?: unknown }).fetch = () =>
+        Promise.resolve(new Response('{}', { status: 200 }));
+    });
+
     it('should intercept all LunchMoney API endpoints', async () => {
       if (!handler) {
         pending('Handler not available');
@@ -163,9 +169,6 @@ describe('custom service worker API handler', () => {
         'https://api.lunchmoney.dev/v2/transactions',
         'https://api.lunchmoney.dev/v2/recurring_items',
       ];
-
-      (globalThis as { fetch?: unknown }).fetch = () =>
-        Promise.resolve(new Response('{}', { status: 200 }));
 
       for (const url of apiEndpoints) {
         const request = new Request(url);
@@ -186,9 +189,6 @@ describe('custom service worker API handler', () => {
         'http://localhost:4600/v2/categories',
       ];
 
-      (globalThis as { fetch?: unknown }).fetch = () =>
-        Promise.resolve(new Response('{}', { status: 200 }));
-
       for (const url of devEndpoints) {
         const request = new Request(url);
         const result = await handler(request);
@@ -204,9 +204,6 @@ describe('custom service worker API handler', () => {
       }
 
       const request = new Request('https://dev.lunchmoney.app/v2/summary');
-      (globalThis as { fetch?: unknown }).fetch = () =>
-        Promise.resolve(new Response('{}', { status: 200 }));
-
       const result = await handler(request);
       expect(result).toBeDefined();
       expect(result.status).toBeGreaterThanOrEqual(200);
