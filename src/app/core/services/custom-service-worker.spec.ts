@@ -3,13 +3,11 @@
 type Handler = (request: Request) => Promise<Response>;
 
 const createDeferred = <T>() => {
-  let resolve: (value: T | PromiseLike<T>) => void;
-  const promise = new Promise<T>(res => {
-    resolve = res;
+  let resolveFn: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((res) => {
+    resolveFn = res;
   });
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return { promise, resolve: resolve! };
-};
+  return { promise, resolve: resolveFn! };
 
 describe('custom service worker API handler', () => {
   let originalImportScripts: unknown;
