@@ -250,16 +250,8 @@ export class BackgroundSyncService implements OnDestroy {
     }
 
     try {
-      const timeout = new Promise<null>(resolve =>
-        setTimeout(() => {
-          resolve(null);
-        }, 1000)
-      );
-      const registration = await Promise.race([
-        navigator.serviceWorker.ready,
-        timeout,
-      ]);
-      return registration ?? null;
+      const registration = await navigator.serviceWorker.ready;
+      return registration;
     } catch {
       return null;
     }

@@ -161,6 +161,15 @@ describe('BackgroundSyncService', () => {
     return fixture.sync;
   };
 
+  const createDeferred = <T>() => {
+    let resolve: (value: T | PromiseLike<T>) => void;
+    const promise = new Promise<T>(res => {
+      resolve = res;
+    });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return { promise, resolve: resolve! };
+  };
+
   describe('on the server platform', () => {
     let service: BackgroundSyncService;
 
@@ -374,6 +383,43 @@ describe('BackgroundSyncService', () => {
         'BackgroundSyncService: failed to post config to service worker'
       );
       expect(errorValue).toEqual(jasmine.any(Error));
+    });
+
+    it('waits for service worker readiness when none are registered yet', async () => {
+      const readyDeferred = createDeferred<ServiceWorkerRegistration>();
+      const registration = { scope: '/ready' } as ServiceWorkerRegistration;
+      const serviceWorkerDescriptor = Object.getOwnPropertyDescriptor(
+        navigator,
+        'serviceWorker'
+      );
+
+      Object.defineProperty(navigator, 'serviceWorker', {
+        configurable: true,
+        value: {
+          getRegistration: jasmine
+            .createSpy('getRegistration')
+            .and.resolveTo(null),
+          ready: readyDeferred.promise,
+        },
+      });
+
+      try {
+        const resultPromise = privateApi.getRegistration();
+        readyDeferred.resolve(registration);
+        const result = await resultPromise;
+
+        expect(result).toBe(registration);
+      } finally {
+        if (serviceWorkerDescriptor) {
+          Object.defineProperty(
+            navigator,
+            'serviceWorker',
+            serviceWorkerDescriptor
+          );
+        } else {
+          Reflect.deleteProperty(navigator, 'serviceWorker');
+        }
+      }
     });
   });
 });

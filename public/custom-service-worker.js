@@ -1,6 +1,5 @@
-// Import Angular service worker first
-importScripts('./ngsw-worker.js');
-
+// Register the custom fetch handler before Angular's service worker so we can
+// short-circuit API requests (and stop propagation) when needed.
 const PERIODIC_SYNC_TAG = 'lunchbuddy-daily-budget-sync';
 const DB_NAME = 'lunchbuddy-background';
 const DB_VERSION = 1;
@@ -10,7 +9,9 @@ const CONFIG_KEY = 'config';
 const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
-const API_CACHE_NAME = 'lunchbuddy-api-cache-v2';
+const API_CACHE_NAME = 'lunchbuddy-api-cache-v3';
+const NETWORK_TIMEOUT_MS = 1500;
+const CACHE_FALLBACK_DELAY_MS = 500;
 
 const defaultConfig = () => ({
   apiKey: null,
@@ -56,6 +57,9 @@ globalThis.addEventListener('fetch', event => {
   }
 });
 
+// Import Angular service worker after registering the custom handler.
+importScripts('./ngsw-worker.js');
+
 // Install event - prepare cache
 globalThis.addEventListener('install', () => {
   globalThis.skipWaiting();
@@ -86,36 +90,53 @@ function isApiRequest(url) {
 }
 
 async function handleApiRequest(request) {
-  try {
-    // Try network first with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const cachedPromise = findCachedResponse(request);
 
-    const networkResponse = await fetch(request.clone(), {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (networkResponse.ok) {
-      // Cache successful responses
-      const cache = await caches.open(API_CACHE_NAME);
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
+  const networkPromise = (async () => {
+    try {
+      const response = await fetchWithTimeout(
+        request.clone(),
+        NETWORK_TIMEOUT_MS
+      );
+      if (response?.ok) {
+        const cache = await caches.open(API_CACHE_NAME);
+        await cache.put(request, response.clone());
+      }
+      return response ?? null;
+    } catch (error) {
+      console.warn(
+        '[WARN] custom-service-worker: network request failed, falling back to cache',
+        error
+      );
+      return null;
     }
+  })();
 
-    // Non-OK network responses should fall back to cached data when available,
-    // otherwise surface the original error response to the client.
-    const cachedResponse = await findCachedResponse(request);
-    return cachedResponse ?? networkResponse;
-  } catch (error) {
-    // Network error or timeout - use cache
-    console.warn(
-      '[WARN] custom-service-worker: network request failed, falling back to cache',
-      error
-    );
-    return getCachedResponse(request);
+  const cacheFallback = (async () => {
+    const cached = await cachedPromise;
+    if (!cached) {
+      return null;
+    }
+    await delay(CACHE_FALLBACK_DELAY_MS);
+    return cached;
+  })();
+
+  const firstResponse =
+    (await Promise.race([networkPromise, cacheFallback])) ?? null;
+  const candidate =
+    firstResponse ?? (await cachedPromise) ?? (await networkPromise);
+
+  if (candidate) {
+    if (!candidate.ok) {
+      const cached = await cachedPromise;
+      if (cached) {
+        return cached;
+      }
+    }
+    return candidate;
   }
+
+  return getCachedResponse(request);
 }
 
 async function findCachedResponse(request) {
@@ -142,6 +163,20 @@ async function getCachedResponse(request) {
       headers: { 'Content-Type': 'application/json' },
     }
   );
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(request, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(request, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 globalThis.addEventListener('message', event => {
@@ -658,3 +693,32 @@ function getValue(db, storeName, key) {
     request.onerror = () => resolve(undefined);
   });
 }
+
+globalThis.addEventListener('notificationclick', event => {
+  event.waitUntil(
+    (async () => {
+      event.notification.close();
+      const clients = await globalThis.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      const visibleClient = clients.find(
+        client => client.visibilityState === 'visible'
+      );
+      if (visibleClient && 'focus' in visibleClient) {
+        return visibleClient.focus();
+      }
+      const firstClient = clients.find(client => 'focus' in client);
+      if (firstClient) {
+        return firstClient.focus();
+      }
+      return globalThis.clients.openWindow('/');
+    })()
+  );
+});
+
+// Expose selected APIs for test harnesses without impacting production behaviour.
+globalThis.__LB_SW_API__ = {
+  handleApiRequest,
+  apiCacheName: API_CACHE_NAME,
+};

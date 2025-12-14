@@ -3,99 +3,51 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { OfflineService } from './offline.service';
 
 describe('OfflineService', () => {
+  let originalOnLineDescriptor: PropertyDescriptor | undefined;
   let service: OfflineService;
-  let originalNavigatorDescriptor: PropertyDescriptor | undefined;
-  let originalAddEventListener: typeof globalThis.addEventListener;
-  const registeredOnlineListeners: EventListener[] = [];
-  const registeredOfflineListeners: EventListener[] = [];
+
+  const setNavigatorOnline = (value: boolean) => {
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value,
+    });
+  };
 
   beforeEach(() => {
-    originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(
-      globalThis.navigator,
+    originalOnLineDescriptor = Object.getOwnPropertyDescriptor(
+      navigator,
       'onLine'
     );
-    Object.defineProperty(globalThis.navigator, 'onLine', {
-      configurable: true,
-      value: true,
-    });
-
-    originalAddEventListener = window.addEventListener;
-    window.addEventListener = (
-      type: string,
-      listener: EventListenerOrEventListenerObject,
-      options?: boolean | AddEventListenerOptions
-    ): void => {
-      if (type === 'online') {
-        registeredOnlineListeners.push(listener as EventListener);
-      }
-      if (type === 'offline') {
-        registeredOfflineListeners.push(listener as EventListener);
-      }
-      originalAddEventListener.call(globalThis, type, listener, options);
-    };
+    setNavigatorOnline(true);
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection()],
+      providers: [provideZonelessChangeDetection(), OfflineService],
     });
+
     service = TestBed.inject(OfflineService);
   });
 
   afterEach(() => {
-    for (const listener of registeredOnlineListeners.splice(0)) {
-      globalThis.removeEventListener('online', listener);
-    }
-    for (const listener of registeredOfflineListeners.splice(0)) {
-      globalThis.removeEventListener('offline', listener);
-    }
-    window.addEventListener = originalAddEventListener;
-
-    if (originalNavigatorDescriptor) {
-      Object.defineProperty(
-        globalThis.navigator,
-        'onLine',
-        originalNavigatorDescriptor
-      );
+    if (originalOnLineDescriptor) {
+      Object.defineProperty(navigator, 'onLine', originalOnLineDescriptor);
     } else {
-      Object.defineProperty(globalThis.navigator, 'onLine', {
-        configurable: true,
-        value: true,
-      });
+      Reflect.deleteProperty(navigator, 'onLine');
     }
+    TestBed.resetTestingModule();
   });
 
-  it('registers window listeners for online and offline events', () => {
-    expect(registeredOnlineListeners.length).toBeGreaterThan(0);
-    expect(registeredOfflineListeners.length).toBeGreaterThan(0);
+  it('exposes initial online/offline state from the navigator', () => {
+    expect(service.getOnlineStatus()()).toBeTrue();
+    expect(service.getOfflineStatus()()).toBeFalse();
   });
 
-  it('reflects navigator online state in its signals', () => {
-    const onlineStatus = service.getOnlineStatus();
-    const offlineStatus = service.getOfflineStatus();
+  it('updates signals when offline/online events are fired', () => {
+    globalThis.window.dispatchEvent(new Event('offline'));
+    expect(service.getOnlineStatus()()).toBeFalse();
+    expect(service.getOfflineStatus()()).toBeTrue();
 
-    expect(onlineStatus()).toBeTrue();
-    expect(offlineStatus()).toBeFalse();
-  });
-
-  it('updates signals when connectivity changes', () => {
-    const onlineStatus = service.getOnlineStatus();
-    const offlineStatus = service.getOfflineStatus();
-
-    Object.defineProperty(globalThis.navigator, 'onLine', {
-      configurable: true,
-      value: false,
-    });
-    globalThis.dispatchEvent(new Event('offline'));
-
-    expect(onlineStatus()).toBeFalse();
-    expect(offlineStatus()).toBeTrue();
-
-    Object.defineProperty(globalThis.navigator, 'onLine', {
-      configurable: true,
-      value: true,
-    });
-    globalThis.dispatchEvent(new Event('online'));
-
-    expect(onlineStatus()).toBeTrue();
-    expect(offlineStatus()).toBeFalse();
+    globalThis.window.dispatchEvent(new Event('online'));
+    expect(service.getOnlineStatus()()).toBeTrue();
+    expect(service.getOfflineStatus()()).toBeFalse();
   });
 });
