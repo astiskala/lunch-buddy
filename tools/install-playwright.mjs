@@ -21,6 +21,13 @@ const isVercel = Boolean(process.env.VERCEL);
 const isLinux = process.platform === 'linux';
 const shouldInstallDeps = isLinux && !isVercel;
 
+// Vercel’s build images do not expose a stable npx path and do not need the
+// Playwright runtime, so skip installation entirely.
+if (isVercel) {
+  console.log('Skipping Playwright browser download on Vercel builds.');
+  process.exit(0);
+}
+
 // Resolve the absolute path to npx to avoid PATH security issues
 // Checks common fixed installation paths without relying on PATH
 // Prioritizes standard Linux paths for CI/CD environments like Vercel
