@@ -3,11 +3,15 @@
 type Handler = (request: Request) => Promise<Response>;
 
 const createDeferred = <T>() => {
-  let resolveFn: (value: T | PromiseLike<T>) => void;
-  const promise = new Promise<T>((res) => {
+  let resolveFn: ((value: T | PromiseLike<T>) => void) | undefined;
+  const promise = new Promise<T>(res => {
     resolveFn = res;
   });
-  return { promise, resolve: resolveFn! };
+  if (!resolveFn) {
+    throw new Error('Promise executor did not run synchronously');
+  }
+  return { promise, resolve: resolveFn };
+};
 
 describe('custom service worker API handler', () => {
   let originalImportScripts: unknown;

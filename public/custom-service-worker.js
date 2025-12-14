@@ -123,46 +123,39 @@ async function handleApiRequest(request) {
 
   const firstResponse =
     (await Promise.race([networkPromise, cacheFallback])) ?? null;
-  const candidate =
-    firstResponse ?? (await cachedPromise) ?? (await networkPromise);
 
-  if (candidate) {
-    if (!candidate.ok) {
-      const cached = await cachedPromise;
-      if (cached) {
-        return cached;
+  // If race returned null, wait for network to complete
+  const candidate = firstResponse ?? (await networkPromise);
+
+  if (!candidate) {
+    // Both network and cache failed - return offline response
+    return new Response(
+      JSON.stringify({
+        error: 'offline',
+        message: 'No cached data available',
+      }),
+      {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'application/json' },
       }
-    }
-    return candidate;
+    );
   }
 
-  return getCachedResponse(request);
+  // If response is not ok, try to return cached response
+  if (!candidate.ok) {
+    const cached = await cachedPromise;
+    if (cached) {
+      return cached;
+    }
+  }
+
+  return candidate;
 }
 
 async function findCachedResponse(request) {
   const cache = await caches.open(API_CACHE_NAME);
   return cache.match(request);
-}
-
-async function getCachedResponse(request) {
-  const cachedResponse = await findCachedResponse(request);
-
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-
-  // No cache available - return error response
-  return new Response(
-    JSON.stringify({
-      error: 'offline',
-      message: 'No cached data available',
-    }),
-    {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'application/json' },
-    }
-  );
 }
 
 function delay(ms) {
