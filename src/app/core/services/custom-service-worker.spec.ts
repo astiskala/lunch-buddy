@@ -208,7 +208,7 @@ describe('custom service worker API handler', () => {
     expect(await result.text()).toBe('cached-auth');
   });
 
-  it('returns offline stub for unauthenticated when network and cache are unavailable', async () => {
+  it('returns offline stub for unauthenticated requests when network and cache are unavailable', async () => {
     if (typeof caches === 'undefined' || !handler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
