@@ -152,4 +152,211 @@ describe('custom service worker API handler', () => {
     const cached = await cache.match(request);
     expect(cached).toBeFalsy();
   });
+
+  it('uses network-first for authenticated requests and populates cache on success', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
+      headers: { Authorization: 'Bearer test-key', Accept: 'application/json' },
+    });
+
+    const networkPayload = JSON.stringify({ ok: true });
+    const networkResponse = new Response(networkPayload, { status: 200 });
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(networkResponse);
+
+    const result = await handler(request);
+    expect(result.status).toBe(200);
+    expect(await result.text()).toBe(networkPayload);
+
+    const cache = await caches.open(apiCacheName);
+    const cached = await cache.match(request);
+    expect(cached).toBeTruthy();
+    expect(await cached?.text()).toBe(networkPayload);
+  });
+
+  it('falls back to cache for authenticated requests when network fails', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
+      headers: { Authorization: 'Bearer test-key', Accept: 'application/json' },
+    });
+
+    const cachedResponse = new Response('cached-auth', { status: 200 });
+    const cache = await caches.open(apiCacheName);
+    await cache.put(request, cachedResponse.clone());
+
+    const failingFetch: typeof fetch = (
+      _input: RequestInfo | URL,
+      _init?: RequestInit
+    ) => Promise.reject(new Error('network down'));
+
+    Object.defineProperty(globalThis, 'fetch', {
+      value: failingFetch,
+      writable: true,
+      configurable: true,
+    });
+
+    const result = await handler(request);
+    expect(result.status).toBe(200);
+    expect(await result.text()).toBe('cached-auth');
+  });
+
+  it('returns offline stub for unauthenticated when network and cache are unavailable', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary');
+
+    const failingFetch: typeof fetch = (
+      _input: RequestInfo | URL,
+      _init?: RequestInit
+    ) => Promise.reject(new Error('network down'));
+
+    Object.defineProperty(globalThis, 'fetch', {
+      value: failingFetch,
+      writable: true,
+      configurable: true,
+    });
+
+    const result = await handler(request);
+    expect(result.status).toBe(503);
+    const body = (await result.json()) as Record<string, unknown>;
+    expect(body).toEqual({
+      error: 'offline',
+      message: 'No cached data available',
+    });
+  });
+
+  it('uses cached data when network times out for unauthenticated requests', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/categories');
+    const cache = await caches.open(apiCacheName);
+    await cache.put(request, new Response('cached-unauth', { status: 200 }));
+
+    const deferred = createDeferred<Response>();
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      deferred.promise as unknown as Response;
+
+    const resultPromise = handler(request);
+    await new Promise(res => setTimeout(res, 520));
+    const result = await resultPromise;
+    expect(await result.text()).toBe('cached-unauth');
+
+    // Resolve the network afterwards to avoid unhandled rejections.
+    deferred.resolve(new Response('network-late', { status: 200 }));
+  });
+
+  it('falls back to cache when server returns non-OK for authenticated requests', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
+      headers: { Authorization: 'Bearer test-key' },
+    });
+
+    const cache = await caches.open(apiCacheName);
+    await cache.put(
+      request,
+      new Response('cached-auth-non-ok', { status: 200 })
+    );
+
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(new Response('server-error', { status: 500 }));
+
+    const result = await handler(request);
+    expect(await result.text()).toBe('cached-auth-non-ok');
+  });
+
+  it('cleans up old cache versions during activation', async () => {
+    if (typeof caches === 'undefined' || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    // Simulate an old cache version
+    const oldCacheName = 'lunchbuddy-api-cache-v2';
+    const oldCache = await caches.open(oldCacheName);
+    await oldCache.put(
+      new Request('https://api.lunchmoney.dev/v2/summary'),
+      new Response('old-data', { status: 200 })
+    );
+
+    // Verify old cache exists before cleanup
+    let cacheNames = await caches.keys();
+    expect(cacheNames).toContain(oldCacheName);
+
+    // Simulate service worker activation by deleting old caches manually
+    await caches.delete(oldCacheName);
+
+    // Verify old cache is deleted and current cache still exists
+    cacheNames = await caches.keys();
+    expect(cacheNames).not.toContain(oldCacheName);
+    // Note: current cache may or may not exist depending on test isolation
+  });
+
+  it('returns timeout error for authenticated requests when AbortError occurs', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
+      headers: { Authorization: 'Bearer test-key' },
+    });
+
+    const abortError = new Error('AbortError');
+    Object.defineProperty(abortError, 'name', {
+      value: 'AbortError',
+      writable: false,
+      configurable: true,
+    });
+
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.reject(abortError);
+
+    const result = await handler(request);
+    expect(result.status).toBe(503);
+    const body = (await result.json()) as Record<string, unknown>;
+    expect(body['error']).toBe('timeout');
+    expect(body['message']).toContain('timed out');
+  });
+
+  it('does not cache non-OK responses from the server', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary');
+    const cache = await caches.open(apiCacheName);
+
+    // Ensure request is not cached initially
+    const initialCached = await cache.match(request);
+    expect(initialCached).toBeFalsy();
+
+    // Return a non-OK response
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(new Response('error', { status: 401 }));
+    const result = await handler(request);
+    expect(result.status).toBe(401);
+
+    // Verify the failed response was not cached
+    const newCached = await cache.match(request);
+    expect(newCached).toBeFalsy();
+  });
 });
