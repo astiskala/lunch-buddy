@@ -282,6 +282,30 @@ describe('custom service worker API handler', () => {
     expect(await result.text()).toBe('cached-auth-non-ok');
   });
 
+  it('returns server error response for authenticated requests when cache is empty', async () => {
+    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+      pending('Cache API not available in this environment');
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
+      headers: { Authorization: 'Bearer test-key' },
+    });
+
+    // Return a non-OK response with no cache available
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(new Response('Unauthorized', { status: 401 }));
+
+    const result = await handler(request);
+    expect(result.status).toBe(401);
+    expect(await result.text()).toBe('Unauthorized');
+
+    // Verify the error response was not cached
+    const cache = await caches.open(apiCacheName);
+    const cached = await cache.match(request);
+    expect(cached).toBeFalsy();
+  });
+
   it('returns timeout error for authenticated requests when AbortError occurs', async () => {
     if (typeof caches === 'undefined' || !handler || !apiCacheName) {
       pending('Cache API not available in this environment');
