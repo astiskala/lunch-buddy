@@ -282,33 +282,6 @@ describe('custom service worker API handler', () => {
     expect(await result.text()).toBe('cached-auth-non-ok');
   });
 
-  it('cleans up old cache versions during activation', async () => {
-    if (typeof caches === 'undefined' || !apiCacheName) {
-      pending('Cache API not available in this environment');
-      return;
-    }
-
-    // Simulate an old cache version
-    const oldCacheName = 'lunchbuddy-api-cache-v2';
-    const oldCache = await caches.open(oldCacheName);
-    await oldCache.put(
-      new Request('https://api.lunchmoney.dev/v2/summary'),
-      new Response('old-data', { status: 200 })
-    );
-
-    // Verify old cache exists before cleanup
-    let cacheNames = await caches.keys();
-    expect(cacheNames).toContain(oldCacheName);
-
-    // Simulate service worker activation by deleting old caches manually
-    await caches.delete(oldCacheName);
-
-    // Verify old cache is deleted and current cache still exists
-    cacheNames = await caches.keys();
-    expect(cacheNames).not.toContain(oldCacheName);
-    // Note: current cache may or may not exist depending on test isolation
-  });
-
   it('returns timeout error for authenticated requests when AbortError occurs', async () => {
     if (typeof caches === 'undefined' || !handler || !apiCacheName) {
       pending('Cache API not available in this environment');
