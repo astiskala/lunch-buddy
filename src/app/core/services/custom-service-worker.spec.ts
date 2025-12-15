@@ -309,7 +309,7 @@ describe('custom service worker API handler', () => {
     expect(body['message']).toContain('timed out');
   });
 
-  it('does not cache non-OK responses from the server', async () => {
+  it('does not cache non-OK responses for unauthenticated requests', async () => {
     if (typeof caches === 'undefined' || !handler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
