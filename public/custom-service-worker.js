@@ -10,7 +10,8 @@ const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 const API_CACHE_NAME = 'lunchbuddy-api-cache-v3';
-const NETWORK_TIMEOUT_MS = 1500;
+// Increase timeout to avoid premature aborts on first-run authenticated requests.
+const NETWORK_TIMEOUT_MS = 5000;
 const CACHE_FALLBACK_DELAY_MS = 500;
 
 const defaultConfig = () => ({
@@ -90,6 +91,13 @@ function isApiRequest(url) {
 }
 
 async function handleApiRequest(request) {
+  // For authenticated requests, prefer network-first to avoid offline stubs
+  // on first login when caches are empty.
+  const hasAuth = !!request.headers.get('Authorization');
+  if (hasAuth) {
+    return networkFirstAuthenticated(request);
+  }
+
   const cachedPromise = findCachedResponse(request);
 
   const networkPromise = (async () => {
@@ -137,6 +145,70 @@ async function handleApiRequest(request) {
   }
 
   return getCachedResponse(request);
+}
+
+async function networkFirstAuthenticated(request) {
+  try {
+    const response = await fetchWithTimeout(
+      request.clone(),
+      NETWORK_TIMEOUT_MS
+    );
+    if (response?.ok) {
+      const cache = await caches.open(API_CACHE_NAME);
+      await cache.put(request, response.clone());
+      return response;
+    }
+
+    // Non-OK response: try cached data if any; otherwise return the server's response.
+    const cached = await findCachedResponse(request);
+    return (
+      cached ??
+      response ??
+      new Response(
+        JSON.stringify({
+          error: 'unavailable',
+          message: 'No cached data available and network returned no response',
+        }),
+        {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+  } catch (err) {
+    // Handle aborted/failed fetches explicitly for Sonar/lint.
+    const name =
+      err && typeof err === 'object' && 'name' in err ? err.name : 'Error';
+    const message =
+      err && typeof err === 'object' && 'message' in err
+        ? err.message
+        : 'unknown error';
+    console.warn(
+      '[WARN] custom-service-worker: authenticated network failed',
+      name,
+      message
+    );
+
+    const cached = await findCachedResponse(request);
+    if (cached) {
+      return cached;
+    }
+    return new Response(
+      JSON.stringify({
+        error: name === 'AbortError' ? 'timeout' : 'unavailable',
+        message:
+          name === 'AbortError'
+            ? 'Request timed out and no cache available'
+            : 'Network request failed and no cache available',
+      }),
+      {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
 }
 
 async function findCachedResponse(request) {
