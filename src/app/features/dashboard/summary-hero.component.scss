@@ -1,0 +1,235 @@
+:host {
+  display: block;
+}
+
+.summary-hero {
+  background: var(--gradient-primary);
+  border-radius: 16px;
+  padding: 32px;
+  color: var(--color-text-primary, #1a202c);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgb(68 149 140 / 25%);
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+
+    h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-secondary);
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 18px;
+      border-radius: 22px;
+      font-weight: 600;
+      color: var(--color-secondary);
+      background: rgb(251 183 0 / 8%);
+      transition:
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+      --mdc-filled-button-container-height: 40px;
+      --mdc-outlined-button-container-height: 40px;
+      --mdc-filled-button-horizontal-padding: 18px;
+      --mdc-outlined-button-horizontal-padding: 18px;
+      --mdc-outlined-button-outline-width: 1px;
+      --mdc-outlined-button-outline-color: rgb(251 183 0 / 55%);
+      --mdc-outlined-button-label-text-color: var(--color-secondary);
+      --mat-outlined-button-state-layer-color: var(--color-secondary);
+
+      &.mat-mdc-outlined-button {
+        border-radius: 22px;
+      }
+
+      .mdc-button__label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .btn-label {
+        white-space: nowrap;
+      }
+
+      mat-icon {
+        font-size: 20px;
+        line-height: 1;
+        color: inherit;
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      &:hover {
+        background: rgb(251 183 0 / 14%);
+      }
+
+      &:active {
+        background: rgb(251 183 0 / 20%);
+      }
+
+      &:focus-visible {
+        box-shadow: 0 0 0 3px rgb(251 183 0 / 25%);
+      }
+    }
+  }
+
+  .budget-bars {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+
+  .budget-section {
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--color-secondary);
+      }
+    }
+
+    .progress-bars {
+      margin-bottom: 16px;
+    }
+
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      text-align: right;
+      color: var(--color-secondary);
+      margin: 0 16px;
+
+      .metric {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-end;
+
+        .metric-label {
+          font-size: 12px;
+          opacity: 0.85;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+          font-size: 16px;
+          font-weight: 600;
+
+          &.negative {
+            color: #ffcdd2;
+          }
+
+          &.highlight {
+            color: var(--color-secondary-dark);
+            font-weight: 700;
+
+            &.negative {
+              color: var(--color-error);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (width <= 768px) {
+    padding: 24px;
+
+    .header {
+      h2 {
+        font-size: 24px;
+      }
+
+      margin-bottom: 8px;
+    }
+
+    .action-buttons {
+      .action-btn {
+        &.mat-mdc-outlined-button {
+          min-width: 44px;
+          width: 44px;
+          padding: 0;
+          border-radius: 22px;
+          justify-content: center;
+          gap: 0;
+
+          --mdc-filled-button-horizontal-padding: 0;
+          --mdc-outlined-button-horizontal-padding: 0;
+          --mdc-filled-button-container-height: 44px;
+          --mdc-outlined-button-container-height: 44px;
+          --mdc-outlined-button-outline-color: rgb(251 183 0 / 65%);
+
+          background: rgb(251 183 0 / 16%);
+        }
+
+        .btn-label {
+          display: none;
+        }
+      }
+    }
+
+    .budget-bars {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .summary-hero {
+    background: linear-gradient(
+      135deg,
+      rgb(15 96 90 / 90%) 0%,
+      rgb(44 122 115 / 90%) 100%
+    );
+    border: 1px solid rgb(68 149 140 / 35%);
+
+    .action-buttons {
+      .action-btn {
+        color: var(--color-secondary-light);
+
+        --mdc-outlined-button-outline-color: rgb(251 183 0 / 70%);
+        --mdc-outlined-button-label-text-color: var(--color-secondary-light);
+
+        background: rgb(251 183 0 / 16%);
+
+        &:hover {
+          background: rgb(251 183 0 / 24%);
+        }
+
+        &:active {
+          background: rgb(251 183 0 / 30%);
+        }
+      }
+    }
+  }
+}

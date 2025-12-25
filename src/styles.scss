@@ -1,6 +1,5 @@
 // Include theming for Angular Material with `mat.theme()`.
 @use '@angular/material' as mat;
-@use 'styles/dashboard-components';
 
 @import 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap';
 @import 'https://fonts.googleapis.com/icon?family=Material+Icons&display=swap';
@@ -198,4 +197,14 @@ app-root.offline-mode {
   padding-top: 2.5rem;
   display: block;
   min-height: 100vh;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }

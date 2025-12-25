@@ -1,3 +1,5 @@
+@use 'styles/mixins' as *;
+
 :host {
   display: inline-block;
 }
@@ -10,18 +12,5 @@
   text-transform: capitalize;
   white-space: nowrap;
 
-  &[data-status='over'] {
-    background: var(--color-error-bg);
-    color: var(--color-error);
-  }
-
-  &[data-status='at-risk'] {
-    background: var(--color-warning-bg);
-    color: var(--color-warning);
-  }
-
-  &[data-status='on-track'] {
-    background: var(--color-success-bg);
-    color: var(--color-success);
-  }
+  @include status-colors;
 }

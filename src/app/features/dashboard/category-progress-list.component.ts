@@ -30,22 +30,7 @@ import {
       </div>
     }
   `,
-  styles: [
-    `
-      .empty-message {
-        color: #666;
-        text-align: center;
-        padding: 24px;
-        font-size: 14px;
-      }
-
-      .category-list {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-    `,
-  ],
+  styleUrls: ['./category-progress-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryProgressListComponent {

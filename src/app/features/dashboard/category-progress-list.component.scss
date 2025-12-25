@@ -1,0 +1,15 @@
+@use 'styles/mixins' as *;
+
+:host {
+  display: block;
+}
+
+.empty-message {
+  @include empty-state;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

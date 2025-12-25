@@ -1,3 +1,5 @@
+@use 'styles/mixins' as *;
+
 .login-container {
   display: flex;
   align-items: center;
@@ -8,7 +10,8 @@
 }
 
 .login-card {
-  background: var(--color-surface);
+  @include card;
+
   border-radius: 16px;
   box-shadow: var(--shadow-lg);
   padding: 2.5rem;

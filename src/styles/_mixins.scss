@@ -1,0 +1,41 @@
+@mixin card {
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+@mixin status-colors {
+  &[data-status='over'],
+  &.over {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+
+  &[data-status='at-risk'],
+  &.at-risk {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
+  &[data-status='on-track'],
+  &.on-track {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+}
+
+@mixin empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+@mixin spinner {
+  border: 3px solid var(--color-bg-tertiary);
+  border-top: 3px solid var(--color-primary);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}

@@ -60,6 +60,7 @@ const calculateBudgetMetrics = (
   selector: 'summary-hero',
   imports: [CommonModule, MatIconModule, MatButtonModule, ProgressBarComponent],
   templateUrl: './summary-hero.component.html',
+  styleUrls: ['./summary-hero.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryHeroComponent {

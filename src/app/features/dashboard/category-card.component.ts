@@ -74,6 +74,7 @@ const AMOUNT_RELATIVE_TOLERANCE = 0.2;
     StatusBadgeComponent,
   ],
   templateUrl: './category-card.component.html',
+  styleUrls: ['./category-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryCardComponent {
