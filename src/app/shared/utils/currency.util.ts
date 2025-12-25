@@ -74,3 +74,45 @@ export const formatCurrencyWithCode = (
 
   return formatted;
 };
+
+/**
+ * Resolves the display currency based on original currency and conversion status.
+ * If `toBase` is a finite number, the amount was converted to the base currency.
+ * Otherwise, the original currency is used (or fallback if not available).
+ *
+ * @param originalCurrency The original currency of the transaction/expense
+ * @param toBase The converted amount (or null if not converted)
+ * @param fallbackCurrency The fallback currency to use when no valid currency is found
+ * @returns The resolved display currency code
+ */
+export const resolveDisplayCurrency = (
+  originalCurrency: string | null,
+  toBase: number | null,
+  fallbackCurrency: string
+): string => {
+  if (Number.isFinite(toBase)) {
+    return fallbackCurrency;
+  }
+  return normalizeCurrencyCode(originalCurrency) ?? fallbackCurrency;
+};
+
+/**
+ * Resolves the preferred display currency from multiple candidates.
+ * Useful when you have multiple possible currency sources (e.g., user preference, account default).
+ *
+ * @param candidates Array of potential currency codes, checked in order
+ * @param fallback Default currency if no valid candidate is found
+ * @returns The first valid currency code, or the fallback
+ */
+export const resolvePreferredCurrency = (
+  candidates: (string | null | undefined)[],
+  fallback = 'USD'
+): string => {
+  for (const candidate of candidates) {
+    const normalized = normalizeCurrencyCode(candidate);
+    if (normalized) {
+      return normalized;
+    }
+  }
+  return fallback;
+};

@@ -11,8 +11,9 @@ import { RecurringInstance } from '../../core/models/lunchmoney.types';
 import {
   formatCurrency,
   formatCurrencyWithCode,
-  normalizeCurrencyCode,
   resolveAmount,
+  resolveDisplayCurrency,
+  resolvePreferredCurrency,
 } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
 import {
@@ -228,9 +229,10 @@ export class RecurringExpensesPanelComponent {
       resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
     );
     const baseCurrency = this.displayCurrency();
-    const displayCurrency = this.resolveDisplayCurrency(
+    const displayCurrency = resolveDisplayCurrency(
       entry.expense.currency,
-      entry.expense.to_base ?? null
+      entry.expense.to_base ?? null,
+      baseCurrency
     );
     return formatCurrencyWithCode(value, displayCurrency, {
       fallbackCurrency: baseCurrency,
@@ -248,21 +250,9 @@ export class RecurringExpensesPanelComponent {
   }
 
   private displayCurrency(): string {
-    const preferred =
-      normalizeCurrencyCode(this.currency()) ??
-      normalizeCurrencyCode(this.defaultCurrency()) ??
-      null;
-    return preferred ?? 'USD';
-  }
-
-  private resolveDisplayCurrency(
-    originalCurrency: string | null,
-    toBase: number | null
-  ): string {
-    const baseCurrency = this.displayCurrency();
-    if (Number.isFinite(toBase)) {
-      return baseCurrency;
-    }
-    return normalizeCurrencyCode(originalCurrency) ?? baseCurrency;
+    return resolvePreferredCurrency(
+      [this.currency(), this.defaultCurrency()],
+      'USD'
+    );
   }
 }

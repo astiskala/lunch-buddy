@@ -16,6 +16,45 @@ import {
 } from '../../shared/utils/currency.util';
 import { toPercent } from '../../shared/utils/number.util';
 
+/**
+ * Represents a budget section (Expenses or Income) with all calculated metrics.
+ */
+export interface BudgetSection {
+  readonly title: string;
+  readonly spentLabel: string;
+  readonly spentPercent: number;
+  readonly projectedPercent: number;
+  readonly remaining: number;
+  readonly spentFormatted: string;
+  readonly upcomingFormatted: string;
+  readonly remainingFormatted: string;
+}
+
+/**
+ * Calculates budget summary metrics from spent, budget, and upcoming values.
+ */
+interface BudgetMetrics {
+  readonly spentPercent: number;
+  readonly projectedPercent: number;
+  readonly remaining: number;
+}
+
+const calculateBudgetMetrics = (
+  spent: number,
+  budget: number,
+  upcoming: number,
+  invertRemaining = false
+): BudgetMetrics => {
+  const projected = spent + upcoming;
+  const spentPercent = budget > 0 ? toPercent(spent / budget) : 0;
+  const projectedPercent = budget > 0 ? toPercent(projected / budget) : 0;
+  let remaining = budget - projected;
+  if (invertRemaining) {
+    remaining = -remaining;
+  }
+  return { spentPercent, projectedPercent, remaining };
+};
+
 @Component({
   selector: 'summary-hero',
   imports: [CommonModule, MatIconModule, MatButtonModule],
@@ -42,67 +81,66 @@ export class SummaryHeroComponent {
     toPercent(this.monthProgressRatio())
   );
 
-  readonly expenseSpentPercent = computed(() => {
-    const budget = this.totalExpenseBudget();
-    const spent = this.totalExpenseSpent();
-    return budget > 0 ? toPercent(spent / budget) : 0;
-  });
-
-  readonly expenseProjectedPercent = computed(() => {
-    const budget = this.totalExpenseBudget();
-    const projected = this.totalExpenseSpent() + this.totalExpenseUpcoming();
-    return budget > 0 ? toPercent(projected / budget) : 0;
-  });
-
-  readonly incomeSpentPercent = computed(() => {
-    const budget = this.totalIncomeBudget();
-    const spent = this.totalIncomeSpent();
-    return budget > 0 ? toPercent(spent / budget) : 0;
-  });
-
-  readonly incomeProjectedPercent = computed(() => {
-    const budget = this.totalIncomeBudget();
-    const projected = this.totalIncomeSpent() + this.totalIncomeUpcoming();
-    return budget > 0 ? toPercent(projected / budget) : 0;
-  });
-
-  readonly expenseRemaining = computed(
-    () =>
-      this.totalExpenseBudget() -
-      (this.totalExpenseSpent() + this.totalExpenseUpcoming())
+  // Expense metrics (for backwards compatibility with tests)
+  private readonly expenseMetrics = computed(() =>
+    calculateBudgetMetrics(
+      this.totalExpenseSpent(),
+      this.totalExpenseBudget(),
+      this.totalExpenseUpcoming()
+    )
   );
 
-  readonly incomeRemaining = computed(() => {
-    const remaining =
-      this.totalIncomeBudget() -
-      (this.totalIncomeSpent() + this.totalIncomeUpcoming());
-    // Invert sign for income categories
-    return -remaining;
-  });
+  readonly expenseSpentPercent = computed(
+    () => this.expenseMetrics().spentPercent
+  );
+  readonly expenseProjectedPercent = computed(
+    () => this.expenseMetrics().projectedPercent
+  );
+  readonly expenseRemaining = computed(() => this.expenseMetrics().remaining);
 
-  readonly expenseSpentFormatted = computed(() =>
-    this.formatValue(this.totalExpenseSpent())
+  // Income metrics (for backwards compatibility with tests)
+  private readonly incomeMetrics = computed(() =>
+    calculateBudgetMetrics(
+      this.totalIncomeSpent(),
+      this.totalIncomeBudget(),
+      this.totalIncomeUpcoming(),
+      true
+    )
   );
 
-  readonly expenseUpcomingFormatted = computed(() =>
-    this.formatValue(this.totalExpenseUpcoming())
+  readonly incomeSpentPercent = computed(
+    () => this.incomeMetrics().spentPercent
   );
+  readonly incomeProjectedPercent = computed(
+    () => this.incomeMetrics().projectedPercent
+  );
+  readonly incomeRemaining = computed(() => this.incomeMetrics().remaining);
 
-  readonly expenseRemainingFormatted = computed(() =>
-    this.formatValue(this.expenseRemaining())
-  );
-
-  readonly incomeSpentFormatted = computed(() =>
-    this.formatValue(this.totalIncomeSpent())
-  );
-
-  readonly incomeUpcomingFormatted = computed(() =>
-    this.formatValue(this.totalIncomeUpcoming())
-  );
-
-  readonly incomeRemainingFormatted = computed(() =>
-    this.formatValue(this.incomeRemaining())
-  );
+  /**
+   * Budget sections for expense and income, ready for template iteration.
+   */
+  readonly budgetSections = computed((): BudgetSection[] => [
+    {
+      title: 'Expenses',
+      spentLabel: 'Spent',
+      spentPercent: this.expenseSpentPercent(),
+      projectedPercent: this.expenseProjectedPercent(),
+      remaining: this.expenseRemaining(),
+      spentFormatted: this.formatValue(this.totalExpenseSpent()),
+      upcomingFormatted: this.formatValue(this.totalExpenseUpcoming()),
+      remainingFormatted: this.formatValue(this.expenseRemaining()),
+    },
+    {
+      title: 'Income',
+      spentLabel: 'Received',
+      spentPercent: this.incomeSpentPercent(),
+      projectedPercent: this.incomeProjectedPercent(),
+      remaining: this.incomeRemaining(),
+      spentFormatted: this.formatValue(this.totalIncomeSpent()),
+      upcomingFormatted: this.formatValue(this.totalIncomeUpcoming()),
+      remainingFormatted: this.formatValue(this.incomeRemaining()),
+    },
+  ]);
 
   readonly monthName = computed(() => {
     const date = new Date(this.monthStart());

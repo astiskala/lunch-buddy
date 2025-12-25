@@ -2,6 +2,9 @@ import {
   formatCurrency,
   formatCurrencyWithCode,
   normalizeCurrencyCode,
+  resolveAmount,
+  resolveDisplayCurrency,
+  resolvePreferredCurrency,
 } from './currency.util';
 
 describe('Currency Utils', () => {
@@ -13,6 +16,56 @@ describe('Currency Utils', () => {
     it('returns null for empty values', () => {
       expect(normalizeCurrencyCode('   ')).toBeNull();
       expect(normalizeCurrencyCode()).toBeNull();
+    });
+  });
+
+  describe('resolveAmount', () => {
+    it('uses toBase when provided as a number', () => {
+      expect(resolveAmount('10.00', 15.5)).toBe(15.5);
+    });
+
+    it('parses string amount when toBase is null', () => {
+      expect(resolveAmount('123.45', null)).toBe(123.45);
+    });
+
+    it('returns 0 for invalid string without toBase', () => {
+      expect(resolveAmount('invalid', null)).toBe(0);
+    });
+  });
+
+  describe('resolveDisplayCurrency', () => {
+    it('returns fallback when toBase is finite', () => {
+      expect(resolveDisplayCurrency('EUR', 100, 'USD')).toBe('USD');
+    });
+
+    it('returns original currency when toBase is null', () => {
+      expect(resolveDisplayCurrency('EUR', null, 'USD')).toBe('EUR');
+    });
+
+    it('returns fallback when original is null and toBase is null', () => {
+      expect(resolveDisplayCurrency(null, null, 'GBP')).toBe('GBP');
+    });
+
+    it('normalizes original currency to uppercase', () => {
+      expect(resolveDisplayCurrency('eur', null, 'USD')).toBe('EUR');
+    });
+  });
+
+  describe('resolvePreferredCurrency', () => {
+    it('returns first valid currency from candidates', () => {
+      expect(resolvePreferredCurrency([null, 'EUR', 'GBP'])).toBe('EUR');
+    });
+
+    it('returns fallback when all candidates are invalid', () => {
+      expect(resolvePreferredCurrency([null, undefined, ''])).toBe('USD');
+    });
+
+    it('allows custom fallback', () => {
+      expect(resolvePreferredCurrency([null], 'GBP')).toBe('GBP');
+    });
+
+    it('normalizes currency codes', () => {
+      expect(resolvePreferredCurrency(['eur'])).toBe('EUR');
     });
   });
 

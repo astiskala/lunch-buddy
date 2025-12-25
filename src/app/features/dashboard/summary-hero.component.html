@@ -26,90 +26,48 @@
   </div>
 
   <div class="budget-bars">
-    <!-- Expenses -->
-    <div class="budget-section">
-      <div class="section-header">
-        <h3>Expenses</h3>
-      </div>
+    @for (section of budgetSections(); track section.title) {
+      <div class="budget-section">
+        <div class="section-header">
+          <h3>{{ section.title }}</h3>
+        </div>
 
-      <div class="progress-bars">
-        <div class="progress-bar-wrapper">
-          <div
-            class="progress-bar spent"
-            [style.width.%]="expenseSpentPercent()"></div>
-          <div
-            class="progress-bar projected"
-            [style.width.%]="expenseProjectedPercent()"></div>
-          <div
-            class="month-indicator"
-            [style.left.%]="monthProgressPercent()"
-            title="Month progress: {{ monthProgressPercent() }}%">
-            <div class="indicator-line"></div>
+        <div class="progress-bars">
+          <div class="progress-bar-wrapper">
+            <div
+              class="progress-bar spent"
+              [style.width.%]="section.spentPercent"></div>
+            <div
+              class="progress-bar projected"
+              [style.width.%]="section.projectedPercent"></div>
+            <div
+              class="month-indicator"
+              [style.left.%]="monthProgressPercent()"
+              title="Month progress: {{ monthProgressPercent() }}%">
+              <div class="indicator-line"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <span class="metric-label">{{ section.spentLabel }}</span>
+            <span class="metric-value">{{ section.spentFormatted }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Upcoming</span>
+            <span class="metric-value">{{ section.upcomingFormatted }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Remaining</span>
+            <span
+              class="metric-value highlight"
+              [class.negative]="section.remaining < 0">
+              {{ section.remainingFormatted }}
+            </span>
           </div>
         </div>
       </div>
-
-      <div class="metrics">
-        <div class="metric">
-          <span class="metric-label">Spent</span>
-          <span class="metric-value">{{ expenseSpentFormatted() }}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Upcoming</span>
-          <span class="metric-value">{{ expenseUpcomingFormatted() }}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Remaining</span>
-          <span
-            class="metric-value highlight"
-            [class.negative]="expenseRemaining() < 0">
-            {{ expenseRemainingFormatted() }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Income -->
-    <div class="budget-section">
-      <div class="section-header">
-        <h3>Income</h3>
-      </div>
-
-      <div class="progress-bars">
-        <div class="progress-bar-wrapper">
-          <div
-            class="progress-bar spent"
-            [style.width.%]="incomeSpentPercent()"></div>
-          <div
-            class="progress-bar projected"
-            [style.width.%]="incomeProjectedPercent()"></div>
-          <div
-            class="month-indicator"
-            [style.left.%]="monthProgressPercent()"
-            title="Month progress: {{ monthProgressPercent() }}%">
-            <div class="indicator-line"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="metrics">
-        <div class="metric">
-          <span class="metric-label">Received</span>
-          <span class="metric-value">{{ incomeSpentFormatted() }}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Upcoming</span>
-          <span class="metric-value">{{ incomeUpcomingFormatted() }}</span>
-        </div>
-        <div class="metric">
-          <span class="metric-label">Remaining</span>
-          <span
-            class="metric-value highlight"
-            [class.negative]="incomeRemaining() < 0">
-            {{ incomeRemainingFormatted() }}
-          </span>
-        </div>
-      </div>
-    </div>
+    }
   </div>
 </div>

@@ -23,6 +23,7 @@ import {
   FormatCurrencyOptions,
   normalizeCurrencyCode,
   resolveAmount,
+  resolveDisplayCurrency,
 } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
 import {
@@ -701,11 +702,11 @@ export class CategoryCardComponent {
     originalCurrency: string | null,
     toBase: number | null
   ): string {
-    const fallbackCurrency = this.normalizedDefaultCurrency();
-    if (Number.isFinite(toBase)) {
-      return fallbackCurrency;
-    }
-    return normalizeCurrencyCode(originalCurrency) ?? fallbackCurrency;
+    return resolveDisplayCurrency(
+      originalCurrency,
+      toBase,
+      this.normalizedDefaultCurrency()
+    );
   }
 
   private getActivityGroupKey(date: Date | null): string {
