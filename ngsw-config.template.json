@@ -46,6 +46,7 @@
       "name": "lunchmoney-api",
       "urls": [
         "https://api.lunchmoney.dev/v2/**",
+        "https://api.lunchmoney.app/v2/**",
         "http://localhost:3000/api/**",
         "http://localhost:4600/**"
       ],

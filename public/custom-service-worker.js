@@ -84,6 +84,7 @@ globalThis.addEventListener('activate', event => {
 function isApiRequest(url) {
   return (
     url.hostname === 'api.lunchmoney.dev' ||
+    url.hostname === 'api.lunchmoney.app' ||
     url.hostname === 'dev.lunchmoney.app' ||
     (url.hostname === 'localhost' &&
       (url.port === '3000' || url.port === '4600'))
@@ -792,5 +793,6 @@ globalThis.addEventListener('notificationclick', event => {
 // Expose selected APIs for test harnesses without impacting production behaviour.
 globalThis.__LB_SW_API__ = {
   handleApiRequest,
+  isApiRequest,
   apiCacheName: API_CACHE_NAME,
 };

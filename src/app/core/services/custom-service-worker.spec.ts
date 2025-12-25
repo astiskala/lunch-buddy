@@ -1,6 +1,7 @@
 // No need to declare `importScripts`; use global assignment/mocking below.
 
 type Handler = (request: Request) => Promise<Response>;
+type ApiRequestMatcher = (url: URL) => boolean;
 
 const createDeferred = <T>() => {
   let resolveFn: (value: T | PromiseLike<T>) => void = () => {
@@ -23,6 +24,7 @@ describe('custom service worker API handler', () => {
   let originalClients: unknown;
   let handler: Handler | undefined;
   let apiCacheName: string | undefined;
+  let isApiRequest: ApiRequestMatcher | undefined;
   let clockInstalled: boolean;
 
   beforeAll(async () => {
@@ -37,12 +39,17 @@ describe('custom service worker API handler', () => {
 
     const api = (
       globalThis as unknown as {
-        __LB_SW_API__?: { handleApiRequest: Handler; apiCacheName: string };
+        __LB_SW_API__?: {
+          handleApiRequest: Handler;
+          isApiRequest: ApiRequestMatcher;
+          apiCacheName: string;
+        };
       }
     ).__LB_SW_API__;
 
     handler = api?.handleApiRequest;
     apiCacheName = api?.apiCacheName;
+    isApiRequest = api?.isApiRequest;
   });
 
   beforeEach(async () => {
@@ -73,6 +80,17 @@ describe('custom service worker API handler', () => {
   afterAll(() => {
     (globalThis as unknown as { importScripts: unknown }).importScripts =
       originalImportScripts;
+  });
+
+  it('recognizes the production Lunch Money API host', () => {
+    if (!isApiRequest) {
+      pending('Service worker API not available in this environment');
+      return;
+    }
+
+    expect(
+      isApiRequest(new URL('https://api.lunchmoney.app/v2/summary'))
+    ).toBeTrue();
   });
 
   it('returns cached API data when the network is slow', async () => {
