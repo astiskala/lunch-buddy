@@ -13,14 +13,8 @@
         <p class="group-name">{{ item().categoryGroupName }}</p>
       }
     </div>
-    <div class="status-badge" [attr.data-status]="item().status">
-      @if (item().status === 'over') {
-        <span>Over</span>
-      } @else if (item().status === 'at-risk') {
-        <span>At risk</span>
-      } @else {
-        <span>On track</span>
-      }
+    <div class="status-badge-wrapper">
+      <app-status-badge [status]="item().status"></app-status-badge>
     </div>
     <button
       class="expand-btn"
@@ -35,29 +29,13 @@
   </div>
 
   @if (hasBudget()) {
-    <div
-      class="progress-bar"
-      [class.has-projected]="
-        upcomingRecurringTotal() > 0 && projectedValue() > progressValue()
-      ">
-      <div
-        class="progress spent"
-        [style.width.%]="progressValue()"
-        [attr.data-color]="statusColor()"></div>
-      @if (upcomingRecurringTotal() > 0 && projectedValue() > progressValue()) {
-        <div
-          class="progress projected"
-          [style.width.%]="projectedValue() - progressValue()"
-          [style.left.%]="progressValue()"
-          [attr.data-color]="statusColor()"></div>
-      }
-      <div
-        class="month-indicator"
-        [style.left.%]="monthProgressPercent()"
-        title="Month progress: {{ monthProgressPercent() }}%">
-        <div class="indicator-line"></div>
-      </div>
-    </div>
+    <app-progress-bar
+      class="progress-bar-container"
+      [spentPercent]="progressValue()"
+      [projectedPercent]="upcomingRecurringTotal() > 0 ? projectedValue() : 0"
+      [status]="statusColor()"
+      [monthProgressPercent]="monthProgressPercent()">
+    </app-progress-bar>
   }
 
   <div class="metrics">

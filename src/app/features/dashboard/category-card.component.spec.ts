@@ -210,7 +210,7 @@ describe('CategoryCardComponent', () => {
     setupComponent(fixture, { item: mockItem });
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.progress-bar')).toBeTruthy();
+    expect(compiled.querySelector('app-progress-bar')).toBeTruthy();
   });
 
   it('should show received label for income categories', () => {

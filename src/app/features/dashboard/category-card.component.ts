@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
+import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import {
   BudgetProgress,
   RecurringInstance,
@@ -65,7 +67,12 @@ const AMOUNT_RELATIVE_TOLERANCE = 0.2;
 
 @Component({
   selector: 'category-card',
-  imports: [CommonModule, MatIconModule],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    ProgressBarComponent,
+    StatusBadgeComponent,
+  ],
   templateUrl: './category-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

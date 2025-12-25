@@ -10,6 +10,7 @@ import {
 import { CommonModule, formatDate } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
 import {
   formatCurrency,
   FormatCurrencyOptions,
@@ -57,7 +58,7 @@ const calculateBudgetMetrics = (
 
 @Component({
   selector: 'summary-hero',
-  imports: [CommonModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, ProgressBarComponent],
   templateUrl: './summary-hero.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,0 +1,27 @@
+:host {
+  display: inline-block;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+
+  &[data-status='over'] {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+
+  &[data-status='at-risk'] {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
+  &[data-status='on-track'] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+}

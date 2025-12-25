@@ -33,20 +33,12 @@
         </div>
 
         <div class="progress-bars">
-          <div class="progress-bar-wrapper">
-            <div
-              class="progress-bar spent"
-              [style.width.%]="section.spentPercent"></div>
-            <div
-              class="progress-bar projected"
-              [style.width.%]="section.projectedPercent"></div>
-            <div
-              class="month-indicator"
-              [style.left.%]="monthProgressPercent()"
-              title="Month progress: {{ monthProgressPercent() }}%">
-              <div class="indicator-line"></div>
-            </div>
-          </div>
+          <app-progress-bar
+            variant="hero"
+            [spentPercent]="section.spentPercent"
+            [projectedPercent]="section.projectedPercent"
+            [monthProgressPercent]="monthProgressPercent()">
+          </app-progress-bar>
         </div>
 
         <div class="metrics">
