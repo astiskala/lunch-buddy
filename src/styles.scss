@@ -2,7 +2,14 @@
 @use '@angular/material' as mat;
 
 @import 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap';
-@import 'https://fonts.googleapis.com/icon?family=Material+Icons&display=swap';
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/MaterialIcons-Regular.ttf') format('truetype');
+}
 
 // Define custom color palettes
 $lunch-buddy-primary: (
