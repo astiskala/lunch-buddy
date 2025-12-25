@@ -14,11 +14,12 @@ import {
   calculateBudgetStatus,
   rankBudgetProgress,
 } from '../utils/budget.util';
-import { normalizeCurrencyCode } from '../utils/currency.util';
+import { normalizeCurrencyCode, resolveAmount } from '../utils/currency.util';
 import {
   deriveReferenceDate,
   getCurrentMonthRange,
   getMonthProgress,
+  getWindowRange,
   toIsoDate,
 } from '../utils/date.util';
 import {
@@ -577,7 +578,7 @@ export class BudgetService {
 
     const { assigned } = this.recurringByCategory();
     const referenceDate = this.referenceDate();
-    const windowRange = this.getWindowRange();
+    const windowRange = getWindowRange(this.startDate(), this.endDate());
     const monthProgress = this.monthProgressRatio();
     const warnAtRatio = this.preferences().warnAtRatio;
 
@@ -589,13 +590,10 @@ export class BudgetService {
       })
         .filter(instance => !hasFoundTransactionForOccurrence(instance))
         .reduce((total, instance) => {
-          const amount =
-            typeof instance.expense.to_base === 'number'
-              ? instance.expense.to_base
-              : Number.parseFloat(instance.expense.amount);
-          if (Number.isNaN(amount)) {
-            return total;
-          }
+          const amount = resolveAmount(
+            instance.expense.amount,
+            instance.expense.to_base ?? null
+          );
           return total + Math.abs(amount);
         }, 0);
 
@@ -652,16 +650,5 @@ export class BudgetService {
     return (
       typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
     );
-  }
-
-  private getWindowRange(): { start: Date; end: Date } | null {
-    const start = new Date(this.startDate());
-    const end = new Date(this.endDate());
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return null;
-    }
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
   }
 }

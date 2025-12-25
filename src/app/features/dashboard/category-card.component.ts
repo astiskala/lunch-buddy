@@ -6,6 +6,7 @@ import {
   computed,
   inject,
   effect,
+  LOCALE_ID,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,11 +20,18 @@ import { LoggerService } from '../../core/services/logger.service';
 import { OfflineService } from '../../core/services/offline.service';
 import {
   formatCurrency,
+  FormatCurrencyOptions,
   normalizeCurrencyCode,
   resolveAmount,
 } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
-import { startOfDay } from '../../shared/utils/date.util';
+import {
+  formatMonthDay,
+  getWindowRange,
+  isPastDate,
+  startOfDay,
+} from '../../shared/utils/date.util';
+import { toPercent } from '../../shared/utils/number.util';
 import {
   hasFoundTransactionForOccurrence,
   isRecurringInstancePending,
@@ -53,20 +61,6 @@ interface ActivityGroup {
  * the amounts are considered to align.
  */
 const AMOUNT_RELATIVE_TOLERANCE = 0.2;
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
 
 @Component({
   selector: 'category-card',
@@ -78,6 +72,7 @@ export class CategoryCardComponent {
   readonly lunchMoneyService = inject(LunchMoneyService);
   readonly logger = inject(LoggerService);
   readonly offlineService = inject(OfflineService);
+  private readonly locale = inject(LOCALE_ID);
 
   readonly item = input.required<BudgetProgress>();
   readonly defaultCurrency = input.required<string>();
@@ -116,9 +111,7 @@ export class CategoryCardComponent {
   }
 
   readonly budgetLabel = computed(() =>
-    formatCurrency(this.item().budgetAmount, this.item().budgetCurrency, {
-      fallbackCurrency: this.defaultCurrency(),
-    })
+    this.formatValue(this.item().budgetAmount, this.item().budgetCurrency)
   );
 
   readonly spentLabelText = computed(() =>
@@ -128,19 +121,17 @@ export class CategoryCardComponent {
   readonly spentLabel = computed(() => {
     const item = this.item();
     const amount = item.isIncome ? Math.abs(item.spent) : item.spent;
-    return formatCurrency(amount, item.budgetCurrency, {
-      fallbackCurrency: this.defaultCurrency(),
-    });
+    return this.formatValue(amount, item.budgetCurrency);
   });
 
   readonly progressValue = computed(() =>
-    Math.min(100, Math.max(0, Math.round(this.item().progressRatio * 100)))
+    toPercent(this.item().progressRatio, { min: 0, max: 100 })
   );
 
   readonly hasBudget = computed(() => Math.abs(this.item().budgetAmount) > 0);
 
   readonly monthProgressPercent = computed(() =>
-    Math.round(this.monthProgressRatio() * 100)
+    toPercent(this.monthProgressRatio())
   );
 
   readonly statusColor = computed(() => {
@@ -151,27 +142,15 @@ export class CategoryCardComponent {
   });
 
   readonly activityEntries = computed(() => {
-    const item = this.item();
-    const txns = Array.isArray(item.transactionList)
-      ? item.transactionList
-      : this.transactions();
+    const txns = this.getTransactions();
     const recurring = this.recurringExpenses();
-    const referenceDate = this.referenceDate();
-    const windowRange = this.getWindowRange();
-    const recordedRecurringIds = this.getRecordedRecurringIds(txns);
-
-    const recurrenceContext = {
-      referenceDate,
-      windowRange,
-      recordedRecurringIds,
-      transactions: txns,
-    } as const;
+    const recurrenceContext = this.buildRecurrenceContext(txns);
 
     const transactionEntries = this.convertTransactionsToEntries(txns);
     const foundEntries = this.buildFoundTransactionEntries(
       recurring,
       txns,
-      windowRange
+      recurrenceContext.windowRange
     );
     const recurringEntries = this.convertRecurringToEntries({
       recurring,
@@ -206,20 +185,8 @@ export class CategoryCardComponent {
 
   readonly upcomingRecurringTotal = computed(() => {
     const recurring = this.recurringExpenses();
-    const item = this.item();
-    const txns = Array.isArray(item.transactionList)
-      ? item.transactionList
-      : this.transactions();
-    const referenceDate = this.referenceDate();
-    const windowRange = this.getWindowRange();
-    const recordedRecurringIds = this.getRecordedRecurringIds(txns);
-
-    const recurrenceContext = {
-      referenceDate,
-      windowRange,
-      recordedRecurringIds,
-      transactions: txns,
-    } as const;
+    const txns = this.getTransactions();
+    const recurrenceContext = this.buildRecurrenceContext(txns);
 
     let total = 0;
 
@@ -239,12 +206,9 @@ export class CategoryCardComponent {
   });
 
   readonly upcomingLabel = computed(() =>
-    formatCurrency(
+    this.formatValue(
       this.upcomingRecurringTotal(),
-      this.normalizedDefaultCurrency(),
-      {
-        fallbackCurrency: this.defaultCurrency(),
-      }
+      this.normalizedDefaultCurrency()
     )
   );
 
@@ -263,12 +227,9 @@ export class CategoryCardComponent {
   });
 
   readonly remainingAfterUpcomingLabel = computed(() =>
-    formatCurrency(
+    this.formatValue(
       Math.abs(this.remainingAfterUpcoming()),
-      this.item().budgetCurrency,
-      {
-        fallbackCurrency: this.defaultCurrency(),
-      }
+      this.item().budgetCurrency
     )
   );
 
@@ -278,7 +239,7 @@ export class CategoryCardComponent {
     const projectedRatio = item.budgetAmount
       ? Math.min(1, Math.max(0, (item.spent + upcoming) / item.budgetAmount))
       : 0;
-    return Math.round(projectedRatio * 100);
+    return toPercent(projectedRatio);
   });
 
   toggleDetails(): void {
@@ -323,7 +284,7 @@ export class CategoryCardComponent {
   private convertTransactionsToEntries(
     transactions: Transaction[]
   ): ActivityEntry[] {
-    const isIncomeCategory = this.safeItem()?.isIncome ?? false;
+    const isIncomeCategory = this.isIncomeCategory();
     return transactions.map(transaction => {
       const rawAmount = resolveAmount(
         transaction.amount,
@@ -378,37 +339,19 @@ export class CategoryCardComponent {
   }): ActivityEntry[] {
     const { recurring, context } = params;
     const entries: ActivityEntry[] = [];
-    const isIncomeCategory = this.safeItem()?.isIncome ?? false;
+    const isIncomeCategory = this.isIncomeCategory();
 
     for (const instance of recurring) {
       if (!this.shouldIncludeRecurringInstance(instance, context)) {
         continue;
       }
-
-      const rawAmount = resolveAmount(
-        instance.expense.amount,
-        instance.expense.to_base ?? null
-      );
-      const amount = isIncomeCategory ? Math.abs(rawAmount) : rawAmount;
-      const payee = decodeHtmlEntities(instance.expense.payee).trim();
-      const label = payee.length > 0 ? payee : 'Recurring expense';
-      const notes = decodeHtmlEntities(instance.expense.description);
-      const originalAmount = this.parseAmountValue(instance.expense.amount);
-      const displayCurrency = this.resolveEntryCurrency(
-        instance.expense.currency,
-        instance.expense.to_base ?? null
-      );
+      const base = this.buildRecurringEntryBase(instance, isIncomeCategory);
 
       entries.push({
         id: `recurring-${instance.expense.id.toString()}`,
         kind: 'upcoming',
         date: instance.occurrenceDate,
-        label,
-        notes,
-        amount,
-        currency: displayCurrency,
-        originalCurrency: instance.expense.currency,
-        originalAmount,
+        ...base,
       });
     }
 
@@ -427,11 +370,7 @@ export class CategoryCardComponent {
 
   formatAmount(entry: ActivityEntry): string {
     const value = Math.abs(entry.amount);
-    const defaultCurrency = this.normalizedDefaultCurrency();
-
-    return formatCurrency(value, entry.currency, {
-      fallbackCurrency: defaultCurrency,
-    });
+    return this.formatValue(value, entry.currency);
   }
 
   formatOriginalAmount(entry: ActivityEntry): string {
@@ -439,22 +378,20 @@ export class CategoryCardComponent {
     if (originalAmount === null || originalAmount === undefined) {
       return '';
     }
-    const defaultCurrency = this.normalizedDefaultCurrency();
     const originalCurrency = normalizeCurrencyCode(entry.originalCurrency);
-    return formatCurrency(Math.abs(originalAmount), originalCurrency, {
-      fallbackCurrency: defaultCurrency,
+    return this.formatValue(Math.abs(originalAmount), originalCurrency, {
       currencyDisplay: 'code',
     });
   }
 
   formatDate(date: Date | null): string {
     if (!date) return '—';
-    return `${MONTHS[date.getMonth()]} ${date.getDate().toString()}`;
+    return formatMonthDay(date, this.locale);
   }
 
   getAmountColor(entry: ActivityEntry): string {
     if (entry.kind === 'upcoming') return 'warning';
-    const isIncomeCategory = this.safeItem()?.isIncome ?? false;
+    const isIncomeCategory = this.isIncomeCategory();
     if (isIncomeCategory) {
       return entry.amount >= 0 ? 'success' : 'error';
     }
@@ -485,11 +422,7 @@ export class CategoryCardComponent {
     if (entry.kind !== 'upcoming' || !entry.date) {
       return false;
     }
-    const reference = new Date(this.referenceDate());
-    reference.setHours(0, 0, 0, 0);
-    const occurrence = new Date(entry.date);
-    occurrence.setHours(0, 0, 0, 0);
-    return occurrence.getTime() < reference.getTime();
+    return isPastDate(entry.date, this.referenceDate());
   }
 
   private safeItem(): BudgetProgress | null {
@@ -506,27 +439,14 @@ export class CategoryCardComponent {
     windowRange: { start: Date; end: Date } | null
   ): ActivityEntry[] {
     const entries: ActivityEntry[] = [];
-    const isIncomeCategory = this.safeItem()?.isIncome ?? false;
+    const isIncomeCategory = this.isIncomeCategory();
 
     for (const instance of recurring) {
       const found = instance.expense.found_transactions;
       if (!found || found.length === 0) {
         continue;
       }
-
-      const rawAmount = resolveAmount(
-        instance.expense.amount,
-        instance.expense.to_base ?? null
-      );
-      const amount = isIncomeCategory ? Math.abs(rawAmount) : rawAmount;
-      const payee = decodeHtmlEntities(instance.expense.payee).trim();
-      const label = payee.length > 0 ? payee : 'Recurring expense';
-      const notes = decodeHtmlEntities(instance.expense.description);
-      const originalAmount = this.parseAmountValue(instance.expense.amount);
-      const displayCurrency = this.resolveEntryCurrency(
-        instance.expense.currency,
-        instance.expense.to_base ?? null
-      );
+      const base = this.buildRecurringEntryBase(instance, isIncomeCategory);
 
       for (const entry of found) {
         const entryDate = this.toFoundEntryDate(entry.date, windowRange);
@@ -540,12 +460,7 @@ export class CategoryCardComponent {
           id: `found-${instance.expense.id.toString()}-${entry.transaction_id.toString()}`,
           kind: 'transaction',
           date: entryDate,
-          label,
-          notes,
-          amount,
-          currency: displayCurrency,
-          originalCurrency: instance.expense.currency,
-          originalAmount,
+          ...base,
         });
       }
     }
@@ -614,17 +529,6 @@ export class CategoryCardComponent {
       return null;
     }
     return num.toString();
-  }
-
-  private getWindowRange(): { start: Date; end: Date } | null {
-    const start = new Date(this.startDate());
-    const end = new Date(this.endDate());
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return null;
-    }
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
   }
 
   private shouldIncludeRecurringInstance(
@@ -807,5 +711,70 @@ export class CategoryCardComponent {
   private getActivityGroupKey(date: Date | null): string {
     if (!date) return 'unknown';
     return startOfDay(date).toDateString();
+  }
+
+  private formatValue(
+    value: number,
+    currency: string | null,
+    options: FormatCurrencyOptions = {}
+  ): string {
+    return formatCurrency(value, currency, {
+      fallbackCurrency: this.defaultCurrency(),
+      locale: this.locale,
+      ...options,
+    });
+  }
+
+  private getTransactions(): Transaction[] {
+    const item = this.item();
+    return Array.isArray(item.transactionList)
+      ? item.transactionList
+      : this.transactions();
+  }
+
+  private buildRecurrenceContext(transactions: Transaction[]): {
+    referenceDate: Date;
+    windowRange: { start: Date; end: Date } | null;
+    recordedRecurringIds: Set<string>;
+    transactions: Transaction[];
+  } {
+    return {
+      referenceDate: this.referenceDate(),
+      windowRange: getWindowRange(this.startDate(), this.endDate()),
+      recordedRecurringIds: this.getRecordedRecurringIds(transactions),
+      transactions,
+    };
+  }
+
+  private buildRecurringEntryBase(
+    instance: RecurringInstance,
+    isIncomeCategory: boolean
+  ): Omit<ActivityEntry, 'id' | 'kind' | 'date'> {
+    const rawAmount = resolveAmount(
+      instance.expense.amount,
+      instance.expense.to_base ?? null
+    );
+    const amount = isIncomeCategory ? Math.abs(rawAmount) : rawAmount;
+    const payee = decodeHtmlEntities(instance.expense.payee).trim();
+    const label = payee.length > 0 ? payee : 'Recurring expense';
+    const notes = decodeHtmlEntities(instance.expense.description);
+    const originalAmount = this.parseAmountValue(instance.expense.amount);
+    const displayCurrency = this.resolveEntryCurrency(
+      instance.expense.currency,
+      instance.expense.to_base ?? null
+    );
+
+    return {
+      label,
+      notes,
+      amount,
+      currency: displayCurrency,
+      originalCurrency: instance.expense.currency,
+      originalAmount,
+    };
+  }
+
+  private isIncomeCategory(): boolean {
+    return this.safeItem()?.isIncome ?? false;
   }
 }

@@ -4,6 +4,9 @@ import {
   getCurrentMonthRange,
   startOfToday,
   deriveReferenceDate,
+  formatMonthDay,
+  getWindowRange,
+  isPastDate,
 } from './date.util';
 
 describe('Date Utils', () => {
@@ -97,6 +100,36 @@ describe('Date Utils', () => {
       expect(ref.getFullYear()).toBe(2025);
       expect(ref.getMonth()).toBe(9);
       expect(ref.getDate()).toBe(15);
+    });
+  });
+
+  describe('getWindowRange', () => {
+    it('should parse valid window dates', () => {
+      const range = getWindowRange('2025-10-01', '2025-10-31');
+      expect(range).not.toBeNull();
+      expect(range?.start.getHours()).toBe(0);
+      expect(range?.end.getHours()).toBe(23);
+      expect(range?.end.getMinutes()).toBe(59);
+    });
+
+    it('should return null for invalid window', () => {
+      expect(getWindowRange('', '2025-10-31')).toBeNull();
+      expect(getWindowRange('2025-10-01', '')).toBeNull();
+    });
+  });
+
+  describe('formatMonthDay', () => {
+    it('formats month and day using locale', () => {
+      const date = new Date(2025, 10, 15);
+      expect(formatMonthDay(date, 'en-US')).toBe('Nov 15');
+    });
+  });
+
+  describe('isPastDate', () => {
+    it('detects dates before the reference day', () => {
+      const reference = new Date(2025, 10, 10, 12);
+      const earlier = new Date(2025, 10, 9, 23);
+      expect(isPastDate(earlier, reference)).toBeTrue();
     });
   });
 });

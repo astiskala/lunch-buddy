@@ -1,4 +1,5 @@
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
+import { getWindowRange, startOfDay } from './date.util';
 
 export interface RecurringDateOptions {
   windowStart?: string;
@@ -13,28 +14,6 @@ const parseDate = (value: string | null | undefined): Date | null => {
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const parseWindowDate = (
-  value: string | undefined,
-  boundary: 'start' | 'end'
-): Date | null => {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  if (boundary === 'start') {
-    parsed.setHours(0, 0, 0, 0);
-  } else {
-    parsed.setHours(23, 59, 59, 999);
-  }
-
-  return parsed;
 };
 
 const lastDayOfMonth = (date: Date): Date => {
@@ -172,12 +151,6 @@ const clampToWindow = (
   windowEnd: Date
 ): boolean =>
   isWithinInterval(candidate, { start: windowStart, end: windowEnd });
-
-const startOfDay = (date: Date): Date => {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
-};
 
 interface AdjustmentResult {
   candidate: Date;
@@ -334,8 +307,12 @@ export const getRecurringDate = (
     return null;
   }
 
-  const windowStart = parseWindowDate(options?.windowStart, 'start');
-  const windowEnd = parseWindowDate(options?.windowEnd, 'end');
+  const windowRange = getWindowRange(
+    options?.windowStart ?? '',
+    options?.windowEnd ?? ''
+  );
+  const windowStart = windowRange?.start ?? null;
+  const windowEnd = windowRange?.end ?? null;
   const cadenceDuration = getCadenceDuration(expense.cadence);
   const reference = options?.referenceDate
     ? startOfDay(options.referenceDate)

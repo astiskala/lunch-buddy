@@ -3,6 +3,8 @@ import {
   Component,
   input,
   computed,
+  inject,
+  LOCALE_ID,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
@@ -10,8 +12,14 @@ import {
   formatCurrency,
   formatCurrencyWithCode,
   normalizeCurrencyCode,
+  resolveAmount,
 } from '../../shared/utils/currency.util';
 import { decodeHtmlEntities } from '../../shared/utils/text.util';
+import {
+  formatMonthDay,
+  getWindowRange,
+  isPastDate,
+} from '../../shared/utils/date.util';
 import {
   hasFoundTransactionForOccurrence,
   isRecurringInstancePending,
@@ -165,6 +173,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RecurringExpensesPanelComponent {
+  private readonly locale = inject(LOCALE_ID);
+
   readonly expenses = input.required<RecurringInstance[]>();
   readonly currency = input<string | null>(null);
   readonly defaultCurrency = input.required<string>();
@@ -174,7 +184,7 @@ export class RecurringExpensesPanelComponent {
 
   readonly sortedExpenses = computed(() => {
     const referenceDate = this.referenceDate();
-    const windowRange = this.getWindowRange();
+    const windowRange = getWindowRange(this.windowStart(), this.windowEnd());
     return this.expenses()
       .filter(
         instance =>
@@ -191,7 +201,7 @@ export class RecurringExpensesPanelComponent {
   readonly totalFormatted = computed(() => {
     const total = this.sortedExpenses().reduce((sum, entry) => {
       const amount = Math.abs(
-        this.resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
+        resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
       );
       return sum + amount;
     }, 0);
@@ -199,6 +209,7 @@ export class RecurringExpensesPanelComponent {
     const displayCurrency = this.displayCurrency();
     return formatCurrency(total, displayCurrency, {
       fallbackCurrency: displayCurrency,
+      locale: this.locale,
     });
   });
 
@@ -214,7 +225,7 @@ export class RecurringExpensesPanelComponent {
 
   getFormattedAmount(entry: RecurringInstance): string {
     const value = Math.abs(
-      this.resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
+      resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
     );
     const baseCurrency = this.displayCurrency();
     const displayCurrency = this.resolveDisplayCurrency(
@@ -224,51 +235,16 @@ export class RecurringExpensesPanelComponent {
     return formatCurrencyWithCode(value, displayCurrency, {
       fallbackCurrency: baseCurrency,
       originalCurrency: entry.expense.currency,
+      locale: this.locale,
     });
   }
 
   getFormattedDate(entry: RecurringInstance): string {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const date = entry.occurrenceDate;
-    return `${months[date.getMonth()]} ${date.getDate().toString()}`;
+    return formatMonthDay(entry.occurrenceDate, this.locale);
   }
 
   isPastDue(entry: RecurringInstance): boolean {
-    const reference = new Date(this.referenceDate());
-    reference.setHours(0, 0, 0, 0);
-    const occurrence = new Date(entry.occurrenceDate);
-    occurrence.setHours(0, 0, 0, 0);
-    return occurrence.getTime() < reference.getTime();
-  }
-
-  private resolveAmount(amount: string, toBase: number | null): number {
-    const converted =
-      typeof toBase === 'number' ? toBase : Number.parseFloat(amount);
-    return Number.isFinite(converted) ? converted : 0;
-  }
-
-  private getWindowRange(): { start: Date; end: Date } | null {
-    const start = new Date(this.windowStart());
-    const end = new Date(this.windowEnd());
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return null;
-    }
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
+    return isPastDate(entry.occurrenceDate, this.referenceDate());
   }
 
   private displayCurrency(): string {

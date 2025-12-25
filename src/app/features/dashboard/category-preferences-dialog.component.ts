@@ -21,6 +21,7 @@ import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { VersionService } from '../../core/services/version.service';
+import { toPercent } from '../../shared/utils/number.util';
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -79,7 +80,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     return this.allCategories().filter(cat => hidden.has(cat.categoryId));
   });
 
-  readonly warnAtPercent = computed(() => Math.round(this.warnAtRatio() * 100));
+  readonly warnAtPercent = computed(() => toPercent(this.warnAtRatio()));
 
   constructor() {
     // Handle dialog open/close based on input signal

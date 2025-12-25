@@ -4,8 +4,9 @@ import {
   signal,
   computed,
   inject,
+  LOCALE_ID,
 } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule, NgOptimizedImage, formatDate } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -24,6 +25,7 @@ import {
   formatCurrency,
   resolveAmount,
 } from '../../shared/utils/currency.util';
+import { getWindowRange } from '../../shared/utils/date.util';
 import { filterPendingInstances } from '../../shared/utils/recurring.util';
 
 type StatusFilter = 'all' | 'over' | 'at-risk' | 'on-track';
@@ -50,8 +52,7 @@ export class DashboardPageComponent {
   readonly budgetService = inject(BudgetService);
   readonly authService = inject(AuthService);
   readonly router = inject(Router);
-  readonly locale =
-    typeof navigator === 'undefined' ? 'en-US' : navigator.language;
+  private readonly locale = inject(LOCALE_ID);
 
   // Local state
   protected readonly activeTab = signal<TabType>('expenses');
@@ -82,6 +83,16 @@ export class DashboardPageComponent {
     this.activeTab() === 'expenses' ? this.expenses() : this.incomes()
   );
 
+  protected readonly allExpenses = computed(() => [
+    ...this.expenses(),
+    ...this.hiddenExpenses(),
+  ]);
+
+  protected readonly allIncomes = computed(() => [
+    ...this.incomes(),
+    ...this.hiddenIncomes(),
+  ]);
+
   protected readonly hiddenItems = computed(() =>
     this.activeTab() === 'expenses'
       ? this.hiddenExpenses()
@@ -105,103 +116,27 @@ export class DashboardPageComponent {
   );
 
   protected readonly totalExpenseSpent = computed(() => {
-    let total = 0;
-    for (const item of this.expenses()) {
-      total += item.spent;
-    }
-    for (const item of this.hiddenExpenses()) {
-      total += item.spent;
-    }
-    return total;
+    return this.sumBy(this.allExpenses(), item => item.spent);
   });
 
   protected readonly totalExpenseBudget = computed(() => {
-    let total = 0;
-    for (const item of this.expenses()) {
-      total += item.budgetAmount;
-    }
-    for (const item of this.hiddenExpenses()) {
-      total += item.budgetAmount;
-    }
-    return total;
+    return this.sumBy(this.allExpenses(), item => item.budgetAmount);
   });
 
   protected readonly totalIncomeSpent = computed(() => {
-    let total = 0;
-    for (const item of this.incomes()) {
-      total += Math.abs(item.spent);
-    }
-    for (const item of this.hiddenIncomes()) {
-      total += Math.abs(item.spent);
-    }
-    return total;
+    return this.sumBy(this.allIncomes(), item => Math.abs(item.spent));
   });
 
   protected readonly totalIncomeBudget = computed(() => {
-    let total = 0;
-    for (const item of this.incomes()) {
-      total += Math.abs(item.budgetAmount);
-    }
-    for (const item of this.hiddenIncomes()) {
-      total += Math.abs(item.budgetAmount);
-    }
-    return total;
+    return this.sumBy(this.allIncomes(), item => Math.abs(item.budgetAmount));
   });
 
   protected readonly totalExpenseUpcoming = computed(() => {
-    const recurring = this.recurringByCategory();
-    const referenceDate = this.referenceDate();
-    const windowRange = this.getWindowRange();
-    const allExpenses = [...this.expenses(), ...this.hiddenExpenses()];
-    const expenseMap = new Map(allExpenses.map(exp => [exp.categoryId, exp]));
-
-    let total = 0;
-    for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = filterPendingInstances(instances, {
-        referenceDate,
-        windowRange: windowRange ?? undefined,
-      });
-      if (pendingInstances.length === 0) {
-        continue;
-      }
-      const category = expenseMap.get(categoryId);
-      if (category && !category.isIncome) {
-        for (const inst of pendingInstances) {
-          total += Math.abs(
-            resolveAmount(inst.expense.amount, inst.expense.to_base ?? null)
-          );
-        }
-      }
-    }
-    return total;
+    return this.sumUpcomingTotal(this.allExpenses(), false);
   });
 
   protected readonly totalIncomeUpcoming = computed(() => {
-    const recurring = this.recurringByCategory();
-    const referenceDate = this.referenceDate();
-    const windowRange = this.getWindowRange();
-    const allIncomes = [...this.incomes(), ...this.hiddenIncomes()];
-    const incomeMap = new Map(allIncomes.map(inc => [inc.categoryId, inc]));
-
-    let total = 0;
-    for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = filterPendingInstances(instances, {
-        referenceDate,
-        windowRange: windowRange ?? undefined,
-      });
-      if (pendingInstances.length === 0) {
-        continue;
-      }
-      const category = incomeMap.get(categoryId);
-      if (category?.isIncome) {
-        for (const inst of pendingInstances) {
-          total += Math.abs(
-            resolveAmount(inst.expense.amount, inst.expense.to_base ?? null)
-          );
-        }
-      }
-    }
-    return total;
+    return this.sumUpcomingTotal(this.allIncomes(), true);
   });
 
   protected readonly statusCounts = computed(() => {
@@ -224,6 +159,7 @@ export class DashboardPageComponent {
   protected readonly hiddenTotalFormatted = computed(() =>
     formatCurrency(this.hiddenTotal(), this.currency(), {
       fallbackCurrency: 'USD',
+      locale: this.locale,
     })
   );
 
@@ -281,12 +217,7 @@ export class DashboardPageComponent {
       return 'Waiting for first sync';
     }
 
-    const formatter = new Intl.DateTimeFormat(this.locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-
-    return `Last updated ${formatter.format(timestamp)}`;
+    return `Last updated ${formatDate(timestamp, 'medium', this.locale)}`;
   });
 
   private getFilterDescription(): string | null {
@@ -341,14 +272,42 @@ export class DashboardPageComponent {
     }
   }
 
-  private getWindowRange(): { start: Date; end: Date } | null {
-    const start = new Date(this.startDate());
-    const end = new Date(this.endDate());
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return null;
+  private sumBy(
+    items: BudgetProgress[],
+    selector: (item: BudgetProgress) => number
+  ): number {
+    return items.reduce((total, item) => total + selector(item), 0);
+  }
+
+  private sumUpcomingTotal(
+    categories: BudgetProgress[],
+    isIncome: boolean
+  ): number {
+    const recurring = this.recurringByCategory();
+    const referenceDate = this.referenceDate();
+    const windowRange = getWindowRange(this.startDate(), this.endDate());
+    const categoryMap = new Map(
+      categories.map(category => [category.categoryId, category])
+    );
+
+    let total = 0;
+    for (const [categoryId, instances] of recurring.assigned.entries()) {
+      const pendingInstances = filterPendingInstances(instances, {
+        referenceDate,
+        windowRange: windowRange ?? undefined,
+      });
+      if (pendingInstances.length === 0) {
+        continue;
+      }
+      const category = categoryMap.get(categoryId);
+      if (category?.isIncome === isIncome) {
+        for (const inst of pendingInstances) {
+          total += Math.abs(
+            resolveAmount(inst.expense.amount, inst.expense.to_base ?? null)
+          );
+        }
+      }
     }
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
+    return total;
   }
 }

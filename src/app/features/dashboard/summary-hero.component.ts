@@ -4,11 +4,17 @@ import {
   input,
   computed,
   output,
+  inject,
+  LOCALE_ID,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { formatCurrency } from '../../shared/utils/currency.util';
+import {
+  formatCurrency,
+  FormatCurrencyOptions,
+} from '../../shared/utils/currency.util';
+import { toPercent } from '../../shared/utils/number.util';
 
 @Component({
   selector: 'summary-hero',
@@ -17,6 +23,8 @@ import { formatCurrency } from '../../shared/utils/currency.util';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryHeroComponent {
+  private readonly locale = inject(LOCALE_ID);
+
   readonly monthStart = input.required<string>();
   readonly monthProgressRatio = input.required<number>();
   readonly totalExpenseSpent = input.required<number>();
@@ -31,31 +39,31 @@ export class SummaryHeroComponent {
   readonly logout = output();
 
   readonly monthProgressPercent = computed(() =>
-    Math.round(this.monthProgressRatio() * 100)
+    toPercent(this.monthProgressRatio())
   );
 
   readonly expenseSpentPercent = computed(() => {
     const budget = this.totalExpenseBudget();
     const spent = this.totalExpenseSpent();
-    return budget > 0 ? Math.round((spent / budget) * 100) : 0;
+    return budget > 0 ? toPercent(spent / budget) : 0;
   });
 
   readonly expenseProjectedPercent = computed(() => {
     const budget = this.totalExpenseBudget();
     const projected = this.totalExpenseSpent() + this.totalExpenseUpcoming();
-    return budget > 0 ? Math.round((projected / budget) * 100) : 0;
+    return budget > 0 ? toPercent(projected / budget) : 0;
   });
 
   readonly incomeSpentPercent = computed(() => {
     const budget = this.totalIncomeBudget();
     const spent = this.totalIncomeSpent();
-    return budget > 0 ? Math.round((spent / budget) * 100) : 0;
+    return budget > 0 ? toPercent(spent / budget) : 0;
   });
 
   readonly incomeProjectedPercent = computed(() => {
     const budget = this.totalIncomeBudget();
     const projected = this.totalIncomeSpent() + this.totalIncomeUpcoming();
-    return budget > 0 ? Math.round((projected / budget) * 100) : 0;
+    return budget > 0 ? toPercent(projected / budget) : 0;
   });
 
   readonly expenseRemaining = computed(
@@ -73,43 +81,45 @@ export class SummaryHeroComponent {
   });
 
   readonly expenseSpentFormatted = computed(() =>
-    formatCurrency(this.totalExpenseSpent(), this.currency(), {
-      fallbackCurrency: 'USD',
-    })
+    this.formatValue(this.totalExpenseSpent())
   );
 
   readonly expenseUpcomingFormatted = computed(() =>
-    formatCurrency(this.totalExpenseUpcoming(), this.currency(), {
-      fallbackCurrency: 'USD',
-    })
+    this.formatValue(this.totalExpenseUpcoming())
   );
 
   readonly expenseRemainingFormatted = computed(() =>
-    formatCurrency(this.expenseRemaining(), this.currency(), {
-      fallbackCurrency: 'USD',
-    })
+    this.formatValue(this.expenseRemaining())
   );
 
   readonly incomeSpentFormatted = computed(() =>
-    formatCurrency(this.totalIncomeSpent(), this.currency(), {
-      fallbackCurrency: 'USD',
-    })
+    this.formatValue(this.totalIncomeSpent())
   );
 
   readonly incomeUpcomingFormatted = computed(() =>
-    formatCurrency(this.totalIncomeUpcoming(), this.currency(), {
-      fallbackCurrency: 'USD',
-    })
+    this.formatValue(this.totalIncomeUpcoming())
   );
 
   readonly incomeRemainingFormatted = computed(() =>
-    formatCurrency(this.incomeRemaining(), this.currency(), {
-      fallbackCurrency: 'USD',
-    })
+    this.formatValue(this.incomeRemaining())
   );
 
   readonly monthName = computed(() => {
     const date = new Date(this.monthStart());
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return formatDate(date, 'MMMM y', this.locale);
   });
+
+  private formatValue(
+    value: number,
+    options: FormatCurrencyOptions = {}
+  ): string {
+    return formatCurrency(value, this.currency(), {
+      fallbackCurrency: 'USD',
+      locale: this.locale,
+      ...options,
+    });
+  }
 }

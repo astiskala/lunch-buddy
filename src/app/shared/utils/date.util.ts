@@ -1,3 +1,5 @@
+import { formatDate } from '@angular/common';
+
 export interface MonthRange {
   start: Date;
   end: Date;
@@ -33,6 +35,35 @@ export const startOfDay = (date: Date): Date => {
   result.setHours(0, 0, 0, 0);
   return result;
 };
+
+export const endOfDay = (date: Date): Date => {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
+};
+
+export const getWindowRange = (
+  windowStart: string,
+  windowEnd: string
+): MonthRange | null => {
+  const start = parseIsoDay(windowStart);
+  const end = parseIsoDay(windowEnd);
+
+  if (!start || !end) {
+    return null;
+  }
+
+  return {
+    start,
+    end: endOfDay(end),
+  };
+};
+
+export const formatMonthDay = (date: Date, locale: string): string =>
+  formatDate(date, 'MMM d', locale);
+
+export const isPastDate = (date: Date, reference: Date): boolean =>
+  startOfDay(date).getTime() < startOfDay(reference).getTime();
 
 export const deriveReferenceDate = (
   windowStart: string,
