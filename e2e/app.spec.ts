@@ -203,14 +203,21 @@ test.describe('Dashboard', () => {
   });
 
   test('should be keyboard navigable', async ({ page }) => {
+    const focusableSelector =
+      'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    await page.locator(focusableSelector).first().waitFor();
+    await page.click('body');
+
     // Press Tab to navigate through interactive elements
     let focusedElementsCount = 0;
 
     for (let i = 0; i < 10; i++) {
       await page.keyboard.press('Tab');
-      const focusedElement = await page.locator(':focus');
+      const activeTag = await page.evaluate(
+        () => document.activeElement?.tagName ?? ''
+      );
 
-      if ((await focusedElement.count()) > 0) {
+      if (activeTag !== '' && activeTag !== 'BODY') {
         focusedElementsCount++;
       }
     }

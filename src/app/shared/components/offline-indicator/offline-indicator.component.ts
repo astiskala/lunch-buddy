@@ -5,7 +5,7 @@ import { OfflineService } from '../../../core/services/offline.service';
 @Component({
   selector: 'app-offline-indicator',
   templateUrl: './offline-indicator.component.html',
-  styleUrl: './offline-indicator.component.scss',
+  styleUrls: ['./offline-indicator.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OfflineIndicatorComponent {

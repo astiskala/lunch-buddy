@@ -9,12 +9,7 @@ export type StatusType = 'over' | 'at-risk' | 'on-track';
 
 @Component({
   selector: 'app-status-badge',
-  imports: [],
-  template: `
-    <div class="status-badge" [attr.data-status]="status()">
-      <span>{{ label() }}</span>
-    </div>
-  `,
+  templateUrl: './status-badge.component.html',
   styleUrls: ['./status-badge.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

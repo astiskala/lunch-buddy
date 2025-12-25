@@ -5,35 +5,7 @@ export type ProgressBarStatus = 'success' | 'warning' | 'error' | 'neutral';
 
 @Component({
   selector: 'app-progress-bar',
-  imports: [],
-  template: `
-    <div
-      class="progress-bar-wrapper"
-      [class]="variant()"
-      [style.height.px]="height()">
-      <div
-        class="progress spent"
-        [style.width.%]="spentPercent()"
-        [attr.data-status]="status()"></div>
-
-      @if (projectedPercent() > spentPercent()) {
-        <div
-          class="progress projected"
-          [style.width.%]="projectedPercent() - spentPercent()"
-          [style.left.%]="spentPercent()"
-          [attr.data-status]="status()"></div>
-      }
-
-      @if (monthProgressPercent() !== undefined) {
-        <div
-          class="month-indicator"
-          [style.left.%]="monthProgressPercent()"
-          [attr.title]="'Month progress: ' + monthProgressPercent() + '%'">
-          <div class="indicator-line"></div>
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './progress-bar.component.html',
   styleUrls: ['./progress-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -16,11 +16,20 @@
     border: 1px solid rgb(26 32 44 / 28%);
     border-radius: 12px;
     height: 24px;
+
+    .progress.spent {
+      border-radius: 12px;
+    }
+
+    .progress.projected {
+      border-radius: 12px;
+    }
   }
 
   .progress {
     position: absolute;
     top: 0;
+    left: 0;
     height: 100%;
     transition: width 0.3s ease;
 
@@ -30,47 +39,39 @@
 
       // Default colors (neutral/hero)
       background: var(--color-secondary-dark);
-      opacity: 0.8;
 
       // Status colors
       &[data-status='success'] {
         background: var(--color-primary-dark);
-        opacity: 1;
       }
 
       &[data-status='warning'] {
         background: var(--color-secondary-dark);
-        opacity: 1;
       }
 
       &[data-status='error'] {
         background: var(--color-error);
-        opacity: 1;
       }
     }
 
     &.projected {
       z-index: 1;
-      border-radius: 0 10px 10px 0;
+      border-radius: 10px;
 
       // Default colors (neutral/hero)
       background: var(--color-secondary-light);
-      opacity: 0.8;
 
       // Status colors
       &[data-status='success'] {
-        background: rgb(68 149 140 / 40%);
-        opacity: 1;
+        background: rgb(68 149 140 / 55%);
       }
 
       &[data-status='warning'] {
-        background: rgb(240 184 0 / 35%);
-        opacity: 1;
+        background: rgb(240 184 0 / 50%);
       }
 
       &[data-status='error'] {
-        background: rgb(244 67 54 / 35%);
-        opacity: 1;
+        background: rgb(244 67 54 / 50%);
       }
     }
   }

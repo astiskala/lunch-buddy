@@ -27,44 +27,7 @@ import {
 
 @Component({
   selector: 'recurring-expenses-panel',
-  imports: [],
-  template: `
-    @if (sortedExpenses().length > 0) {
-      <div class="recurring-panel">
-        <div class="panel-header">
-          <h3>Upcoming recurring expenses</h3>
-          <p class="total">Unassigned total: {{ totalFormatted() }}</p>
-        </div>
-        <div class="expenses-list">
-          @for (
-            entry of sortedExpenses();
-            track entry.expense.id + '-' + entry.occurrenceDate.toISOString()
-          ) {
-            <div class="expense-item">
-              <div class="expense-info">
-                <div class="payee">{{ getPayee(entry) }}</div>
-                @if (getDescription(entry)) {
-                  <div class="description">{{ getDescription(entry) }}</div>
-                }
-                <div class="badges">
-                  <span class="badge upcoming">
-                    {{ isPastDue(entry) ? 'Due' : 'Upcoming' }}
-                  </span>
-                  @if (entry.expense.type === 'suggested') {
-                    <span class="badge suggested">Suggested</span>
-                  }
-                </div>
-              </div>
-              <div class="expense-amount">
-                <div class="amount">{{ getFormattedAmount(entry) }}</div>
-                <div class="date">{{ getFormattedDate(entry) }}</div>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    }
-  `,
+  templateUrl: './recurring-expenses-panel.component.html',
   styleUrls: ['./recurring-expenses-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

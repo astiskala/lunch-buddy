@@ -80,7 +80,8 @@
     flex: 1 1 0;
     min-width: 0;
 
-    .mat-button-toggle-button {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    &::ng-deep .mat-button-toggle-button {
       min-height: 44px;
       border-radius: 999px;
       padding: 0 24px;
@@ -96,29 +97,35 @@
     }
 
     @media (hover: hover) and (pointer: fine) {
-      &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
+      /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+      &:not(.mat-button-toggle-disabled)::ng-deep
+        .mat-button-toggle-button:hover {
         background: rgb(68 149 140 / 12%);
         color: var(--color-primary-dark);
       }
     }
 
-    &.mat-button-toggle-checked .mat-button-toggle-button {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    &.mat-button-toggle-checked::ng-deep .mat-button-toggle-button {
       background: var(--color-primary);
       color: #fff;
       box-shadow: 0 4px 12px rgb(68 149 140 / 25%);
     }
 
-    .mat-button-toggle-button:focus-visible {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    &::ng-deep .mat-button-toggle-button:focus-visible {
       outline: 2px solid rgb(68 149 140 / 45%);
       outline-offset: 2px;
     }
 
-    .mdc-button__ripple,
-    .mat-mdc-button-touch-target {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    &::ng-deep .mdc-button__ripple,
+    &::ng-deep .mat-mdc-button-touch-target {
       border-radius: 999px;
     }
 
-    &.mat-button-toggle-disabled .mat-button-toggle-button {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+    &.mat-button-toggle-disabled::ng-deep .mat-button-toggle-button {
       color: var(--color-text-muted);
       opacity: 0.6;
     }
@@ -353,18 +360,22 @@ category-progress-list {
 
     .segmented-option {
       @media (hover: hover) and (pointer: fine) {
-        &:not(.mat-button-toggle-disabled) .mat-button-toggle-button:hover {
+        /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+        &:not(.mat-button-toggle-disabled)::ng-deep
+          .mat-button-toggle-button:hover {
           background: rgb(68 149 140 / 26%);
           color: #0b1d1c;
         }
       }
 
-      &.mat-button-toggle-checked .mat-button-toggle-button {
+      /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+      &.mat-button-toggle-checked::ng-deep .mat-button-toggle-button {
         background: rgb(68 149 140 / 85%);
         color: #0b1d1c;
       }
 
-      .mat-button-toggle-button:focus-visible {
+      /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+      &::ng-deep .mat-button-toggle-button:focus-visible {
         outline-color: rgb(68 149 140 / 70%);
       }
     }
