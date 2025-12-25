@@ -24,6 +24,7 @@
       "resources": {
         "files": [
           "/assets/**",
+          "/fonts/**",
           "/icons/**",
           "/apple-touch-icon.png",
           "/favicon.ico",
