@@ -8,7 +8,6 @@ import {
   effect,
   LOCALE_ID,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
@@ -67,12 +66,7 @@ const AMOUNT_RELATIVE_TOLERANCE = 0.2;
 
 @Component({
   selector: 'category-card',
-  imports: [
-    CommonModule,
-    MatIconModule,
-    ProgressBarComponent,
-    StatusBadgeComponent,
-  ],
+  imports: [MatIconModule, ProgressBarComponent, StatusBadgeComponent],
   templateUrl: './category-card.component.html',
   styleUrls: ['./category-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

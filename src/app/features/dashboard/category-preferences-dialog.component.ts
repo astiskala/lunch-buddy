@@ -11,7 +11,6 @@ import {
   ElementRef,
   effect,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,13 +24,7 @@ import { toPercent } from '../../shared/utils/number.util';
 
 @Component({
   selector: 'category-preferences-dialog',
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
-  ],
+  imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
   templateUrl: './category-preferences-dialog.component.html',
   styleUrls: ['./category-preferences-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

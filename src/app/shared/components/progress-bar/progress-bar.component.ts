@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export type ProgressBarVariant = 'default' | 'hero';
 export type ProgressBarStatus = 'success' | 'warning' | 'error' | 'neutral';
 
 @Component({
   selector: 'app-progress-bar',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div
       class="progress-bar-wrapper"

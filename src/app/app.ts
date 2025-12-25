@@ -4,7 +4,6 @@ import {
   inject,
   OnInit,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,13 +13,13 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, map } from 'rxjs';
 import { BackgroundSyncService } from './core/services/background-sync.service';
 import { AppUpdateService } from './core/services/app-update.service';
-import { OfflineIndicatorComponent } from './shared/components/offline-indicator.component';
+import { OfflineIndicatorComponent } from './shared/components/offline-indicator/offline-indicator.component';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     RouterOutlet,
     MatToolbarModule,
     MatIconModule,

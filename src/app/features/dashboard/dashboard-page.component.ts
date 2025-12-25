@@ -6,7 +6,7 @@ import {
   inject,
   LOCALE_ID,
 } from '@angular/core';
-import { CommonModule, NgOptimizedImage, formatDate } from '@angular/common';
+import { NgOptimizedImage, formatDate } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -34,7 +34,6 @@ type TabType = 'expenses' | 'income';
 @Component({
   selector: 'dashboard-page',
   imports: [
-    CommonModule,
     NgOptimizedImage,
     MatIconModule,
     MatButtonModule,

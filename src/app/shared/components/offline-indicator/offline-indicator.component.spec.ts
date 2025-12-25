@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { OfflineIndicatorComponent } from './offline-indicator.component';
-import { OfflineService } from '../../core/services/offline.service';
+import { OfflineService } from '../../../core/services/offline.service';
 
 describe('OfflineIndicatorComponent', () => {
   let component: OfflineIndicatorComponent;

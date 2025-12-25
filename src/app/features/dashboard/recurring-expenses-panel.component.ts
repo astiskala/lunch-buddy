@@ -6,7 +6,6 @@ import {
   inject,
   LOCALE_ID,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
 import {
   formatCurrency,
@@ -28,7 +27,7 @@ import {
 
 @Component({
   selector: 'recurring-expenses-panel',
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (sortedExpenses().length > 0) {
       <div class="recurring-panel">

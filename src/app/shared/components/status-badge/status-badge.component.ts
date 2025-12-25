@@ -4,14 +4,12 @@ import {
   input,
   computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 export type StatusType = 'over' | 'at-risk' | 'on-track';
 
 @Component({
   selector: 'app-status-badge',
-  standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="status-badge" [attr.data-status]="status()">
       <span>{{ label() }}</span>

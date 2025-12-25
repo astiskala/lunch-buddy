@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { CategoryCardComponent } from './category-card.component';
 import {
   BudgetProgress,
@@ -8,7 +7,7 @@ import {
 
 @Component({
   selector: 'category-progress-list',
-  imports: [CommonModule, CategoryCardComponent],
+  imports: [CategoryCardComponent],
   template: `
     @if (items().length === 0) {
       <p class="empty-message">{{ emptyMessage() }}</p>

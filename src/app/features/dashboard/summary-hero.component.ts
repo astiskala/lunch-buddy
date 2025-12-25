@@ -7,7 +7,7 @@ import {
   inject,
   LOCALE_ID,
 } from '@angular/core';
-import { CommonModule, formatDate } from '@angular/common';
+import { formatDate } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
@@ -58,7 +58,7 @@ const calculateBudgetMetrics = (
 
 @Component({
   selector: 'summary-hero',
-  imports: [CommonModule, MatIconModule, MatButtonModule, ProgressBarComponent],
+  imports: [MatIconModule, MatButtonModule, ProgressBarComponent],
   templateUrl: './summary-hero.component.html',
   styleUrls: ['./summary-hero.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

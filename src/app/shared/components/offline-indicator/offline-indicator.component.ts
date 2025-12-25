@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { OfflineService } from '../../core/services/offline.service';
+import { OfflineService } from '../../../core/services/offline.service';
 
 @Component({
   selector: 'app-offline-indicator',
