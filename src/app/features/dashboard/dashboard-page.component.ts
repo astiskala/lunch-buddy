@@ -265,7 +265,7 @@ export class DashboardPageComponent {
 
   async logout(): Promise<void> {
     try {
-      this.authService.clearApiKey();
+      await this.authService.clearApiKey();
     } finally {
       await this.router.navigate(['/login']);
     }

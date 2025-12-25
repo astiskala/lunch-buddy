@@ -89,9 +89,9 @@ describe('AuthService', () => {
     expect(newService.getApiKey()).toBe(TEST_API_KEY);
   });
 
-  it('should remove API key from localStorage when cleared', () => {
+  it('should remove API key from localStorage when cleared', async () => {
     service.setApiKey(TEST_API_KEY);
-    service.clearApiKey();
+    await service.clearApiKey();
 
     expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
   });

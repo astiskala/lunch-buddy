@@ -15,7 +15,7 @@ describe('DashboardPageComponent - Unit Tests', () => {
   }
 
   interface AuthServiceStub {
-    clearApiKey: () => void;
+    clearApiKey: () => Promise<void>;
   }
 
   interface RouterStub {
@@ -35,6 +35,7 @@ describe('DashboardPageComponent - Unit Tests', () => {
     mockAuthService = jasmine.createSpyObj<AuthServiceStub>('AuthService', [
       'clearApiKey',
     ]);
+    mockAuthService.clearApiKey.and.resolveTo();
 
     mockRouter = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
     mockRouter.navigate.and.resolveTo(true);

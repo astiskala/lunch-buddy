@@ -2,6 +2,7 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
+import { SiteDataService } from './site-data.service';
 import { resolveLunchMoneyApiKey } from '../../../environments/resolve-api-key';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
@@ -12,6 +13,7 @@ const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
+  private readonly siteDataService = inject(SiteDataService);
   private readonly apiKey = new BehaviorSubject<string | null>(null);
   private initialized = false;
 
@@ -37,11 +39,12 @@ export class AuthService {
   }
 
   /**
-   * Clear the API key (logout)
+   * Clear the API key (logout) and purge cached site data.
    */
-  clearApiKey(): void {
+  async clearApiKey(): Promise<void> {
     this.removeApiKey();
     this.apiKey.next(null);
+    await this.siteDataService.clearSiteData();
   }
 
   /**
