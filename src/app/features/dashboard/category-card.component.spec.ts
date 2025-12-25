@@ -283,21 +283,99 @@ describe('CategoryCardComponent', () => {
       currency: 'USD',
     };
 
-    const incomeEntry: TestActivityEntry = {
-      ...expenseEntry,
-      id: 'txn-2',
-      label: 'Paycheck',
-      amount: -42,
-    };
-
     const upcomingEntry: TestActivityEntry = {
       ...expenseEntry,
       kind: 'upcoming',
     };
 
+    setupComponent(fixture, { item: mockItem });
     expect(component.getAmountColor(expenseEntry)).toBe('error');
+
+    const incomeItem: BudgetProgress = {
+      ...mockItem,
+      isIncome: true,
+    };
+    const incomeEntry: TestActivityEntry = {
+      ...expenseEntry,
+      id: 'txn-2',
+      label: 'Paycheck',
+      amount: 42,
+    };
+    setupComponent(fixture, { item: incomeItem });
     expect(component.getAmountColor(incomeEntry)).toBe('success');
     expect(component.getAmountColor(upcomingEntry)).toBe('warning');
+  });
+
+  it('groups activity entries by date', () => {
+    const txn1 = buildTransaction({
+      id: 10,
+      date: '2025-10-05',
+      amount: '-12.00',
+      to_base: -12,
+    });
+    const txn2 = buildTransaction({
+      id: 11,
+      date: '2025-10-05',
+      amount: '-5.00',
+      to_base: -5,
+    });
+    const txn3 = buildTransaction({
+      id: 12,
+      date: '2025-10-02',
+      amount: '-8.00',
+      to_base: -8,
+    });
+
+    const itemWithTxns: BudgetProgress = {
+      ...mockItem,
+      transactionList: [txn1, txn2, txn3],
+    };
+
+    setupComponent(fixture, {
+      item: itemWithTxns,
+      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+    });
+
+    const groups = component.activityGroups();
+    expect(groups.length).toBe(2);
+    expect(groups[0].entries.length).toBe(2);
+    expect(groups[1].entries.length).toBe(1);
+
+    const firstGroupDates = new Set(
+      groups[0].entries.map(entry => entry.date?.getTime() ?? 0)
+    );
+    expect(firstGroupDates.size).toBe(1);
+
+    const groupTimes = groups.map(
+      group => group.entries[0].date?.getTime() ?? -Infinity
+    );
+    expect(groupTimes[0]).toBeGreaterThan(groupTimes[1]);
+  });
+
+  it('shows original amount when transaction currency differs', () => {
+    const foreignTxn = buildTransaction({
+      id: 55,
+      date: '2025-10-03',
+      amount: '-20.00',
+      currency: 'SGD',
+      to_base: -15,
+    });
+
+    const itemWithTxn: BudgetProgress = {
+      ...mockItem,
+      transactionList: [foreignTxn],
+    };
+
+    setupComponent(fixture, {
+      item: itemWithTxn,
+      defaultCurrency: 'AUD',
+      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+    });
+
+    const entry = component.activityEntries()[0];
+    expect(component.shouldShowOriginalAmount(entry)).toBeTrue();
+    const formatted = component.formatOriginalAmount(entry);
+    expect(formatted).toContain('SGD');
   });
 
   it('should toggle details when clicked', () => {

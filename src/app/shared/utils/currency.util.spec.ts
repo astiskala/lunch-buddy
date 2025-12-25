@@ -53,12 +53,12 @@ describe('Currency Utils', () => {
   });
 
   describe('formatCurrencyWithCode', () => {
-    it('appends original currency code when different from display currency', () => {
+    it('appends display currency code when original differs', () => {
       const result = formatCurrencyWithCode(100, 'USD', {
         originalCurrency: 'eur',
       });
       expect(result).toContain('USD');
-      expect(result).toContain('EUR');
+      expect(result).not.toContain('EUR');
     });
 
     it('omits code when currencies align', () => {

@@ -35,6 +35,7 @@ export interface FormatCurrencyOptions {
   readonly fallbackCurrency?: string;
   readonly minimumFractionDigits?: number;
   readonly maximumFractionDigits?: number;
+  readonly currencyDisplay?: 'symbol' | 'narrowSymbol' | 'code' | 'name';
 }
 
 export const formatCurrency = (
@@ -47,7 +48,7 @@ export const formatCurrency = (
     currency: resolveCurrency(currency, options.fallbackCurrency),
     minimumFractionDigits: options.minimumFractionDigits ?? 2,
     maximumFractionDigits: options.maximumFractionDigits ?? 2,
-    currencyDisplay: 'narrowSymbol',
+    currencyDisplay: options.currencyDisplay ?? 'narrowSymbol',
   }).format(value);
 
 export interface FormatCurrencyWithCodeOptions extends FormatCurrencyOptions {
@@ -68,7 +69,7 @@ export const formatCurrencyWithCode = (
     originalCurrency.length > 0 &&
     originalCurrency !== displayCurrency
   ) {
-    return `${formatted} ${displayCurrency} ${originalCurrency}`;
+    return `${formatted} ${displayCurrency}`;
   }
 
   return formatted;

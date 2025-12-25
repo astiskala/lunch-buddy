@@ -216,9 +216,13 @@ export class RecurringExpensesPanelComponent {
     const value = Math.abs(
       this.resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
     );
-    const displayCurrency = this.displayCurrency();
+    const baseCurrency = this.displayCurrency();
+    const displayCurrency = this.resolveDisplayCurrency(
+      entry.expense.currency,
+      entry.expense.to_base ?? null
+    );
     return formatCurrencyWithCode(value, displayCurrency, {
-      fallbackCurrency: displayCurrency,
+      fallbackCurrency: baseCurrency,
       originalCurrency: entry.expense.currency,
     });
   }
@@ -273,5 +277,16 @@ export class RecurringExpensesPanelComponent {
       normalizeCurrencyCode(this.defaultCurrency()) ??
       null;
     return preferred ?? 'USD';
+  }
+
+  private resolveDisplayCurrency(
+    originalCurrency: string | null,
+    toBase: number | null
+  ): string {
+    const baseCurrency = this.displayCurrency();
+    if (Number.isFinite(toBase)) {
+      return baseCurrency;
+    }
+    return normalizeCurrencyCode(originalCurrency) ?? baseCurrency;
   }
 }

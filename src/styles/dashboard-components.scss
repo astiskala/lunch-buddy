@@ -358,7 +358,8 @@ category-card {
         .group-name {
           margin: 4px 0 0;
           font-size: 13px;
-          color: var(--color-text-muted);
+          color: var(--color-text-secondary);
+          font-weight: 500;
         }
       }
 
@@ -603,10 +604,26 @@ category-card {
       .activity-list {
         display: flex;
         flex-direction: column;
+        gap: 12px;
+      }
+
+      .activity-group {
+        display: flex;
+        flex-direction: column;
         gap: 1px;
         background: var(--color-bg-tertiary);
         border-radius: 8px;
         overflow: hidden;
+      }
+
+      .activity-date {
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--color-text-secondary);
+        background: var(--color-bg-tertiary);
       }
 
       .activity-item {
@@ -614,7 +631,7 @@ category-card {
         padding: 12px;
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 16px;
 
         .activity-info {
@@ -654,6 +671,8 @@ category-card {
             color: var(--color-text-muted);
 
             .notes {
+              color: var(--color-text-secondary);
+              font-weight: 500;
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
@@ -662,9 +681,20 @@ category-card {
         }
 
         .activity-amount {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+          align-self: center;
           font-weight: 700;
           font-size: 14px;
           white-space: nowrap;
+
+          .amount-secondary {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+          }
 
           &[data-color='warning'] {
             color: var(--color-secondary-dark);

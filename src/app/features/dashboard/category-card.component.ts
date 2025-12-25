@@ -19,7 +19,6 @@ import { LoggerService } from '../../core/services/logger.service';
 import { OfflineService } from '../../core/services/offline.service';
 import {
   formatCurrency,
-  formatCurrencyWithCode,
   normalizeCurrencyCode,
   resolveAmount,
 } from '../../shared/utils/currency.util';
@@ -39,6 +38,13 @@ interface ActivityEntry {
   amount: number;
   currency: string | null;
   originalCurrency?: string | null;
+  originalAmount?: number | null;
+}
+
+interface ActivityGroup {
+  id: string;
+  label: string;
+  entries: ActivityEntry[];
 }
 
 /**
@@ -47,6 +53,20 @@ interface ActivityEntry {
  * the amounts are considered to align.
  */
 const AMOUNT_RELATIVE_TOLERANCE = 0.2;
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 @Component({
   selector: 'category-card',
@@ -164,6 +184,24 @@ export class CategoryCardComponent {
       ...recurringEntries,
     ];
     return this.sortEntriesByDateDescending(entries);
+  });
+
+  readonly activityGroups = computed(() => {
+    const groups: ActivityGroup[] = [];
+    for (const entry of this.activityEntries()) {
+      const key = this.getActivityGroupKey(entry.date);
+      const current = groups.at(-1);
+      if (current?.id === key) {
+        current.entries.push(entry);
+      } else {
+        groups.push({
+          id: key,
+          label: this.formatDate(entry.date),
+          entries: [entry],
+        });
+      }
+    }
+    return groups;
   });
 
   readonly upcomingRecurringTotal = computed(() => {
@@ -285,7 +323,6 @@ export class CategoryCardComponent {
   private convertTransactionsToEntries(
     transactions: Transaction[]
   ): ActivityEntry[] {
-    const defaultCurrency = this.normalizedDefaultCurrency();
     const isIncomeCategory = this.safeItem()?.isIncome ?? false;
     return transactions.map(transaction => {
       const rawAmount = resolveAmount(
@@ -299,6 +336,11 @@ export class CategoryCardComponent {
       const notes = transaction.notes
         ? decodeHtmlEntities(transaction.notes)
         : null;
+      const originalAmount = this.parseAmountValue(transaction.amount);
+      const displayCurrency = this.resolveEntryCurrency(
+        transaction.currency,
+        transaction.to_base ?? null
+      );
 
       return {
         id: `txn-${transaction.id.toString()}`,
@@ -307,8 +349,9 @@ export class CategoryCardComponent {
         label,
         notes,
         amount,
-        currency: defaultCurrency,
+        currency: displayCurrency,
         originalCurrency: transaction.currency,
+        originalAmount,
       };
     });
   }
@@ -335,7 +378,6 @@ export class CategoryCardComponent {
   }): ActivityEntry[] {
     const { recurring, context } = params;
     const entries: ActivityEntry[] = [];
-    const defaultCurrency = this.normalizedDefaultCurrency();
     const isIncomeCategory = this.safeItem()?.isIncome ?? false;
 
     for (const instance of recurring) {
@@ -351,6 +393,11 @@ export class CategoryCardComponent {
       const payee = decodeHtmlEntities(instance.expense.payee).trim();
       const label = payee.length > 0 ? payee : 'Recurring expense';
       const notes = decodeHtmlEntities(instance.expense.description);
+      const originalAmount = this.parseAmountValue(instance.expense.amount);
+      const displayCurrency = this.resolveEntryCurrency(
+        instance.expense.currency,
+        instance.expense.to_base ?? null
+      );
 
       entries.push({
         id: `recurring-${instance.expense.id.toString()}`,
@@ -359,8 +406,9 @@ export class CategoryCardComponent {
         label,
         notes,
         amount,
-        currency: defaultCurrency,
+        currency: displayCurrency,
         originalCurrency: instance.expense.currency,
+        originalAmount,
       });
     }
 
@@ -381,36 +429,34 @@ export class CategoryCardComponent {
     const value = Math.abs(entry.amount);
     const defaultCurrency = this.normalizedDefaultCurrency();
 
-    return formatCurrencyWithCode(value, entry.currency, {
+    return formatCurrency(value, entry.currency, {
       fallbackCurrency: defaultCurrency,
-      originalCurrency: entry.originalCurrency,
     });
   }
 
-  formatDate(entry: ActivityEntry): string {
-    if (!entry.date) return '—';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return `${months[entry.date.getMonth()]} ${entry.date.getDate().toString()}`;
+  formatOriginalAmount(entry: ActivityEntry): string {
+    const originalAmount = entry.originalAmount;
+    if (originalAmount === null || originalAmount === undefined) {
+      return '';
+    }
+    const defaultCurrency = this.normalizedDefaultCurrency();
+    const originalCurrency = normalizeCurrencyCode(entry.originalCurrency);
+    return formatCurrency(Math.abs(originalAmount), originalCurrency, {
+      fallbackCurrency: defaultCurrency,
+      currencyDisplay: 'code',
+    });
+  }
+
+  formatDate(date: Date | null): string {
+    if (!date) return '—';
+    return `${MONTHS[date.getMonth()]} ${date.getDate().toString()}`;
   }
 
   getAmountColor(entry: ActivityEntry): string {
     if (entry.kind === 'upcoming') return 'warning';
     const isIncomeCategory = this.safeItem()?.isIncome ?? false;
     if (isIncomeCategory) {
-      return entry.amount < 0 ? 'success' : 'error';
+      return entry.amount >= 0 ? 'success' : 'error';
     }
     return entry.amount >= 0 ? 'error' : 'success';
   }
@@ -421,6 +467,18 @@ export class CategoryCardComponent {
 
   shouldShowUpcomingBadge(entry: ActivityEntry): boolean {
     return entry.kind === 'upcoming';
+  }
+
+  shouldShowOriginalAmount(entry: ActivityEntry): boolean {
+    const originalCurrency = normalizeCurrencyCode(entry.originalCurrency);
+    const displayCurrency = normalizeCurrencyCode(entry.currency);
+    if (!originalCurrency || !displayCurrency) {
+      return false;
+    }
+    if (originalCurrency === displayCurrency) {
+      return false;
+    }
+    return entry.originalAmount !== null && entry.originalAmount !== undefined;
   }
 
   private isPastDue(entry: ActivityEntry): boolean {
@@ -447,7 +505,6 @@ export class CategoryCardComponent {
     transactions: Transaction[],
     windowRange: { start: Date; end: Date } | null
   ): ActivityEntry[] {
-    const defaultCurrency = this.normalizedDefaultCurrency();
     const entries: ActivityEntry[] = [];
     const isIncomeCategory = this.safeItem()?.isIncome ?? false;
 
@@ -465,6 +522,11 @@ export class CategoryCardComponent {
       const payee = decodeHtmlEntities(instance.expense.payee).trim();
       const label = payee.length > 0 ? payee : 'Recurring expense';
       const notes = decodeHtmlEntities(instance.expense.description);
+      const originalAmount = this.parseAmountValue(instance.expense.amount);
+      const displayCurrency = this.resolveEntryCurrency(
+        instance.expense.currency,
+        instance.expense.to_base ?? null
+      );
 
       for (const entry of found) {
         const entryDate = this.toFoundEntryDate(entry.date, windowRange);
@@ -481,8 +543,9 @@ export class CategoryCardComponent {
           label,
           notes,
           amount,
-          currency: defaultCurrency,
+          currency: displayCurrency,
           originalCurrency: instance.expense.currency,
+          originalAmount,
         });
       }
     }
@@ -720,5 +783,29 @@ export class CategoryCardComponent {
 
   private normalizedDefaultCurrency(): string {
     return normalizeCurrencyCode(this.defaultCurrency()) ?? 'USD';
+  }
+
+  private parseAmountValue(value: string | null | undefined): number | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private resolveEntryCurrency(
+    originalCurrency: string | null,
+    toBase: number | null
+  ): string {
+    const fallbackCurrency = this.normalizedDefaultCurrency();
+    if (Number.isFinite(toBase)) {
+      return fallbackCurrency;
+    }
+    return normalizeCurrencyCode(originalCurrency) ?? fallbackCurrency;
+  }
+
+  private getActivityGroupKey(date: Date | null): string {
+    if (!date) return 'unknown';
+    return startOfDay(date).toDateString();
   }
 }

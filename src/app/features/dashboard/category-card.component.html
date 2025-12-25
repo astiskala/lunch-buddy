@@ -89,7 +89,6 @@
 
   @if (showDetails()) {
     <section class="details" aria-label="Category details">
-      <h4>This month's activity</h4>
       @if (isLoadingTransactions()) {
         <div class="loading">Loading transactions...</div>
       } @else if (transactionsLoadError()) {
@@ -118,29 +117,38 @@
         </p>
       } @else {
         <div class="activity-list">
-          @for (entry of activityEntries(); track entry.id) {
-            <div class="activity-item">
-              <div class="activity-info">
-                <div class="activity-header">
-                  <span class="activity-label">{{ entry.label }}</span>
-                  @if (shouldShowUpcomingBadge(entry)) {
-                    <span class="badge upcoming">{{
-                      getUpcomingLabel(entry)
-                    }}</span>
-                  }
+          @for (group of activityGroups(); track group.id) {
+            <div class="activity-group">
+              <div class="activity-date">{{ group.label }}</div>
+              @for (entry of group.entries; track entry.id) {
+                <div class="activity-item">
+                  <div class="activity-info">
+                    <div class="activity-header">
+                      <span class="activity-label">{{ entry.label }}</span>
+                      @if (shouldShowUpcomingBadge(entry)) {
+                        <span class="badge upcoming">{{
+                          getUpcomingLabel(entry)
+                        }}</span>
+                      }
+                    </div>
+                    @if (entry.notes) {
+                      <div class="activity-meta">
+                        <span class="notes">{{ entry.notes }}</span>
+                      </div>
+                    }
+                  </div>
+                  <div
+                    class="activity-amount"
+                    [attr.data-color]="getAmountColor(entry)">
+                    <div class="amount-primary">{{ formatAmount(entry) }}</div>
+                    @if (shouldShowOriginalAmount(entry)) {
+                      <div class="amount-secondary">
+                        {{ formatOriginalAmount(entry) }}
+                      </div>
+                    }
+                  </div>
                 </div>
-                <div class="activity-meta">
-                  <span class="date">{{ formatDate(entry) }}</span>
-                  @if (entry.notes) {
-                    <span class="notes">{{ entry.notes }}</span>
-                  }
-                </div>
-              </div>
-              <div
-                class="activity-amount"
-                [attr.data-color]="getAmountColor(entry)">
-                {{ formatAmount(entry) }}
-              </div>
+              }
             </div>
           }
         </div>

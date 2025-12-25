@@ -161,7 +161,8 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('referenceDate', new Date('2025-11-01'));
     const formatted = component.getFormattedAmount(mockExpense);
     expect(formatted).toContain('25.99');
-    expect(formatted).toContain('EUR');
+    expect(formatted).toContain('USD');
+    expect(formatted).not.toContain('EUR');
   });
 
   it('should handle empty expenses list', () => {
