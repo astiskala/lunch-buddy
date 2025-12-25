@@ -10,6 +10,37 @@ const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 const API_CACHE_NAME = 'lunchbuddy-api-cache-v3';
+const SHELL_CACHE_NAME = 'lunchbuddy-shell-v1';
+const SHELL_CACHE_PREFIX = 'lunchbuddy-shell-';
+const APP_SHELL_URL = '/index.html';
+const OFFLINE_URL = '/offline.html';
+const SHELL_CACHEABLE_DESTINATIONS = new Set([
+  'document',
+  'script',
+  'style',
+  'image',
+  'font',
+  'manifest',
+]);
+const SHELL_ASSET_EXTENSIONS = new Set([
+  '.js',
+  '.css',
+  '.html',
+  '.ico',
+  '.png',
+  '.svg',
+  '.webmanifest',
+  '.txt',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.otf',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.avif',
+  '.gif',
+]);
 // Increase timeout to avoid premature aborts on first-run authenticated requests.
 const NETWORK_TIMEOUT_MS = 5000;
 const CACHE_FALLBACK_DELAY_MS = 500;
@@ -40,6 +71,22 @@ globalThis.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
   if (!isApiRequest(url)) {
+    if (!isAppShellRequest(request, url)) {
+      return;
+    }
+
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    }
+
+    try {
+      event.respondWith(handleAppShellRequest(request));
+    } catch (error) {
+      console.warn(
+        '[WARN] custom-service-worker: failed to respond with cached shell data',
+        error
+      );
+    }
     return;
   }
 
@@ -62,8 +109,13 @@ globalThis.addEventListener('fetch', event => {
 importScripts('./ngsw-worker.js');
 
 // Install event - prepare cache
-globalThis.addEventListener('install', () => {
-  globalThis.skipWaiting();
+globalThis.addEventListener('install', event => {
+  event.waitUntil(
+    (async () => {
+      await globalThis.skipWaiting();
+      await warmShellCache();
+    })()
+  );
 });
 
 // Activate event - cleanup old caches
@@ -73,7 +125,9 @@ globalThis.addEventListener('activate', event => {
       const cacheNames = await caches.keys();
       const cachesToDelete = cacheNames.filter(
         name =>
-          name.startsWith('lunchbuddy-api-cache-') && name !== API_CACHE_NAME
+          (name.startsWith('lunchbuddy-api-cache-') &&
+            name !== API_CACHE_NAME) ||
+          (name.startsWith(SHELL_CACHE_PREFIX) && name !== SHELL_CACHE_NAME)
       );
       await Promise.all(cachesToDelete.map(name => caches.delete(name)));
       await globalThis.clients.claim();
@@ -89,6 +143,124 @@ function isApiRequest(url) {
     (url.hostname === 'localhost' &&
       (url.port === '3000' || url.port === '4600'))
   );
+}
+
+function isAppShellRequest(request, url) {
+  if (request.method !== 'GET') {
+    return false;
+  }
+
+  if (url.origin !== globalThis.location.origin) {
+    return false;
+  }
+
+  if (request.mode === 'navigate') {
+    return true;
+  }
+
+  if (SHELL_CACHEABLE_DESTINATIONS.has(request.destination)) {
+    return true;
+  }
+
+  return hasShellAssetExtension(url.pathname);
+}
+
+function hasShellAssetExtension(pathname) {
+  const lastDot = pathname.lastIndexOf('.');
+  if (lastDot === -1) {
+    return false;
+  }
+  const extension = pathname.slice(lastDot).toLowerCase();
+  return SHELL_ASSET_EXTENSIONS.has(extension);
+}
+
+async function handleAppShellRequest(request) {
+  if (request.mode === 'navigate') {
+    const cachedIndex = await caches.match(APP_SHELL_URL, {
+      ignoreSearch: true,
+    });
+    if (cachedIndex) {
+      return cachedIndex;
+    }
+
+    try {
+      const response = await fetch(request);
+      if (shouldCacheShellResponse(response)) {
+        await storeShellResponse(APP_SHELL_URL, response.clone());
+      }
+      return response;
+    } catch (error) {
+      console.warn(
+        '[WARN] custom-service-worker: navigation fetch failed, serving offline fallback',
+        error
+      );
+      const offlineResponse = await caches.match(OFFLINE_URL, {
+        ignoreSearch: true,
+      });
+      if (offlineResponse) {
+        return offlineResponse;
+      }
+      return new Response('Offline', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain' },
+      });
+    }
+  }
+
+  const cachedResponse = await caches.match(request, { ignoreSearch: true });
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (shouldCacheShellResponse(response)) {
+      await storeShellResponse(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: asset fetch failed, attempting shell cache fallback',
+      error
+    );
+    const fallback = await caches.match(request, { ignoreSearch: true });
+    if (fallback) {
+      return fallback;
+    }
+    return new Response(null, {
+      status: 504,
+      statusText: 'Gateway Timeout',
+    });
+  }
+}
+
+function shouldCacheShellResponse(response) {
+  return !!response?.ok;
+}
+
+async function storeShellResponse(request, response) {
+  try {
+    const cache = await caches.open(SHELL_CACHE_NAME);
+    await cache.put(request, response);
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: failed to cache shell response',
+      error
+    );
+  }
+}
+
+async function warmShellCache() {
+  try {
+    const cache = await caches.open(SHELL_CACHE_NAME);
+    await cache.addAll([APP_SHELL_URL, OFFLINE_URL]);
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: failed to warm shell cache',
+      error
+    );
+  }
 }
 
 async function handleApiRequest(request) {
@@ -794,5 +966,10 @@ globalThis.addEventListener('notificationclick', event => {
 globalThis.__LB_SW_API__ = {
   handleApiRequest,
   isApiRequest,
+  handleAppShellRequest,
+  isAppShellRequest,
   apiCacheName: API_CACHE_NAME,
+  shellCacheName: SHELL_CACHE_NAME,
+  appShellUrl: APP_SHELL_URL,
+  offlineUrl: OFFLINE_URL,
 };

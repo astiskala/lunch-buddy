@@ -2,6 +2,7 @@
 
 type Handler = (request: Request) => Promise<Response>;
 type ApiRequestMatcher = (url: URL) => boolean;
+type AppShellRequestMatcher = (request: Request, url: URL) => boolean;
 
 const createDeferred = <T>() => {
   let resolveFn: (value: T | PromiseLike<T>) => void = () => {
@@ -18,13 +19,36 @@ const createDeferred = <T>() => {
   };
 };
 
+const createNavigationRequest = (url: URL): Request => {
+  const request = new Request(url.toString());
+  try {
+    Object.defineProperty(request, 'mode', {
+      value: 'navigate',
+      configurable: true,
+    });
+    return request;
+  } catch {
+    return {
+      url: url.toString(),
+      method: 'GET',
+      mode: 'navigate',
+      destination: 'document',
+    } as Request;
+  }
+};
+
 describe('custom service worker API handler', () => {
   let originalImportScripts: unknown;
   let originalFetch: unknown;
   let originalClients: unknown;
-  let handler: Handler | undefined;
+  let apiHandler: Handler | undefined;
+  let appShellHandler: Handler | undefined;
   let apiCacheName: string | undefined;
+  let shellCacheName: string | undefined;
+  let appShellUrl: string | undefined;
+  let offlineUrl: string | undefined;
   let isApiRequest: ApiRequestMatcher | undefined;
+  let isAppShellRequest: AppShellRequestMatcher | undefined;
   let clockInstalled: boolean;
 
   beforeAll(async () => {
@@ -41,15 +65,25 @@ describe('custom service worker API handler', () => {
       globalThis as unknown as {
         __LB_SW_API__?: {
           handleApiRequest: Handler;
+          handleAppShellRequest: Handler;
           isApiRequest: ApiRequestMatcher;
+          isAppShellRequest: AppShellRequestMatcher;
           apiCacheName: string;
+          shellCacheName: string;
+          appShellUrl: string;
+          offlineUrl: string;
         };
       }
     ).__LB_SW_API__;
 
-    handler = api?.handleApiRequest;
+    apiHandler = api?.handleApiRequest;
+    appShellHandler = api?.handleAppShellRequest;
     apiCacheName = api?.apiCacheName;
+    shellCacheName = api?.shellCacheName;
+    appShellUrl = api?.appShellUrl;
+    offlineUrl = api?.offlineUrl;
     isApiRequest = api?.isApiRequest;
+    isAppShellRequest = api?.isAppShellRequest;
   });
 
   beforeEach(async () => {
@@ -61,8 +95,13 @@ describe('custom service worker API handler', () => {
     };
     clockInstalled = false;
 
-    if (typeof caches !== 'undefined' && apiCacheName) {
-      await caches.delete(apiCacheName);
+    if (typeof caches !== 'undefined') {
+      if (apiCacheName) {
+        await caches.delete(apiCacheName);
+      }
+      if (shellCacheName) {
+        await caches.delete(shellCacheName);
+      }
     }
   });
 
@@ -72,8 +111,13 @@ describe('custom service worker API handler', () => {
     if (clockInstalled) {
       jasmine.clock().uninstall();
     }
-    if (typeof caches !== 'undefined' && apiCacheName) {
-      await caches.delete(apiCacheName);
+    if (typeof caches !== 'undefined') {
+      if (apiCacheName) {
+        await caches.delete(apiCacheName);
+      }
+      if (shellCacheName) {
+        await caches.delete(shellCacheName);
+      }
     }
   });
 
@@ -94,7 +138,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('returns cached API data when the network is slow', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -108,7 +152,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       fetchDeferred.promise as unknown as Response;
 
-    const resultPromise = handler(request);
+    const resultPromise = apiHandler(request);
 
     await new Promise(resolve => setTimeout(resolve, 550));
     const result = await resultPromise;
@@ -121,7 +165,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('uses fresh network data when available and caches it', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -131,7 +175,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.resolve(networkResponse);
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(await result.text()).toBe('network');
 
     const cache = await caches.open(apiCacheName);
@@ -141,7 +185,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('returns an offline response when both network and cache are unavailable', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -158,7 +202,7 @@ describe('custom service worker API handler', () => {
       configurable: true,
     });
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(503);
     const body: unknown = await result.json();
     expect(body).toEqual({
@@ -172,7 +216,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('uses network-first for authenticated requests and populates cache on success', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -186,7 +230,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.resolve(networkResponse);
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(200);
     expect(await result.text()).toBe(networkPayload);
 
@@ -197,7 +241,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('falls back to cache for authenticated requests when network fails', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -221,13 +265,13 @@ describe('custom service worker API handler', () => {
       configurable: true,
     });
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(200);
     expect(await result.text()).toBe('cached-auth');
   });
 
   it('returns offline stub for unauthenticated requests when network and cache are unavailable', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -245,7 +289,7 @@ describe('custom service worker API handler', () => {
       configurable: true,
     });
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(503);
     const body = (await result.json()) as Record<string, unknown>;
     expect(body).toEqual({
@@ -255,7 +299,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('uses cached data when network times out for unauthenticated requests', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -268,7 +312,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       deferred.promise as unknown as Response;
 
-    const resultPromise = handler(request);
+    const resultPromise = apiHandler(request);
     await new Promise(res => setTimeout(res, 520));
     const result = await resultPromise;
     expect(await result.text()).toBe('cached-unauth');
@@ -278,7 +322,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('falls back to cache when server returns non-OK for authenticated requests', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -296,12 +340,12 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.resolve(new Response('server-error', { status: 500 }));
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(await result.text()).toBe('cached-auth-non-ok');
   });
 
   it('returns server error response for authenticated requests when cache is empty', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -314,7 +358,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.resolve(new Response('Unauthorized', { status: 401 }));
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(401);
     expect(await result.text()).toBe('Unauthorized');
 
@@ -325,7 +369,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('returns timeout error for authenticated requests when AbortError occurs', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -344,7 +388,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.reject(abortError);
 
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(503);
     const body = (await result.json()) as Record<string, unknown>;
     expect(body['error']).toBe('timeout');
@@ -352,7 +396,7 @@ describe('custom service worker API handler', () => {
   });
 
   it('does not cache non-OK responses for unauthenticated requests', async () => {
-    if (typeof caches === 'undefined' || !handler || !apiCacheName) {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       pending('Cache API not available in this environment');
       return;
     }
@@ -367,11 +411,82 @@ describe('custom service worker API handler', () => {
     // Return a non-OK response
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.resolve(new Response('error', { status: 401 }));
-    const result = await handler(request);
+    const result = await apiHandler(request);
     expect(result.status).toBe(401);
 
     // Verify the failed response was not cached
     const newCached = await cache.match(request);
     expect(newCached).toBeFalsy();
+  });
+
+  it('serves cached app shell content when navigating offline', async () => {
+    if (
+      typeof caches === 'undefined' ||
+      !appShellHandler ||
+      !shellCacheName ||
+      !appShellUrl
+    ) {
+      pending('Shell cache API not available in this environment');
+      return;
+    }
+
+    const cache = await caches.open(shellCacheName);
+    await cache.put(
+      appShellUrl,
+      new Response('<html>cached-shell</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      })
+    );
+
+    const request = createNavigationRequest(
+      new URL('/', globalThis.location.origin)
+    );
+
+    if (isAppShellRequest) {
+      expect(isAppShellRequest(request, new URL(request.url))).toBeTrue();
+    }
+
+    const result = await appShellHandler(request);
+    expect(await result.text()).toBe('<html>cached-shell</html>');
+  });
+
+  it('falls back to offline page when navigation fails and shell cache is empty', async () => {
+    if (
+      typeof caches === 'undefined' ||
+      !appShellHandler ||
+      !shellCacheName ||
+      !offlineUrl
+    ) {
+      pending('Shell cache API not available in this environment');
+      return;
+    }
+
+    const cache = await caches.open(shellCacheName);
+    await cache.put(
+      offlineUrl,
+      new Response('<html>offline-fallback</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      })
+    );
+
+    const failingFetch: typeof fetch = (
+      _input: RequestInfo | URL,
+      _init?: RequestInit
+    ) => Promise.reject(new Error('network down'));
+
+    Object.defineProperty(globalThis, 'fetch', {
+      value: failingFetch,
+      writable: true,
+      configurable: true,
+    });
+
+    const request = createNavigationRequest(
+      new URL('/', globalThis.location.origin)
+    );
+
+    const result = await appShellHandler(request);
+    expect(await result.text()).toBe('<html>offline-fallback</html>');
   });
 });
