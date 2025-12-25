@@ -12,6 +12,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { lunchmoneyInterceptor } from './lunchmoney.interceptor';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 describe('lunchmoneyInterceptor', () => {
   let httpClient: HttpClient;
@@ -104,5 +105,25 @@ describe('lunchmoneyInterceptor', () => {
     const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
     expect(readyResolved).toBe(true);
     req.flush({});
+  });
+
+  it('should add Authorization header for proxied mock API requests', async () => {
+    const originalBase = environment.lunchmoneyApiBase;
+    environment.lunchmoneyApiBase = '/v2';
+
+    try {
+      httpClient.get('/v2/me').subscribe();
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const req = httpMock.expectOne('/v2/me');
+      expect(req.request.headers.has('Authorization')).toBe(true);
+      expect(req.request.headers.get('Authorization')).toBe(
+        'Bearer test-api-key'
+      );
+      req.flush({});
+    } finally {
+      environment.lunchmoneyApiBase = originalBase;
+    }
   });
 });

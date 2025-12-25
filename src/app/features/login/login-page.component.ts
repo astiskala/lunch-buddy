@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { LoggerService } from '../../core/services/logger.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login-page',
@@ -24,12 +25,26 @@ export class LoginPageComponent {
   private readonly router = inject(Router);
 
   private static readonly MIN_API_KEY_LENGTH = 20;
+  private static readonly MIN_MOCK_API_KEY_LENGTH = 11;
+  private static readonly MOCK_API_HOST = 'alpha.lunchmoney.dev';
+  private static readonly LOCAL_API_HOSTS = ['localhost', '127.0.0.1'];
 
   protected readonly apiKey = signal(this.authService.getApiKey() ?? '');
   protected readonly errorMessage = signal('');
   protected readonly isSubmitting = signal(false);
   protected readonly isApiKeyValid = computed(() => {
     const value = this.apiKey().trim();
+    if (!value) {
+      return false;
+    }
+
+    if (this.isMockApiBase()) {
+      return (
+        value.length >= LoginPageComponent.MIN_MOCK_API_KEY_LENGTH &&
+        !/\s/.test(value)
+      );
+    }
+
     return (
       value.length >= LoginPageComponent.MIN_API_KEY_LENGTH &&
       /^[a-zA-Z0-9]+$/.test(value)
@@ -74,5 +89,20 @@ export class LoginPageComponent {
   protected onApiKeyChange(value: string): void {
     this.apiKey.set(value);
     this.errorMessage.set('');
+  }
+
+  private isMockApiBase(): boolean {
+    const apiBase = environment.lunchmoneyApiBase;
+    if (apiBase.includes(LoginPageComponent.MOCK_API_HOST)) {
+      return true;
+    }
+
+    if (apiBase.startsWith('/')) {
+      return true;
+    }
+
+    return LoginPageComponent.LOCAL_API_HOSTS.some(host =>
+      apiBase.includes(host)
+    );
   }
 }

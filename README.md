@@ -1,6 +1,6 @@
 # Lunch Buddy
 
-Lunch Buddy is a progressive web app that visualises your Lunch Money budgets with real-time signals, offline caching, and push notifications when categories drift off track. Secure login, background sync, and a local mock API make it safe to explore production-like behaviour without touching real money.
+Lunch Buddy is a progressive web app that visualises your Lunch Money budgets with real-time signals, offline caching, and push notifications when categories drift off track. Secure login, background sync, and a static mock API make it safe to explore production-like behaviour without touching real money.
 
 ## Feature Highlights
 
@@ -8,7 +8,7 @@ Lunch Buddy is a progressive web app that visualises your Lunch Money budgets wi
 - Dashboard surfaces expense and income categories, month progress, upcoming recurring charges, and per-category activity—including friendly offline hints when fresh data cannot be fetched.
 - Category preferences dialog lets you reorder and hide categories, tweak warning thresholds, opt into push notifications, and decide whether uncleared transactions count toward the budget.
 - Custom service worker extends Angular’s default worker to cache data, perform background refreshes, and raise native notifications when categories exceed targets.
-- Mock Lunch Money API (`npm run mock:server`) serves realistic fixtures for `/me`, `/categories`, `/budgets`, `/recurring_expenses`, and `/transactions`, keeping development local-first.
+- Static mock Lunch Money API (`https://alpha.lunchmoney.dev/v2`) supports safe testing with production-shaped data.
 
 ## Architecture Overview
 
@@ -44,13 +44,13 @@ Or enter your API key in the login screen—it's stored securely in your browser
 ## Mock API for Development
 
 ```bash
-# Terminal 1
-npm run mock:server
-
-# Terminal 2
-export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v2
+export NG_APP_LUNCHMONEY_API_BASE=/v2
+export NG_APP_LUNCHMONEY_API_KEY=mock-api-key-12345
 npm start
 ```
+
+The dev server proxies `/v2` to `https://alpha.lunchmoney.dev` to avoid CORS errors.
+Use any API key value that is 11+ characters to authenticate against the static mock server.
 
 ## Commands
 
@@ -91,7 +91,6 @@ Add `--read-only` to the args to register only read-only tools, or `--local-only
 ```bash
 npm install          # Install dependencies (also sets up Husky hooks)
 npm start            # Start dev server (http://localhost:4200)
-npm run mock:server  # Start mock API (http://localhost:4600/v2)
 ```
 
 ### Before Every Commit

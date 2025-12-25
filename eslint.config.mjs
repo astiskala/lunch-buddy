@@ -160,35 +160,6 @@ export default tseslint.config(
     },
   },
 
-  // Mock server files (Node.js)
-  {
-    files: ['mock-server/**/*.js'],
-    languageOptions: {
-      globals: {
-        // Node.js globals
-        require: 'readonly',
-        module: 'readonly',
-        exports: 'writable',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        process: 'readonly',
-        console: 'readonly',
-
-        // Built-ins
-        Buffer: 'readonly',
-        Error: 'readonly',
-
-        // Standard globals
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        setInterval: 'readonly',
-        clearInterval: 'readonly',
-        setImmediate: 'readonly',
-        clearImmediate: 'readonly',
-      },
-    },
-  },
-
   // Karma configuration (Node.js)
   {
     files: ['karma.conf.js'],

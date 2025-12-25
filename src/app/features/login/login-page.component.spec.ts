@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { LoginPageComponent } from './login-page.component';
 import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 
 describe('LoginPageComponent', () => {
   let component: LoginPageComponent;
@@ -118,6 +119,22 @@ describe('LoginPageComponent', () => {
 
     expect(authService.setApiKey).toHaveBeenCalledWith(validKey);
     expect(router.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('should accept mock API key for the static mock server', async () => {
+    const originalBase = environment.lunchmoneyApiBase;
+    environment.lunchmoneyApiBase = '/v2';
+
+    try {
+      const mockKey = 'mock-api-key-12345';
+      await setApiKeyValue(mockKey);
+      await submitForm();
+
+      expect(authService.setApiKey).toHaveBeenCalledWith(mockKey);
+      expect(router.navigate).toHaveBeenCalledWith(['/']);
+    } finally {
+      environment.lunchmoneyApiBase = originalBase;
+    }
   });
 
   it('should clear error message when API key changes', async () => {

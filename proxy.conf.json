@@ -1,0 +1,8 @@
+{
+  "/v2": {
+    "target": "https://alpha.lunchmoney.dev",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn"
+  }
+}

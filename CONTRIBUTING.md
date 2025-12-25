@@ -25,7 +25,7 @@ Thanks for helping improve Lunch Buddy! These guidelines outline the expectation
 
 - Start the dev server with `npm start`. This command also keeps the generated runtime environment file in sync.
 - Use `npm run generate:env` to clear or refresh `src/environments/runtime-env.generated.ts` after changing environment overrides.
-- Launch the mock Lunch Money API locally with `npm run mock:server` when you need realistic data without touching production.
+- Use the static mock Lunch Money API (`https://alpha.lunchmoney.dev/v2`) when you need realistic data without touching production.
 - Keep pull requests small and iterative. When a change spans multiple subsystems, break it into reviewable chunks.
 
 ### Before You Commit
@@ -67,13 +67,13 @@ npx tsc --noEmit    # Type check without building
 For local development without touching production:
 
 ```bash
-# Terminal 1: Start mock API
-npm run mock:server
-
-# Terminal 2: Configure and run app
-export NG_APP_LUNCHMONEY_API_BASE=http://localhost:4600/v2
+export NG_APP_LUNCHMONEY_API_BASE=/v2
+export NG_APP_LUNCHMONEY_API_KEY=mock-api-key-12345
 npm start
 ```
+
+The dev server proxies `/v2` to `https://alpha.lunchmoney.dev` to avoid CORS errors.
+Use any API key value that is 11+ characters to authenticate against the static mock server.
 
 ### Available Commands
 
@@ -84,7 +84,6 @@ npm start
 - `npm run lint` - Lint and auto-fix TypeScript + SCSS
 - `npm run build` - Production build
 - `npm run analyze` - Analyze bundle sizes
-- `npm run mock:server` - Start mock Lunch Money API
 
 ## Commit Message Format
 
