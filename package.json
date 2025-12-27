@@ -8,6 +8,7 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "generate:env": "node tools/write-runtime-env.mjs",
+    "prebuild": "npm run generate:env",
     "lint:check": "npm run lint:eslint && npm run lint:styles && npm run format:check",
     "lint:eslint:fix": "eslint . --max-warnings=0 --fix",
     "lint:eslint": "eslint . --max-warnings=0",
