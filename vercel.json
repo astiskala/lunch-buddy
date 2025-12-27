@@ -6,6 +6,10 @@
   "public": true,
   "rewrites": [
     {
+      "source": "/v2/:path*",
+      "destination": "https://api.lunchmoney.dev/v2/:path*"
+    },
+    {
       "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
