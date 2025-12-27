@@ -11,7 +11,7 @@ describe('ProgressBarComponent', () => {
   ): HTMLElement => {
     const element = host.querySelector(selector);
     if (!(element instanceof HTMLElement)) {
-      throw new Error(`Missing element: ${selector}`);
+      throw new TypeError(`Missing element: ${selector}`);
     }
     return element;
   };
@@ -38,7 +38,7 @@ describe('ProgressBarComponent', () => {
     const spent = getRequiredElement(host, '.progress.spent');
     expect(spent).toBeTruthy();
     expect(spent.style.width).toBe('40%');
-    expect(spent.getAttribute('data-status')).toBe('warning');
+    expect(spent.dataset['status']).toBe('warning');
   });
 
   it('renders projected segment when projected exceeds spent', () => {

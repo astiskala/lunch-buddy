@@ -145,7 +145,7 @@
           font-weight: 600;
 
           &.negative {
-            color: #ffcdd2;
+            color: var(--color-error);
           }
 
           &.highlight {
@@ -153,7 +153,11 @@
             font-weight: 700;
 
             &.negative {
-              color: var(--color-error);
+              color: color-mix(
+                in srgb,
+                var(--color-error) 75%,
+                var(--color-error-bg)
+              );
             }
           }
         }
@@ -212,6 +216,24 @@
       rgb(44 122 115 / 90%) 100%
     );
     border: 1px solid rgb(68 149 140 / 35%);
+
+    .budget-section {
+      .metrics {
+        .metric {
+          .metric-value {
+            &.highlight {
+              &.negative {
+                color: color-mix(
+                  in srgb,
+                  var(--color-error) 85%,
+                  var(--color-text-primary)
+                );
+              }
+            }
+          }
+        }
+      }
+    }
 
     .action-buttons {
       .action-btn {

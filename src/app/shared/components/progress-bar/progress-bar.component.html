@@ -18,6 +18,7 @@
     <div
       class="month-indicator"
       [style.left.%]="monthProgressPercent()"
+      [attr.data-status]="status()"
       [attr.title]="'Month progress: ' + monthProgressPercent() + '%'">
       <div class="indicator-line"></div>
     </div>
