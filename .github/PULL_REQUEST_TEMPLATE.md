@@ -21,15 +21,11 @@
 
 **Before submitting, ensure you've completed:**
 
-- [ ] Ran `npm run lint` - all linting issues fixed
-- [ ] Ran `npm test` - all tests passing locally
-- [ ] Ran `npx tsc --noEmit` - no TypeScript errors
-- [ ] **Ran `npm audit`** - no high/critical security vulnerabilities (use `npm audit fix` if needed)
-- [ ] Updated tests for new/changed functionality
-- [ ] Updated documentation (README, CONTRIBUTING, JSDoc, etc.) if needed
-- [ ] Followed [Conventional Commits](https://www.conventionalcommits.org/) format
-- [ ] Pre-commit hooks passed successfully
-- [ ] Tested changes with the mock API (`NG_APP_LUNCHMONEY_API_BASE=/v2`)
+- [ ] Ran `npm run lint`
+- [ ] Ran `npx tsc --noEmit`
+- [ ] Ran `npm test`
+- [ ] If dependencies changed: ran `npm audit` (and `npm audit fix` if needed)
+- [ ] Updated tests/docs if behavior changed
 
 **If applicable:**
 
