@@ -20,7 +20,6 @@ import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { VersionService } from '../../core/services/version.service';
-import { toPercent } from '../../shared/utils/number.util';
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -47,7 +46,6 @@ export class CategoryPreferencesDialogComponent implements OnInit {
 
   readonly orderedIds = signal<(number | null)[]>([]);
   readonly hiddenIds = signal<Set<number | null>>(new Set());
-  readonly warnAtRatio = signal(0.85);
   readonly notificationsEnabled = signal(false);
   readonly includeAllTransactions = signal(true);
 
@@ -72,8 +70,6 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     const hidden = this.hiddenIds();
     return this.allCategories().filter(cat => hidden.has(cat.categoryId));
   });
-
-  readonly warnAtPercent = computed(() => toPercent(this.warnAtRatio()));
 
   constructor() {
     // Handle dialog open/close based on input signal
@@ -110,7 +106,6 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     const prefs = this.preferences();
     this.orderedIds.set([...prefs.customOrder]);
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
-    this.warnAtRatio.set(prefs.warnAtRatio);
     this.notificationsEnabled.set(prefs.notificationsEnabled);
     this.includeAllTransactions.set(prefs.includeAllTransactions);
   }
@@ -157,7 +152,6 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   resetPreferences(): void {
     this.orderedIds.set([]);
     this.hiddenIds.set(new Set());
-    this.warnAtRatio.set(0.85);
     this.notificationsEnabled.set(false);
     this.includeAllTransactions.set(true);
   }
@@ -166,7 +160,6 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     const newPreferences: CategoryPreferences = {
       customOrder: this.ensureOrderContains(this.orderedIds()),
       hiddenCategoryIds: Array.from(this.hiddenIds()),
-      warnAtRatio: Math.min(0.95, Math.max(0.5, this.warnAtRatio())),
       notificationsEnabled: this.notificationsEnabled(),
       includeAllTransactions: this.includeAllTransactions(),
     };
@@ -177,11 +170,6 @@ export class CategoryPreferencesDialogComponent implements OnInit {
 
   handleClose(): void {
     this.dialogClose.emit();
-  }
-
-  handleWarnRatioChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.warnAtRatio.set(Number.parseInt(target.value) / 100);
   }
 
   async handleNotificationsChange(event: Event): Promise<void> {

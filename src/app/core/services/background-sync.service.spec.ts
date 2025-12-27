@@ -202,7 +202,6 @@ describe('BackgroundSyncService', () => {
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [1, 2],
         notificationsEnabled: true,
-        warnAtRatio: 0.9,
         currency: 'USD',
       });
 
@@ -234,7 +233,6 @@ describe('BackgroundSyncService', () => {
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [],
         notificationsEnabled: true,
-        warnAtRatio: 0.75,
         currency: 'USD',
       });
 
@@ -271,7 +269,6 @@ describe('BackgroundSyncService', () => {
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [],
         notificationsEnabled: false,
-        warnAtRatio: 0.5,
         currency: null,
       });
 
@@ -295,7 +292,6 @@ describe('BackgroundSyncService', () => {
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [],
         notificationsEnabled: false,
-        warnAtRatio: 0.6,
         currency: null,
       });
 
@@ -322,7 +318,6 @@ describe('BackgroundSyncService', () => {
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [],
         notificationsEnabled: true,
-        warnAtRatio: 0.5,
         currency: null,
       });
 
@@ -356,7 +351,6 @@ describe('BackgroundSyncService', () => {
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [],
         notificationsEnabled: true,
-        warnAtRatio: 0.5,
         currency: null,
       });
 

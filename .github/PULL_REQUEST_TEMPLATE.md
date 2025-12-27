@@ -29,7 +29,7 @@
 - [ ] Updated documentation (README, CONTRIBUTING, JSDoc, etc.) if needed
 - [ ] Followed [Conventional Commits](https://www.conventionalcommits.org/) format
 - [ ] Pre-commit hooks passed successfully
-- [ ] Tested changes with mock API (`npm run mock:server`)
+- [ ] Tested changes with the mock API (`NG_APP_LUNCHMONEY_API_BASE=/v2`)
 
 **If applicable:**
 

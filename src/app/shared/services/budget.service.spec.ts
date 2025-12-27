@@ -17,7 +17,6 @@ const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 const defaultPreferences: CategoryPreferences = {
   customOrder: [],
   hiddenCategoryIds: [],
-  warnAtRatio: 0.85,
   notificationsEnabled: false,
   includeAllTransactions: true,
 };
@@ -144,7 +143,6 @@ describe('BudgetService background sync', () => {
   interface BackgroundPreferencesPayload {
     hiddenCategoryIds: number[];
     notificationsEnabled: boolean;
-    warnAtRatio: number;
     currency: string | null;
   }
 
@@ -198,7 +196,6 @@ describe('BudgetService background sync', () => {
     storePreferences({
       notificationsEnabled: true,
       hiddenCategoryIds: [5],
-      warnAtRatio: 0.9,
     });
 
     initService();
@@ -210,7 +207,6 @@ describe('BudgetService background sync', () => {
       jasmine.objectContaining({
         hiddenCategoryIds: [5],
         notificationsEnabled: true,
-        warnAtRatio: 0.9,
       })
     );
   });
@@ -223,7 +219,6 @@ describe('BudgetService background sync', () => {
       ...current,
       notificationsEnabled: true,
       hiddenCategoryIds: [1, 2],
-      warnAtRatio: 0.92,
     }));
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalledTimes(1);
@@ -231,7 +226,6 @@ describe('BudgetService background sync', () => {
     expect(payload).toEqual({
       hiddenCategoryIds: [1, 2],
       notificationsEnabled: true,
-      warnAtRatio: 0.92,
       currency: null,
     });
   });

@@ -99,44 +99,6 @@ dialog.dialog-container {
   }
 }
 
-.slider-container {
-  padding: 0 8px;
-
-  .slider {
-    width: 100%;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--color-bg-tertiary);
-    outline: none;
-    appearance: none;
-
-    &::-webkit-slider-thumb,
-    &::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--color-primary);
-      cursor: pointer;
-      box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
-      border: none;
-      appearance: none;
-    }
-  }
-
-  .slider-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 8px;
-    font-size: 12px;
-    color: var(--color-text-muted);
-
-    .current-value {
-      font-weight: 600;
-      color: var(--color-primary);
-    }
-  }
-}
-
 .toggle-container {
   position: relative;
   display: inline-block;

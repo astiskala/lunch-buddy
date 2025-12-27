@@ -293,7 +293,7 @@ These conventions were already in place—follow them for new code so the projec
 
 ### Component Architecture
 
-- All feature and shared components are standalone and list their own `imports`; Angular 20's default `standalone` flag keeps decorators concise.
+- All feature and shared components are standalone and list their own `imports`; Angular 21's default `standalone` flag keeps decorators concise.
 - Templates use the modern control-flow syntax (`@if`, `@for`) and favor class/style bindings over `ngClass`/`ngStyle`.
 - Local state leans on signals, while component inputs/outputs use the `input()`/`output()` helpers to stay type-safe and ergonomic.
 
@@ -340,7 +340,7 @@ export class SummaryHeroComponent {
 - `provideZonelessChangeDetection()` removes Zone.js overhead; derived values use `computed()` to avoid redundant work, and effects update data reactively.
 - TypeScript runs in strict mode. ESLint (`npm run lint`) and Stylelint enforce Angular, TypeScript, and accessibility rules; Prettier maintains formatting.
 - Unit tests cover core flows across services, guards, utilities, and UI widgets (e.g., `AuthService`, `BudgetService`, dashboard components, offline indicator, push notification service). Run them with `npm run test`.
-- `.github/workflows/ci.yml` installs dependencies with Node 20, runs both lint suites, executes the Karma suite headlessly, and builds the production bundle.
+- `.github/workflows/ci.yml` installs dependencies with Node 22, runs both lint suites, executes the Karma suite headlessly, and builds the production bundle.
 
 ## Communication
 
@@ -355,7 +355,7 @@ export class SummaryHeroComponent {
 
 ## Resources
 
-- [Angular 20 Documentation](https://angular.dev)
+- [Angular Documentation](https://angular.dev)
 - [Signals Guide](https://angular.dev/guide/signals)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Playwright Testing](https://playwright.dev)

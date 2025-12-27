@@ -51,7 +51,6 @@ const defaultConfig = () => ({
   preferences: {
     hiddenCategoryIds: [],
     notificationsEnabled: false,
-    warnAtRatio: 0.85,
     currency: null,
   },
 });
@@ -466,7 +465,6 @@ async function handleBudgetSync(trigger) {
     const endIso = toIsoDate(monthRange.end);
     const monthKey = startIso;
     const monthProgress = getMonthProgress(now, monthRange);
-    const warnAtRatio = config.preferences.warnAtRatio ?? 0.85;
 
     const budgetsUrl = buildBudgetsUrl(config.apiBaseUrl, startIso, endIso);
     const categoriesUrl = buildCategoriesUrl(config.apiBaseUrl);
@@ -505,9 +503,7 @@ async function handleBudgetSync(trigger) {
 
     const progress = summaries
       .filter(summary => !summary.exclude_from_budget && !summary.is_group)
-      .map(summary =>
-        buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio)
-      );
+      .map(summary => buildBudgetProgress(summary, monthKey, monthProgress));
 
     const alerts = filterAlerts(progress, config.preferences.hiddenCategoryIds);
     if (!alerts.length) {
@@ -537,7 +533,8 @@ async function handleBudgetSync(trigger) {
 
     const payload = buildNotificationPayload(
       alerts,
-      config.preferences.currency
+      config.preferences.currency,
+      monthProgress
     );
     await globalThis.registration.showNotification(payload.title, {
       body: payload.body,
@@ -609,14 +606,13 @@ async function isAnyClientVisible() {
   }
 }
 
-function buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio) {
+function buildBudgetProgress(summary, monthKey, monthProgress) {
   const budgetAmount =
     summary.occurrence?.budgeted ?? summary.totals?.budgeted ?? 0;
   const spent =
     (summary.totals?.other_activity ?? 0) +
     (summary.totals?.recurring_activity ?? 0);
   const budgetCurrency = summary.occurrence?.budgeted_currency ?? null;
-  const recurringTotal = summary.totals?.recurring_expected ?? 0;
 
   return {
     categoryId: summary.category_id,
@@ -629,43 +625,25 @@ function buildBudgetProgress(summary, monthKey, monthProgress, warnAtRatio) {
       spent,
       budgetAmount,
       monthProgress,
-      warnAtRatio,
-      !!summary.is_income,
-      recurringTotal
+      !!summary.is_income
     ),
   };
 }
 
-function calculateStatus(
-  spent,
-  budget,
-  monthProgress,
-  warnAtRatio,
-  isIncome,
-  recurringTotal
-) {
+function calculateStatus(spent, budget, monthProgress, isIncome) {
   if (!budget || budget <= 0) {
     return 'on-track';
   }
 
   const epsilon = 0.005;
+  const normalizedProgress = Math.min(Math.max(monthProgress, 0), 1);
 
   if (isIncome) {
-    const actual = Math.abs(spent);
-    const projected = actual + Math.max(0, recurringTotal ?? 0);
-    if (projected >= budget * (1 - epsilon)) {
-      return 'on-track';
-    }
-    const projectedRatio = budget > 0 ? projected / budget : 1;
-    const projectedShortfallRatio = Math.max(0, 1 - projectedRatio);
-    const warnShortfallRatio = Math.max(
-      0,
-      1 - Math.min(Math.max(warnAtRatio, 0), 1)
-    );
-    if (projectedShortfallRatio > warnShortfallRatio + epsilon) {
-      return 'at-risk';
-    }
-    return 'on-track';
+    const received = Math.max(0, Math.abs(spent));
+    const receivedRatio = budget > 0 ? received / budget : 1;
+    return receivedRatio + epsilon < normalizedProgress
+      ? 'at-risk'
+      : 'on-track';
   }
 
   const ratio = spent / budget;
@@ -678,7 +656,7 @@ function calculateStatus(
     return 'on-track';
   }
 
-  if (ratio >= warnAtRatio || ratio >= monthProgress + 0.1) {
+  if (ratio > normalizedProgress + epsilon) {
     return 'at-risk';
   }
 
@@ -773,43 +751,65 @@ function buildSignature(alerts) {
     .join('|');
 }
 
-function buildNotificationPayload(alerts, preferredCurrency) {
+function buildNotificationPayload(alerts, preferredCurrency, monthProgress) {
   const fallbackCurrency =
     preferredCurrency ??
     alerts.find(alert => alert.budgetCurrency)?.budgetCurrency ??
     FALLBACK_CURRENCY;
 
-  if (alerts.length === 1) {
-    const [alert] = alerts;
-    const statusLabel = alert.status === 'over' ? 'over budget' : 'at risk';
-    const spent = formatCurrency(
-      alert.spent,
-      alert.budgetCurrency,
-      fallbackCurrency
-    );
-    const budget = formatCurrency(
-      alert.budgetAmount,
-      alert.budgetCurrency,
-      fallbackCurrency
-    );
-
-    return {
-      title: `${alert.categoryName} is ${statusLabel}`,
-      body: `${spent} spent of ${budget}`,
-    };
-  }
-
-  const summary = alerts
-    .map(
-      alert =>
-        `${alert.categoryName} (${alert.status === 'over' ? 'over' : 'at risk'})`
-    )
-    .join(', ');
+  const normalizedProgress = Math.min(Math.max(monthProgress ?? 0, 0), 1);
+  const overBudget = alerts.filter(alert => alert.status === 'over');
+  const atRisk = alerts.filter(alert => alert.status === 'at-risk');
 
   return {
-    title: `Budget alerts: ${alerts.length} categories`,
-    body: summary,
+    title: 'Budget alerts',
+    body: [
+      formatAlertSection('Over budget', overBudget, {
+        kind: 'budget',
+        fallbackCurrency,
+      }),
+      formatAlertSection('At risk', atRisk, {
+        kind: 'expected',
+        fallbackCurrency,
+        progress: normalizedProgress,
+      }),
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
   };
+}
+
+function formatAlertSection(title, alerts, options) {
+  if (!alerts.length) {
+    return '';
+  }
+
+  const lines = alerts.map(alert => {
+    const spent = formatCurrency(
+      Math.abs(alert.spent),
+      alert.budgetCurrency,
+      options.fallbackCurrency
+    );
+    const budgetAmount = Math.abs(alert.budgetAmount);
+    const budget = formatCurrency(
+      budgetAmount,
+      alert.budgetCurrency,
+      options.fallbackCurrency
+    );
+
+    if (options.kind === 'expected') {
+      const expected = formatCurrency(
+        budgetAmount * (options.progress ?? 0),
+        alert.budgetCurrency,
+        options.fallbackCurrency
+      );
+      return `• ${alert.categoryName}: ${spent} (Expected ${expected})`;
+    }
+
+    return `• ${alert.categoryName}: ${spent} (Budget ${budget})`;
+  });
+
+  return [title, ...lines].join('\n');
 }
 
 function formatCurrency(amount, currency, fallbackCurrency) {
@@ -818,10 +818,11 @@ function formatCurrency(amount, currency, fallbackCurrency) {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency: currencyCode,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `${currencyCode} ${Math.round(amount)}`;
+    return `${currencyCode} ${amount.toFixed(2)}`;
   }
 }
 

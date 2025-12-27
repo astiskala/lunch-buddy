@@ -116,28 +116,28 @@ describe('buildBudgetProgress status evaluation', () => {
 
   it('treats equal spending and budget as on track', () => {
     const summary = createSummary({ spent: 1000, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+    const result = buildBudgetProgress(summary, monthKey, 0.5);
 
     expect(result.status).toBe('on-track');
   });
 
   it('treats minor rounding differences as on track', () => {
     const summary = createSummary({ spent: 1005, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+    const result = buildBudgetProgress(summary, monthKey, 0.5);
 
     expect(result.status).toBe('on-track');
   });
 
   it('marks meaningfully overspent categories as over', () => {
     const summary = createSummary({ spent: 1055, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+    const result = buildBudgetProgress(summary, monthKey, 0.5);
 
     expect(result.status).toBe('over');
   });
 
   it('marks high spending versus progress as at risk', () => {
     const summary = createSummary({ spent: 650, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.4, 0.7);
+    const result = buildBudgetProgress(summary, monthKey, 0.4);
 
     expect(result.status).toBe('at-risk');
   });
@@ -148,47 +148,45 @@ describe('buildBudgetProgress status evaluation', () => {
       budget: 1000,
       isIncome: true,
     });
-    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+    const result = buildBudgetProgress(summary, monthKey, 0.5);
 
     expect(result.status).toBe('on-track');
     expect(result.progressRatio).toBe(1);
     expect(result.remaining).toBeCloseTo(0, 5);
   });
 
-  it('marks income categories at risk when received is below the budget', () => {
+  it('marks income categories at risk when received is behind month progress', () => {
     const summary = createSummary({
       spent: -450,
       budget: 1000,
       isIncome: true,
     });
-    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.8);
+    const result = buildBudgetProgress(summary, monthKey, 0.5);
 
     expect(result.status).toBe('at-risk');
     expect(result.progressRatio).toBeCloseTo(0.45, 5);
     expect(result.remaining).toBeCloseTo(550, 5);
   });
 
-  it('keeps income on track when upcoming payments close the shortfall', () => {
-    const summary = createSummary({
-      spent: -200,
-      budget: 1000,
-      isIncome: true,
-      recurring: [800],
-    });
-    const result = buildBudgetProgress(summary, monthKey, 0.5, 0.9);
-
-    expect(result.status).toBe('on-track');
-    expect(result.remaining).toBeCloseTo(800, 5);
-  });
-
-  it('marks income at risk when projected total stays below the threshold', () => {
+  it('keeps income on track when received keeps pace with the month', () => {
     const summary = createSummary({
       spent: -600,
       budget: 1000,
       isIncome: true,
-      recurring: [120],
     });
-    const result = buildBudgetProgress(summary, monthKey, 0.6, 0.9);
+    const result = buildBudgetProgress(summary, monthKey, 0.5);
+
+    expect(result.status).toBe('on-track');
+    expect(result.remaining).toBeCloseTo(400, 5);
+  });
+
+  it('marks income at risk when income lags the month progress', () => {
+    const summary = createSummary({
+      spent: -500,
+      budget: 1000,
+      isIncome: true,
+    });
+    const result = buildBudgetProgress(summary, monthKey, 0.6);
 
     expect(result.status).toBe('at-risk');
   });

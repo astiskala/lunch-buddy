@@ -33,7 +33,6 @@ import { LoggerService } from '../../core/services/logger.service';
 export interface CategoryPreferences {
   customOrder: (number | null)[];
   hiddenCategoryIds: (number | null)[];
-  warnAtRatio: number;
   notificationsEnabled: boolean;
   includeAllTransactions: boolean;
 }
@@ -41,7 +40,6 @@ export interface CategoryPreferences {
 const defaultCategoryPreferences: CategoryPreferences = {
   customOrder: [],
   hiddenCategoryIds: [],
-  warnAtRatio: 0.85,
   notificationsEnabled: false,
   includeAllTransactions: true,
 };
@@ -298,7 +296,6 @@ export class BudgetService {
   ): Observable<BudgetProgress[]> {
     const monthKey = this.monthKey;
     const monthProgress = this.monthProgressRatio();
-    const warnAtRatio = this.preferences().warnAtRatio;
     const includeAll = this.preferences().includeAllTransactions;
     const filterBudgetableItems = (
       items: BudgetProgress[]
@@ -334,12 +331,7 @@ export class BudgetService {
       if (shouldSplitUncategorised(summary)) {
         uncategorisedSummaries.push(summary);
       } else {
-        const item = buildBudgetProgress(
-          summary,
-          monthKey,
-          monthProgress,
-          warnAtRatio
-        );
+        const item = buildBudgetProgress(summary, monthKey, monthProgress);
         regularItems.push(item);
       }
     }
@@ -421,8 +413,7 @@ export class BudgetService {
             result.fallback = buildBudgetProgress(
               uncategorisedSummary,
               monthKey,
-              monthProgress,
-              warnAtRatio
+              monthProgress
             );
           }
 
@@ -438,8 +429,7 @@ export class BudgetService {
             fallback: buildBudgetProgress(
               uncategorisedSummary,
               monthKey,
-              monthProgress,
-              warnAtRatio
+              monthProgress
             ),
           } satisfies SplitResult);
         })
@@ -458,7 +448,6 @@ export class BudgetService {
               baseSummary: result.summary,
               monthKey,
               monthProgress,
-              warnAtRatio,
               amount: result.expense.total,
               transactions: result.expense.transactions,
               isIncome: false,
@@ -472,7 +461,6 @@ export class BudgetService {
               baseSummary: result.summary,
               monthKey,
               monthProgress,
-              warnAtRatio,
               amount: result.income.total,
               transactions: result.income.transactions,
               isIncome: true,
@@ -490,7 +478,6 @@ export class BudgetService {
     baseSummary: BudgetSummaryItem;
     monthKey: string;
     monthProgress: number;
-    warnAtRatio: number;
     amount: number;
     transactions: number;
     isIncome: boolean;
@@ -500,7 +487,6 @@ export class BudgetService {
       baseSummary,
       monthKey,
       monthProgress,
-      warnAtRatio,
       amount,
       transactions,
       isIncome,
@@ -543,9 +529,7 @@ export class BudgetService {
         spent,
         budgetAmount,
         monthProgress,
-        warnAtRatio,
-        isIncome,
-        recurringTotal
+        isIncome
       ),
       progressRatio,
       transactionList,
@@ -562,7 +546,6 @@ export class BudgetService {
       .updateBudgetPreferences({
         hiddenCategoryIds: prefs.hiddenCategoryIds,
         notificationsEnabled: prefs.notificationsEnabled,
-        warnAtRatio: prefs.warnAtRatio,
         currency,
       })
       .catch((error: unknown) => {
@@ -580,7 +563,6 @@ export class BudgetService {
     const referenceDate = this.referenceDate();
     const windowRange = getWindowRange(this.startDate(), this.endDate());
     const monthProgress = this.monthProgressRatio();
-    const warnAtRatio = this.preferences().warnAtRatio;
 
     const updated = items.map(item => {
       const instances = assigned.get(item.categoryId) ?? [];
@@ -607,9 +589,7 @@ export class BudgetService {
           item.spent,
           item.budgetAmount,
           monthProgress,
-          warnAtRatio,
-          item.isIncome,
-          recurringTotal
+          item.isIncome
         ),
       };
     });

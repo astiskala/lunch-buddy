@@ -1,18 +1,18 @@
 # Lunch Buddy
 
-Lunch Buddy is a progressive web app that visualises your Lunch Money budgets with real-time signals, offline caching, and push notifications when categories drift off track. Secure login, background sync, and a static mock API make it safe to explore production-like behaviour without touching real money.
+Lunch Buddy is a progressive web app that visualises your Lunch Money budgets with real-time signals, offline caching, and push notifications when categories drift off track. Secure login, background sync, and the Lunch Money mock API make it safe to explore production-like behaviour without touching real money.
 
 ## Feature Highlights
 
 - Secure authentication flow stores the Lunch Money API key locally, mirrors the credential to the background worker, and supports quick sign-out.
 - Dashboard surfaces expense and income categories, month progress, upcoming recurring charges, and per-category activity—including friendly offline hints when fresh data cannot be fetched.
-- Category preferences dialog lets you reorder and hide categories, tweak warning thresholds, opt into push notifications, and decide whether uncleared transactions count toward the budget.
+- Category preferences dialog lets you reorder and hide categories, explains how at-risk status is determined by month progress, opt into push notifications, and decide whether uncleared transactions count toward the budget.
 - Custom service worker extends Angular’s default worker to cache data, perform background refreshes, and raise native notifications when categories exceed targets.
 - Static mock Lunch Money API (`https://alpha.lunchmoney.dev/v2`) supports safe testing with production-shaped data.
 
 ## Architecture Overview
 
-- Built on Angular 20 with standalone components, signal-based state, and modern template control flow (`@if`, `@for`).
+- Built on Angular 21 with standalone components, signal-based state, and modern template control flow (`@if`, `@for`).
 - `BudgetService` derives reactive dashboard state, persists user preferences to `localStorage`, and coordinates with the background sync channel.
 - `AuthService`, guards, and the HTTP interceptor rely on the functional `inject()` API and respect runtime overrides supplied via `NG_APP_*` variables.
 - Offline UX flows through `OfflineService` and an `OfflineIndicatorComponent` banner; global styles shift layout whenever connectivity changes.
@@ -153,11 +153,10 @@ Works with any static host—serve `dist/lunch-buddy/browser` with fallback to `
 - **Unit Tests**: Karma + Jasmine with 80% coverage thresholds
 - **E2E Tests**: Playwright with multi-browser support and accessibility checks
 - **Coverage Reporting**: Integrated with Codecov
-- **Code Quality**: SonarCloud analysis on every PR
 
 ### Test Coverage
 
-Run `npm run test:coverage` to generate coverage reports. Minimum thresholds:
+Run `npm test` to generate coverage reports. Minimum thresholds:
 
 - Statements: 80%
 - Branches: 80%
@@ -277,7 +276,6 @@ You can adapt the same build artefacts for other hosts—serve `dist/lunch-buddy
 
 ## Additional Documentation
 
-- `DEVELOPMENT.md` – Comprehensive development guide with testing, debugging, and best practices
 - `CONTRIBUTING.md` – Contribution workflow, coding conventions, and PR guidelines
 - `SECURITY.md` – Responsible disclosure process for vulnerabilities
 - `.github/pull_request_template.md` – PR checklist and standards

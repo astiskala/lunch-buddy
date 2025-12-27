@@ -21,7 +21,6 @@ interface SyncManager {
 interface BudgetPreferencesPayload {
   hiddenCategoryIds: (number | null)[];
   notificationsEnabled: boolean;
-  warnAtRatio: number;
   currency: string | null;
 }
 
@@ -49,7 +48,6 @@ export class BackgroundSyncService implements OnDestroy {
     preferences: {
       hiddenCategoryIds: [],
       notificationsEnabled: false,
-      warnAtRatio: 0.85,
       currency: null,
     },
   };

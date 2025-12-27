@@ -8,38 +8,22 @@ export const calculateBudgetStatus = (
   spent: number,
   budget: number,
   monthProgress: number,
-  warnAtRatio: number,
-  isIncome: boolean,
-  recurringTotal: number
+  isIncome: boolean
 ): BudgetProgress['status'] => {
   if (budget <= 0) {
     return 'on-track';
   }
 
   const epsilon = 0.005;
+  const normalizedProgress = Math.min(Math.max(monthProgress, 0), 1);
 
   if (isIncome) {
-    const normalizedProgress = Math.min(Math.max(monthProgress, 0), 1);
-    const normalizedWarnAt = Math.min(Math.max(warnAtRatio, 0), 1);
-    const tolerance = epsilon + (1 - normalizedProgress) * 0.05;
-
     const received = Math.max(0, Math.abs(spent));
-    const upcoming = Math.max(0, recurringTotal);
-    const projected = received + upcoming;
-    const projectedRatio = budget > 0 ? projected / budget : 1;
+    const receivedRatio = budget > 0 ? received / budget : 1;
 
-    if (projectedRatio >= 1 - tolerance) {
-      return 'on-track';
-    }
-
-    const projectedShortfallRatio = Math.max(0, 1 - projectedRatio);
-    const warnShortfallRatio = Math.max(0, 1 - normalizedWarnAt);
-
-    if (projectedShortfallRatio > warnShortfallRatio + tolerance) {
-      return 'at-risk';
-    }
-
-    return 'on-track';
+    return receivedRatio + epsilon < normalizedProgress
+      ? 'at-risk'
+      : 'on-track';
   }
 
   const spendingRatio = spent / budget;
@@ -52,7 +36,7 @@ export const calculateBudgetStatus = (
     return 'on-track';
   }
 
-  if (spendingRatio >= warnAtRatio || spendingRatio >= monthProgress + 0.1) {
+  if (spendingRatio > normalizedProgress + epsilon) {
     return 'at-risk';
   }
 
@@ -62,8 +46,7 @@ export const calculateBudgetStatus = (
 export const buildBudgetProgress = (
   summary: BudgetSummaryItem,
   monthKey: string,
-  monthProgress: number,
-  warnAtRatio: number
+  monthProgress: number
 ): BudgetProgress => {
   const totals = summary.totals;
   const occurrence = summary.occurrence;
@@ -99,9 +82,7 @@ export const buildBudgetProgress = (
       spent,
       budgetAmount,
       monthProgress,
-      warnAtRatio,
-      summary.is_income,
-      recurringTotal
+      summary.is_income
     ),
     progressRatio,
   };

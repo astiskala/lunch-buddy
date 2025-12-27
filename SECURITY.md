@@ -35,7 +35,7 @@ I appreciate proof-of-concept code, but please avoid exfiltrating or modifying r
 
 ## Secure Development Practices
 
-- Run `npm run lint:ci`, `npm run lint:styles:ci`, and `npm test` before submitting pull requests. CI blocks merges on lint/test failures.
+- Run `npm run lint:check` and `npm test` before submitting pull requests. CI blocks merges on lint/test failures.
 - Never commit real Lunch Money API keys. Use the `NG_APP_` environment variables and the generated `src/environments/runtime-env.generated.ts` (regenerated via `npm run generate:env`) to keep secrets out of VCS.
 - When adding third-party libraries, prefer well-maintained packages with clear security guidance; document any new network destinations in the CSP.
 

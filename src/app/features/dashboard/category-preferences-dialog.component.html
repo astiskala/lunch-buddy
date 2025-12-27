@@ -12,36 +12,6 @@
     </div>
 
     <div class="dialog-content">
-      <!-- Alert Threshold -->
-      <div class="setting-section">
-        <div class="setting-header">
-          <span class="icon warning">⚠</span>
-          <div class="setting-info">
-            <h3>Alert threshold</h3>
-            <p>
-              Control when a category is flagged as "at risk" relative to its
-              budget.
-            </p>
-          </div>
-        </div>
-        <div class="slider-container">
-          <input
-            type="range"
-            min="50"
-            max="95"
-            step="1"
-            [value]="warnAtPercent()"
-            (input)="handleWarnRatioChange($event)"
-            class="slider"
-            name="warnAtPercent" />
-          <div class="slider-labels">
-            <span>50%</span>
-            <span class="current-value">{{ warnAtPercent() }}%</span>
-            <span>95%</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Transactions Filter -->
       <div class="setting-section">
         <div class="setting-header">

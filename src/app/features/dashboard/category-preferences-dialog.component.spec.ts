@@ -101,7 +101,6 @@ describe('CategoryPreferencesDialogComponent', () => {
   const basePreferences: CategoryPreferences = {
     customOrder: [1],
     hiddenCategoryIds: [2],
-    warnAtRatio: 0.9,
     notificationsEnabled: true,
     includeAllTransactions: false,
   };
@@ -144,7 +143,6 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(Array.from(component.hiddenIds())).toEqual(
       basePreferences.hiddenCategoryIds
     );
-    expect(component.warnAtRatio()).toBe(basePreferences.warnAtRatio);
     expect(component.notificationsEnabled()).toBeTrue();
     expect(component.includeAllTransactions()).toBeFalse();
   });
@@ -160,7 +158,6 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     component.orderedIds.set([2]);
     component.hiddenIds.set(new Set([3]));
-    component.warnAtRatio.set(0.2);
     component.notificationsEnabled.set(true);
     component.includeAllTransactions.set(false);
 
@@ -172,7 +169,6 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(preferencesSpy).toHaveBeenCalledWith({
       customOrder: [2, 1, 3],
       hiddenCategoryIds: [3],
-      warnAtRatio: 0.5,
       notificationsEnabled: true,
       includeAllTransactions: false,
     });
@@ -182,7 +178,6 @@ describe('CategoryPreferencesDialogComponent', () => {
   it('resets preferences to defaults', () => {
     component.orderedIds.set([1]);
     component.hiddenIds.set(new Set([2]));
-    component.warnAtRatio.set(0.7);
     component.notificationsEnabled.set(true);
     component.includeAllTransactions.set(false);
 
@@ -190,7 +185,6 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     expect(component.orderedIds()).toEqual([]);
     expect(component.hiddenIds().size).toBe(0);
-    expect(component.warnAtRatio()).toBe(0.85);
     expect(component.notificationsEnabled()).toBeFalse();
     expect(component.includeAllTransactions()).toBeTrue();
   });
