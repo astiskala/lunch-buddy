@@ -103,8 +103,8 @@
     "@semantic-release/github": "^12.0.0",
     "@semantic-release/release-notes-generator": "^14.1.0",
     "@types/jasmine": "^5.1.12",
-    "@typescript-eslint/eslint-plugin": "^8.50.1",
-    "@typescript-eslint/parser": "^8.50.1",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "angular-eslint": "^21.1.0",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
@@ -128,7 +128,7 @@
     "stylelint-config-standard-scss": "^16.0.0",
     "stylelint-scss": "^6.12.1",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.50.1"
+    "typescript-eslint": "^8.51.0"
   },
   "engines": {
     "node": ">=22.x"
