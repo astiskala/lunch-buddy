@@ -10,10 +10,8 @@
 }
 
 .login-card {
-  @include card;
+  @include card(16px, var(--shadow-lg));
 
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
   padding: 2.5rem;
   width: 100%;
   max-width: 450px;
@@ -38,10 +36,11 @@
     margin: 0 0 0.5rem;
   }
 
-  p {
-    font-size: 0.95rem;
+  .login-description {
     color: var(--color-text-secondary);
-    margin: 0;
+    margin: 1.5rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 }
 
@@ -65,13 +64,14 @@
       background: var(--color-bg-primary);
       color: var(--color-text-primary);
       border-radius: 8px;
-      transition: all 0.2s;
-      box-sizing: border-box;
+      transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
 
       &:focus {
         outline: none;
         border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px rgb(68 149 140 / 20%);
+        box-shadow: 0 0 0 3px rgb(var(--color-primary-rgb) / 20%);
       }
 
       &::placeholder {
@@ -92,12 +92,15 @@
     padding: 0.875rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--color-text-on-secondary);
     background: var(--color-secondary);
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition:
+      background-color 0.2s,
+      transform 0.2s,
+      box-shadow 0.2s;
     box-shadow: 0 8px 18px rgb(240 184 0 / 25%);
 
     &:hover:not(:disabled) {
@@ -128,6 +131,10 @@
     font-size: 0.875rem;
     color: var(--color-text-secondary);
     margin: 0;
+
+    & + p {
+      margin-top: 0.5rem;
+    }
 
     a {
       color: var(--color-primary-dark);

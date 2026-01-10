@@ -9,19 +9,19 @@
   @include card;
 
   overflow: hidden;
-  border: 1px solid rgb(68 149 140 / 15%);
+  border: 1px solid rgb(var(--color-primary-rgb) / 15%);
 }
 
 .panel-header {
   background: var(--gradient-secondary);
-  color: #1a202c;
+  color: var(--color-text-on-secondary);
   padding: 20px 24px;
 
   h3 {
     margin: 0 0 8px;
     font-size: 18px;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--color-text-on-secondary);
   }
 
   .total {
@@ -83,7 +83,7 @@
     }
 
     &.suggested {
-      background: rgb(68 149 140 / 15%);
+      background: rgb(var(--color-primary-rgb) / 15%);
       color: var(--color-primary-dark);
     }
   }

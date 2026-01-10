@@ -87,6 +87,7 @@ html {
   --color-primary: #44958c;
   --color-primary-dark: #357872;
   --color-primary-light: #6bb3ab;
+  --color-primary-rgb: 68 149 140;
 
   // Secondary color
   --color-secondary: #f0b800;
@@ -104,6 +105,7 @@ html {
 
   // Text colors
   --color-text-primary: #1a202c;
+  --color-text-on-secondary: #1a202c;
   --color-text-secondary: #4a5568;
   --color-text-tertiary: #718096;
   --color-text-muted: #a0aec0;
@@ -137,6 +139,7 @@ html {
     --color-primary: #44958c;
     --color-primary-dark: #357872;
     --color-primary-light: #6bb3ab;
+    --color-primary-rgb: 68 149 140;
 
     // Secondary color
     --color-secondary: #f0b800;
@@ -154,6 +157,7 @@ html {
 
     // Text colors
     --color-text-primary: #e8e8e8;
+    --color-text-on-secondary: #1a202c;
     --color-text-secondary: #b8b8b8;
     --color-text-tertiary: #888;
     --color-text-muted: #666;

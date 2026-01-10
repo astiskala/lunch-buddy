@@ -6,9 +6,9 @@
   background: var(--gradient-primary);
   border-radius: 16px;
   padding: 32px;
-  color: var(--color-text-primary, #1a202c);
+  color: var(--color-text-primary);
   box-shadow: var(--shadow-md);
-  border: 1px solid rgb(68 149 140 / 25%);
+  border: 1px solid rgb(var(--color-primary-rgb) / 25%);
 
   .header {
     display: flex;
@@ -215,7 +215,7 @@
       rgb(15 96 90 / 90%) 0%,
       rgb(44 122 115 / 90%) 100%
     );
-    border: 1px solid rgb(68 149 140 / 35%);
+    border: 1px solid rgb(var(--color-primary-rgb) / 35%);
 
     .budget-section {
       .metrics {

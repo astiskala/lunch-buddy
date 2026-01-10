@@ -12,7 +12,10 @@
         class="login-logo"
         priority />
       <h1 id="login-title">Sign in to Lunch Buddy</h1>
-      <p id="login-subtitle">Enter your API key to continue</p>
+      <p class="login-description">
+        Lunch Buddy visualizes progress against your Lunch Money budgets,
+        helping you to keep track of your spending as it happens.
+      </p>
     </header>
 
     <form (ngSubmit)="onSubmit()" class="login-form">
@@ -52,6 +55,15 @@
           target="_blank"
           rel="noopener noreferrer">
           Get one from Lunch Money
+        </a>
+      </p>
+      <p>
+        Want to learn more or get help?
+        <a
+          href="https://github.com/astiskala/lunch-buddy"
+          target="_blank"
+          rel="noopener noreferrer">
+          Visit the project on GitHub
         </a>
       </p>
     </footer>

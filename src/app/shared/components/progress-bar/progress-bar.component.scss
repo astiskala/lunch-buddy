@@ -21,17 +21,8 @@
 
     --month-indicator-outline-color: rgb(26 32 44 / 28%);
 
-    .progress.spent {
+    .progress {
       border-radius: 12px;
-    }
-
-    .progress.projected {
-      border-radius: 12px;
-    }
-
-    .month-indicator {
-      width: 4px;
-      transform: translateX(-2px);
     }
   }
 
@@ -40,11 +31,11 @@
     top: 0;
     left: 0;
     height: 100%;
+    border-radius: 10px;
     transition: width 0.3s ease;
 
     &.spent {
       z-index: 2;
-      border-radius: 10px;
 
       // Default colors (neutral/hero)
       background: var(--color-secondary-dark);
@@ -54,10 +45,6 @@
         background: var(--color-primary-dark);
       }
 
-      &[data-status='warning'] {
-        background: var(--color-secondary-dark);
-      }
-
       &[data-status='error'] {
         background: var(--color-error);
       }
@@ -65,14 +52,13 @@
 
     &.projected {
       z-index: 1;
-      border-radius: 10px;
 
       // Default colors (neutral/hero)
       background: var(--color-secondary-light);
 
       // Status colors
       &[data-status='success'] {
-        background: rgb(68 149 140 / 55%);
+        background: rgb(var(--color-primary-rgb) / 55%);
       }
 
       &[data-status='warning'] {
@@ -104,10 +90,6 @@
 
     &[data-status='success'] .indicator-line {
       background: var(--color-primary-dark);
-    }
-
-    &[data-status='warning'] .indicator-line {
-      background: var(--color-secondary-dark);
     }
 
     &[data-status='error'] .indicator-line {

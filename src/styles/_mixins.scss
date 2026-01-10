@@ -1,7 +1,7 @@
-@mixin card {
+@mixin card($radius: 12px, $shadow: var(--shadow-sm)) {
   background: var(--color-surface);
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  border-radius: $radius;
+  box-shadow: $shadow;
 }
 
 @mixin status-colors {

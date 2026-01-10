@@ -144,9 +144,16 @@
             color="primary"
             (click)="resetPreferences()">
             <mat-icon fontIcon="restart_alt"></mat-icon>
-            Reset to defaults
+            Reset
           </button>
-          <span class="version">Version: {{ version }}</span>
+          <span class="version">Version {{ version }}</span>
+          <a
+            class="github-link"
+            href="https://github.com/astiskala/lunch-buddy"
+            target="_blank"
+            rel="noopener noreferrer">
+            About &amp; support
+          </a>
         </div>
         <div class="actions-right">
           <button mat-button type="button" (click)="handleClose()">
