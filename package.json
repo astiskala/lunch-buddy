@@ -1,6 +1,6 @@
 {
   "name": "lunch-buddy",
-  "version": "1.12.2",
+  "version": "1.12.3",
   "private": true,
   "scripts": {
     "analyze": "npm run build && source-map-explorer dist/lunch-buddy/browser/**/*.js",
