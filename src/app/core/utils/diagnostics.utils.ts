@@ -74,13 +74,13 @@ const REDACTED_KEYS = [
   'memo',
 ];
 
-export function redact(obj: unknown, includeExtra = false): unknown {
-  if (!obj || typeof obj !== 'object') {
+export function redact(obj: unknown, includeExtra = false, depth = 0): unknown {
+  if (!obj || typeof obj !== 'object' || depth > 10) {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => redact(item, includeExtra));
+    return obj.map(item => redact(item, includeExtra, depth + 1));
   }
 
   const redacted: Record<string, unknown> = {};
@@ -90,8 +90,8 @@ export function redact(obj: unknown, includeExtra = false): unknown {
       const lowerKey = key.toLowerCase();
       if (REDACTED_KEYS.some(k => lowerKey.includes(k)) && !includeExtra) {
         redacted[key] = '[REDACTED]';
-      } else if (typeof record[key] === 'object') {
-        redacted[key] = redact(record[key], includeExtra);
+      } else if (typeof record[key] === 'object' && record[key] !== null) {
+        redacted[key] = redact(record[key], includeExtra, depth + 1);
       } else {
         redacted[key] = record[key];
       }

@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { redis, getSessionKeys, TTL } from '../_lib/redis';
-import { hashWriteKey } from '../_lib/utils';
+import { hashWriteKey, safeCompare } from '../_lib/utils';
 
 const MAX_EVENTS_PER_REQ = 50;
 const MAX_EVENT_SIZE = 8192; // 8KB
@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const providedHash = await hashWriteKey(writeKey);
-    if (providedHash !== storedHash) {
+    if (!safeCompare(providedHash, storedHash)) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

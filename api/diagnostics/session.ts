@@ -4,6 +4,7 @@ import {
   hashWriteKey,
   generateSupportCode,
   generateOpaqueId,
+  safeCompare,
 } from '../_lib/utils';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -65,12 +66,17 @@ async function createSession(req: VercelRequest, res: VercelResponse) {
 async function getSession(req: VercelRequest, res: VercelResponse) {
   const { supportCode } = req.query;
   const adminToken = req.headers['x-admin-token'];
+  const expectedToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 
   if (!supportCode || typeof supportCode !== 'string') {
     return res.status(400).json({ error: 'Missing supportCode' });
   }
 
-  if (adminToken !== process.env['DIAGNOSTICS_ADMIN_TOKEN']) {
+  if (
+    !expectedToken ||
+    typeof adminToken !== 'string' ||
+    !safeCompare(adminToken, expectedToken)
+  ) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -101,6 +107,7 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
     writeKey?: string;
   };
   const adminToken = req.headers['x-admin-token'];
+  const expectedToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 
   if (!supportCode) {
     return res.status(400).json({ error: 'Missing supportCode' });
@@ -110,13 +117,21 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Auth: either admin token or writeKey
-    if (adminToken !== process.env['DIAGNOSTICS_ADMIN_TOKEN']) {
+    const isAdmin =
+      expectedToken &&
+      typeof adminToken === 'string' &&
+      safeCompare(adminToken, expectedToken);
+
+    if (!isAdmin) {
       if (!writeKey) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       const storedHash = await redis.get<string>(keys.writeKeyHash);
+      if (!storedHash) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
       const providedHash = await hashWriteKey(writeKey);
-      if (storedHash !== providedHash) {
+      if (!safeCompare(providedHash, storedHash)) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
     }

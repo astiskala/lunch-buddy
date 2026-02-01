@@ -1,4 +1,9 @@
-import { randomUUID, webcrypto } from 'node:crypto';
+import {
+  randomUUID,
+  webcrypto,
+  timingSafeEqual,
+  createHash,
+} from 'node:crypto';
 
 /**
  * Hash a write key for storage
@@ -9,6 +14,15 @@ export async function hashWriteKey(writeKey: string): Promise<string> {
   const hashBuffer = await webcrypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Timing-safe string comparison
+ */
+export function safeCompare(a: string, b: string): boolean {
+  const hashA = createHash('sha256').update(a).digest();
+  const hashB = createHash('sha256').update(b).digest();
+  return timingSafeEqual(hashA, hashB) && a === b;
 }
 
 /**

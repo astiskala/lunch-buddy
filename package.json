@@ -17,7 +17,7 @@
     "lint": "npm run lint:eslint:fix && npm run lint:styles:fix && npm run format",
     "mcp": "node tools/diagnostics-mcp.mjs",
     "mcp:check": "node tools/mcp-smoke.mjs",
-    "postinstall": "node tools/install-playwright.mjs",
+    "postinstall": "npm run generate:env && node tools/install-playwright.mjs",
     "prepare": "husky",
     "prestart": "npm run generate:env",
     "pretest": "npm run generate:env",
