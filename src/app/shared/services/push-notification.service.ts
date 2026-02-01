@@ -1,6 +1,17 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { DiagnosticsService } from '../../core/services/diagnostics.service';
 
+export type PermissionDenialReason =
+  | 'not-supported'
+  | 'denied-by-browser'
+  | 'denied-by-user'
+  | 'request-failed';
+
+export interface PermissionResult {
+  granted: boolean;
+  denialReason?: PermissionDenialReason;
+}
+
 export interface NotificationChannel {
   isSupported(): boolean;
   getPermission(): NotificationPermission;
@@ -70,7 +81,7 @@ export class PushNotificationService {
   private readonly channel = inject(PUSH_NOTIFICATION_CHANNEL);
   private readonly diagnostics = inject(DiagnosticsService);
 
-  async ensurePermission(): Promise<boolean> {
+  async ensurePermission(): Promise<PermissionResult> {
     const isSupported = this.channel.isSupported();
     this.diagnostics.log('info', 'push', 'Ensuring permission', {
       isSupported,
@@ -82,7 +93,15 @@ export class PushNotificationService {
     });
 
     if (!isSupported) {
-      return false;
+      const result: PermissionResult = {
+        granted: false,
+        denialReason: 'not-supported',
+      };
+      this.diagnostics.log('warn', 'push', 'Permission denied', {
+        reason: result.denialReason,
+        granted: result.granted,
+      });
+      return result;
     }
 
     const current = this.channel.getPermission();
@@ -91,27 +110,52 @@ export class PushNotificationService {
     });
 
     if (current === 'granted') {
-      return true;
+      this.diagnostics.log('info', 'push', 'Permission already granted');
+      return { granted: true };
     }
     if (current === 'denied') {
-      return false;
+      const result: PermissionResult = {
+        granted: false,
+        denialReason: 'denied-by-browser',
+      };
+      this.diagnostics.log('warn', 'push', 'Permission denied', {
+        reason: result.denialReason,
+        granted: result.granted,
+        priorState: current,
+      });
+      return result;
     }
 
     try {
-      const result = await this.channel.requestPermission();
+      const requestResult = await this.channel.requestPermission();
       this.diagnostics.log('info', 'push', 'Permission request result', {
-        result,
+        result: requestResult,
+        priorState: current,
       });
-      return result === 'granted';
+      if (requestResult === 'granted') {
+        this.diagnostics.log('info', 'push', 'Permission granted by user');
+        return { granted: true };
+      }
+      const result: PermissionResult = {
+        granted: false,
+        denialReason: 'denied-by-user',
+      };
+      this.diagnostics.log('warn', 'push', 'Permission denied', {
+        reason: result.denialReason,
+        granted: result.granted,
+        requestResult,
+        priorState: current,
+      });
+      return result;
     } catch (error) {
       this.diagnostics.log(
         'error',
         'push',
         'Error requesting permission',
-        {},
+        { priorState: current },
         error
       );
-      return false;
+      return { granted: false, denialReason: 'request-failed' };
     }
   }
 }

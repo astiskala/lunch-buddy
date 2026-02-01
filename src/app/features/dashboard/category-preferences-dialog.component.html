@@ -49,6 +49,12 @@
             </p>
           </div>
         </div>
+        @if (notificationError()) {
+          <div class="notification-error" role="alert">
+            <mat-icon fontIcon="warning"></mat-icon>
+            <span>{{ notificationError() }}</span>
+          </div>
+        }
       </div>
 
       <!-- Visible Categories -->

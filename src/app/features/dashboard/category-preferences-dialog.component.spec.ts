@@ -42,7 +42,7 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
   beforeEach(async () => {
     ensurePermissionSpy = jasmine
       .createSpy('ensurePermission')
-      .and.resolveTo(true);
+      .and.resolveTo({ granted: true });
 
     await TestBed.configureTestingModule({
       imports: [CategoryPreferencesDialogComponent],
@@ -68,10 +68,14 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
 
     expect(ensurePermissionSpy).toHaveBeenCalled();
     expect(component.notificationsEnabled()).toBeTrue();
+    expect(component.notificationError()).toBeNull();
   });
 
   it('reverts the toggle when permission is denied', async () => {
-    ensurePermissionSpy.and.resolveTo(false);
+    ensurePermissionSpy.and.resolveTo({
+      granted: false,
+      denialReason: 'denied-by-browser',
+    });
     const event = createToggleEvent(true);
     const input = event.target as HTMLInputElement;
 
@@ -80,6 +84,33 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
     expect(ensurePermissionSpy).toHaveBeenCalled();
     expect(component.notificationsEnabled()).toBeFalse();
     expect(input.checked).toBeFalse();
+    expect(component.notificationError()).toContain(
+      'Notifications are blocked'
+    );
+  });
+
+  it('shows user-denied message when permission denied by user', async () => {
+    ensurePermissionSpy.and.resolveTo({
+      granted: false,
+      denialReason: 'denied-by-user',
+    });
+    const event = createToggleEvent(true);
+
+    await component.handleNotificationsChange(event);
+
+    expect(component.notificationError()).toContain(
+      'You denied the notification permission'
+    );
+  });
+
+  it('clears error message when disabling notifications', async () => {
+    component.notificationError.set('Some previous error');
+    component.notificationsEnabled.set(true);
+    const event = createToggleEvent(false);
+
+    await component.handleNotificationsChange(event);
+
+    expect(component.notificationError()).toBeNull();
   });
 
   it('does not request permission when disabling notifications', async () => {

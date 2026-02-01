@@ -82,41 +82,57 @@ describe('PushNotificationService', () => {
     TestBed.resetTestingModule();
   });
 
-  it('returns false when notifications are not supported', async () => {
+  it('returns not-supported when notifications are not supported', async () => {
     channel.supported = false;
 
-    await expectAsync(service.ensurePermission()).toBeResolvedTo(false);
+    const result = await service.ensurePermission();
+    expect(result).toEqual({ granted: false, denialReason: 'not-supported' });
     expect(channel.requestPermissionSpy).not.toHaveBeenCalled();
   });
 
-  it('returns true when permission already granted', async () => {
+  it('returns granted when permission already granted', async () => {
     channel.permission = 'granted';
 
-    await expectAsync(service.ensurePermission()).toBeResolvedTo(true);
+    const result = await service.ensurePermission();
+    expect(result).toEqual({ granted: true });
     expect(channel.requestPermissionSpy).not.toHaveBeenCalled();
   });
 
   it('requests permission when status is default', async () => {
     channel.permission = 'default';
 
-    await expectAsync(service.ensurePermission()).toBeResolvedTo(true);
+    const result = await service.ensurePermission();
+    expect(result).toEqual({ granted: true });
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('returns false when permission request is denied', async () => {
+  it('returns denied-by-user when permission request is denied', async () => {
     channel.permission = 'default';
     channel.requestPermissionSpy.and.resolveTo('denied');
 
-    await expectAsync(service.ensurePermission()).toBeResolvedTo(false);
+    const result = await service.ensurePermission();
+    expect(result).toEqual({ granted: false, denialReason: 'denied-by-user' });
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('returns false when the permission request fails', async () => {
+  it('returns denied-by-browser when permission is already denied', async () => {
+    channel.permission = 'denied';
+
+    const result = await service.ensurePermission();
+    expect(result).toEqual({
+      granted: false,
+      denialReason: 'denied-by-browser',
+    });
+    expect(channel.requestPermissionSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns request-failed when the permission request fails', async () => {
     channel.permission = 'default';
     const failure = new Error('request failed');
     channel.requestPermissionSpy.and.returnValue(Promise.reject(failure));
 
-    await expectAsync(service.ensurePermission()).toBeResolvedTo(false);
+    const result = await service.ensurePermission();
+    expect(result).toEqual({ granted: false, denialReason: 'request-failed' });
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
   });
 });

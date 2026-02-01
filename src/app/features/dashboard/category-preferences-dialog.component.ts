@@ -17,10 +17,23 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
-import { PushNotificationService } from '../../shared/services/push-notification.service';
+import {
+  PermissionDenialReason,
+  PushNotificationService,
+} from '../../shared/services/push-notification.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { VersionService } from '../../core/services/version.service';
 import { DiagnosticsService } from '../../core/services/diagnostics.service';
+
+const DENIAL_MESSAGES: Record<PermissionDenialReason, string> = {
+  'not-supported': 'Push notifications are not supported in this browser.',
+  'denied-by-browser':
+    'Notifications are blocked. If you are in Incognito/Private mode, notifications are disabled by default. Please use a regular browser window or check your browser settings.',
+  'denied-by-user':
+    'You denied the notification permission. To enable notifications, please allow them in your browser settings.',
+  'request-failed':
+    'Failed to request notification permission. Please try again.',
+};
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -49,6 +62,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly orderedIds = signal<(number | null)[]>([]);
   readonly hiddenIds = signal<Set<number | null>>(new Set());
   readonly notificationsEnabled = signal(false);
+  readonly notificationError = signal<string | null>(null);
   readonly includeAllTransactions = signal(true);
 
   readonly allCategories = computed(() => [
@@ -178,18 +192,29 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     const target = event.target as HTMLInputElement;
     if (!target.checked) {
       this.notificationsEnabled.set(false);
+      this.notificationError.set(null);
       return;
     }
 
     try {
-      const granted = await this.pushNotificationService.ensurePermission();
-      this.notificationsEnabled.set(granted);
-      if (!granted) {
+      const result = await this.pushNotificationService.ensurePermission();
+      if (result.granted) {
+        this.notificationsEnabled.set(true);
+        this.notificationError.set(null);
+      } else {
+        this.notificationsEnabled.set(false);
         target.checked = false;
+        const message = result.denialReason
+          ? DENIAL_MESSAGES[result.denialReason]
+          : 'Notifications could not be enabled.';
+        this.notificationError.set(message);
       }
     } catch (error) {
       this.logger.error('Failed to enable push notifications', error);
       this.notificationsEnabled.set(false);
+      this.notificationError.set(
+        'An unexpected error occurred. Please try again.'
+      );
       target.checked = false;
     }
   }
