@@ -4,7 +4,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 
 /**
@@ -102,13 +102,19 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 
         for (const [key, val] of envs) {
           try {
-            // We use --force to overwrite if exists, or just add.
-            // Vercel CLI 'env add' doesn't have an easy overwrite without interactive.
-            // But we can try to add it.
-            execSync(`npx vercel env add ${key} production "${val}"`, {
-              stdio: 'pipe',
-            });
-            results.push(`Added ${key} to production`);
+            // Use spawnSync with arguments instead of execSync with a string
+            // to prevent shell command injection vulnerabilities.
+            const { status, stderr } = spawnSync(
+              'npx',
+              ['vercel', 'env', 'add', key, 'production', val],
+              { stdio: 'pipe', encoding: 'utf-8' }
+            );
+
+            if (status === 0) {
+              results.push(`Added ${key} to production`);
+            } else {
+              throw new Error(stderr || 'Unknown error');
+            }
           } catch {
             results.push(
               `Note: Could not add ${key} (it might already exist). Use 'vercel env rm ${key}' first if you need to update it.`

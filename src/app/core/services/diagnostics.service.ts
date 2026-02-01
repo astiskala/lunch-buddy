@@ -1,4 +1,11 @@
-import { Injectable, inject, signal, effect, PLATFORM_ID } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  signal,
+  effect,
+  PLATFORM_ID,
+  isDevMode,
+} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { v4 as uuidv4 } from 'uuid';
@@ -70,7 +77,9 @@ export class DiagnosticsService {
         this.isEnabled.set(parsed.isEnabled ?? false);
         this.session.set(parsed.session ?? null);
       } catch (e) {
-        console.error('Failed to load diagnostics state', e);
+        if (isDevMode()) {
+          console.error('Failed to load diagnostics state', e);
+        }
       }
     }
   }
@@ -98,7 +107,9 @@ export class DiagnosticsService {
       this.log('info', 'diagnostics', 'Diagnostic logging enabled');
       void this.flush();
     } catch (e) {
-      console.error('Failed to enable diagnostics', e);
+      if (isDevMode()) {
+        console.error('Failed to enable diagnostics', e);
+      }
       this.isEnabled.set(false);
     }
   }
@@ -116,7 +127,9 @@ export class DiagnosticsService {
           })
         );
       } catch (e) {
-        console.error('Failed to delete server logs', e);
+        if (isDevMode()) {
+          console.error('Failed to delete server logs', e);
+        }
       }
     }
 
@@ -146,7 +159,9 @@ export class DiagnosticsService {
       error: error ? normalizeError(error) : undefined,
     };
 
-    console.debug(`[Diagnostics][${area}] ${message}`, event);
+    if (isDevMode()) {
+      console.debug(`[Diagnostics][${area}] ${message}`, event);
+    }
 
     this.eventBuffer.push(event);
     if (this.eventBuffer.length >= this.MAX_BUFFER_SIZE) {
@@ -170,7 +185,9 @@ export class DiagnosticsService {
         })
       );
     } catch (e) {
-      console.error('Failed to flush diagnostic events', e);
+      if (isDevMode()) {
+        console.error('Failed to flush diagnostic events', e);
+      }
       this.eventBuffer = [
         ...eventsToFlush.slice(-50),
         ...this.eventBuffer,

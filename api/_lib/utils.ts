@@ -15,7 +15,11 @@ export async function hashWriteKey(writeKey: string): Promise<string> {
  * Generate a random support code (e.g. 8-10 chars)
  */
 export function generateSupportCode(): string {
-  return Math.random().toString(36).substring(2, 12).toUpperCase();
+  // Use crypto.getRandomValues for cryptographically strong random values
+  const array = new Uint32Array(1);
+  webcrypto.getRandomValues(array);
+  const randomValue = array[0] / (0xffffffff + 1);
+  return randomValue.toString(36).substring(2, 12).toUpperCase();
 }
 
 /**

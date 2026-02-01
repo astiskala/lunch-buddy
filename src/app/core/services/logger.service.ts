@@ -21,10 +21,14 @@ export class LoggerService {
   }
 
   warn(message: string, ...args: unknown[]): void {
-    console.warn(`[WARN] ${message}`, ...args);
+    if (this.isDev) {
+      console.warn(`[WARN] ${message}`, ...args);
+    }
   }
 
   error(message: string, error?: unknown, ...args: unknown[]): void {
-    console.error(`[ERROR] ${message}`, error, ...args);
+    if (this.isDev) {
+      console.error(`[ERROR] ${message}`, error, ...args);
+    }
   }
 }

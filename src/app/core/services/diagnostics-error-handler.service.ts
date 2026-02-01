@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable, inject } from '@angular/core';
+import { ErrorHandler, Injectable, inject, isDevMode } from '@angular/core';
 import { DiagnosticsService } from './diagnostics.service';
 
 @Injectable()
@@ -9,8 +9,10 @@ export class DiagnosticsErrorHandler implements ErrorHandler {
     // Log to diagnostics if enabled
     this.diagnostics.log('error', 'app', 'Unhandled exception', {}, error);
 
-    // Continue to standard handling (console)
-    console.error(error);
+    // Continue to standard handling (console) in dev mode
+    if (isDevMode()) {
+      console.error(error);
+    }
   }
 
   /**
