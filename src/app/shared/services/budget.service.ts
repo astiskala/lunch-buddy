@@ -29,6 +29,7 @@ import {
 } from '../utils/recurring.util';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
+import { DiagnosticsService } from '../../core/services/diagnostics.service';
 
 export interface CategoryPreferences {
   customOrder: (number | null)[];
@@ -56,6 +57,7 @@ export class BudgetService {
   readonly lunchMoneyService = inject(LunchMoneyService);
   readonly backgroundSyncService = inject(BackgroundSyncService);
   readonly logger = inject(LoggerService);
+  private readonly diagnostics = inject(DiagnosticsService);
 
   // Month information
   readonly monthRange = getCurrentMonthRange();
@@ -224,8 +226,18 @@ export class BudgetService {
     this.isLoading.set(true);
     this.errors.set([]);
 
+    const startDate = this.startDate();
+    const endDate = this.endDate();
+
+    this.diagnostics.log('info', 'budget', 'Loading budget data', {
+      startDate,
+      endDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      offset: new Date().getTimezoneOffset(),
+    });
+
     this.lunchMoneyService
-      .getBudgetSummary(this.startDate(), this.endDate())
+      .getBudgetSummary(startDate, endDate)
       .pipe(
         switchMap((summaries: BudgetSummaryItem[]) =>
           this.buildBudgetProgressFromSummaries(summaries)
@@ -233,6 +245,14 @@ export class BudgetService {
       )
       .subscribe({
         next: (progress: BudgetProgress[]) => {
+          this.diagnostics.log(
+            'info',
+            'budget',
+            'Budget data loaded successfully',
+            {
+              categoryCount: progress.length,
+            }
+          );
           this.budgetData.set(progress);
           this.recomputeBudgetStatuses();
           this.isLoading.set(false);
@@ -246,7 +266,19 @@ export class BudgetService {
         },
         error: (error: unknown) => {
           this.logger.error('Failed to refresh budget data', error);
-          this.errors.set([error as Error]);
+          this.diagnostics.log(
+            'error',
+            'budget',
+            'Failed to load budget data',
+            {
+              startDate,
+              endDate,
+            },
+            error
+          );
+          this.errors.set([
+            error instanceof Error ? error : new Error(String(error)),
+          ]);
           this.isLoading.set(false);
         },
       });

@@ -8,7 +8,7 @@
     <div class="error-state">
       <h3>Error Loading Budget</h3>
       @for (error of errors(); track error) {
-        <p class="error-message">{{ error }}</p>
+        <p class="error-message">{{ errorToString(error) }}</p>
       }
       <button (click)="refresh()">Retry</button>
     </div>

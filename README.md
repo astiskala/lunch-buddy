@@ -49,6 +49,25 @@ npm start  # Dev server at http://localhost:4200
 
 ### Optional: Configure Environment
 
+To enable all features, you can provide several optional environment variables.
+
+#### Diagnostics & Troubleshooting
+
+Lunch Buddy includes an optional diagnostic logging mode to help troubleshoot issues.
+Logs are stored server-side in Redis (Upstash) and are automatically deleted after 7 days.
+
+1.  **Provision Redis**: In Vercel Marketplace, add the **Upstash Redis** integration to your project.
+2.  **Environment Variables**:
+    - `UPSTASH_REDIS_REST_URL`: Provided automatically by the integration.
+    - `UPSTASH_REDIS_REST_TOKEN`: Provided automatically by the integration.
+    - `DIAGNOSTICS_ADMIN_TOKEN`: A secret string used to retrieve logs via the CLI.
+3.  **Fetch Logs**:
+    ```bash
+    DIAGNOSTICS_ADMIN_TOKEN=your_secret node tools/fetch-logs.mjs <supportCode>
+    ```
+
+#### API Proxies
+
 ```bash
 export NG_APP_LUNCHMONEY_API_KEY=<your-token>
 npm start

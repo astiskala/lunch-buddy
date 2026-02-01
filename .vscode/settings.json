@@ -4,7 +4,7 @@
     "connectionId": "astiskala",
     "projectKey": "astiskala_lunch-buddy"
   },
-  "mcp.servers": {
+  "mcpServers": {
     "angular": {
       "command": "npm",
       "args": ["exec", "--", "ng", "mcp"],
@@ -14,6 +14,11 @@
     },
     "sonarqube": {
       "disabled": true
+    },
+    "lunch-buddy": {
+      "command": "node",
+      "args": ["/Users/adam/Source/lunch-buddy/tools/diagnostics-mcp.mjs"],
+      "cwd": "/Users/adam/Source/lunch-buddy"
     }
   },
   "[git-commit]": {

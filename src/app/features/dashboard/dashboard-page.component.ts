@@ -27,6 +27,7 @@ import {
 } from '../../shared/utils/currency.util';
 import { getWindowRange } from '../../shared/utils/date.util';
 import { filterPendingInstances } from '../../shared/utils/recurring.util';
+import { errorToString } from '../../core/utils/diagnostics.utils';
 
 type StatusFilter = 'all' | 'over' | 'at-risk' | 'on-track';
 type TabType = 'expenses' | 'income';
@@ -76,6 +77,8 @@ export class DashboardPageComponent {
   protected readonly preferences = this.budgetService.getPreferences;
   protected readonly lastRefresh = this.budgetService.getLastRefresh;
   protected readonly referenceDate = this.budgetService.getReferenceDate;
+
+  protected readonly errorToString = errorToString;
 
   // Computed values
   protected readonly activeItems = computed(() =>

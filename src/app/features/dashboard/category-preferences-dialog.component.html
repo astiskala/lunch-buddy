@@ -137,6 +137,62 @@
         </div>
       }
 
+      <!-- Diagnostics Section -->
+      <div class="divider"></div>
+      <div class="setting-section diagnostics-section">
+        <div class="setting-header">
+          <label
+            class="toggle-container"
+            aria-label="Enable diagnostic logging">
+            <input
+              type="checkbox"
+              [checked]="diagnostics.isEnabled()"
+              (change)="toggleDiagnostics($event)" />
+            <span class="toggle-slider"></span>
+          </label>
+          <div class="setting-info">
+            <h3>Diagnostic logging</h3>
+            <p>Help troubleshoot issues by capturing technical app logs.</p>
+          </div>
+        </div>
+
+        @if (diagnostics.isEnabled() && diagnostics.session(); as session) {
+          <div class="diagnostics-controls">
+            <div class="support-code-container">
+              <span class="support-code-label">Support Code:</span>
+              <code class="support-code">{{ session.supportCode }}</code>
+              <button
+                mat-icon-button
+                (click)="copySupportCode()"
+                matTooltip="Copy code"
+                aria-label="Copy support code">
+                <mat-icon fontIcon="content_copy"></mat-icon>
+              </button>
+            </div>
+
+            <div class="action-buttons">
+              <button mat-stroked-button (click)="flushLogs()">
+                <mat-icon fontIcon="send"></mat-icon>
+                Send logs now
+              </button>
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="disableAndDeleteLogs()">
+                <mat-icon fontIcon="delete_forever"></mat-icon>
+                Disable & delete logs
+              </button>
+            </div>
+          </div>
+        }
+
+        <p class="consent-note">
+          Diagnostics include technical details about app behavior. By default,
+          financial content and secrets are redacted. Use only when requested by
+          support.
+        </p>
+      </div>
+
       <div class="dialog-actions">
         <div class="actions-left">
           <button

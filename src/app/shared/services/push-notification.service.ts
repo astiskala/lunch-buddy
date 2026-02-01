@@ -1,4 +1,5 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
+import { DiagnosticsService } from '../../core/services/diagnostics.service';
 
 export interface NotificationChannel {
   isSupported(): boolean;
@@ -67,13 +68,28 @@ export const PUSH_NOTIFICATION_CHANNEL =
 })
 export class PushNotificationService {
   private readonly channel = inject(PUSH_NOTIFICATION_CHANNEL);
+  private readonly diagnostics = inject(DiagnosticsService);
 
   async ensurePermission(): Promise<boolean> {
-    if (!this.channel.isSupported()) {
+    const isSupported = this.channel.isSupported();
+    this.diagnostics.log('info', 'push', 'Ensuring permission', {
+      isSupported,
+      hasNotification: typeof Notification !== 'undefined',
+      hasServiceWorker:
+        typeof navigator !== 'undefined' && 'serviceWorker' in navigator,
+      hasPushManager:
+        typeof globalThis !== 'undefined' && 'PushManager' in globalThis,
+    });
+
+    if (!isSupported) {
       return false;
     }
 
     const current = this.channel.getPermission();
+    this.diagnostics.log('info', 'push', 'Current permission state', {
+      current,
+    });
+
     if (current === 'granted') {
       return true;
     }
@@ -81,7 +97,21 @@ export class PushNotificationService {
       return false;
     }
 
-    const result = await this.channel.requestPermission();
-    return result === 'granted';
+    try {
+      const result = await this.channel.requestPermission();
+      this.diagnostics.log('info', 'push', 'Permission request result', {
+        result,
+      });
+      return result === 'granted';
+    } catch (error) {
+      this.diagnostics.log(
+        'error',
+        'push',
+        'Error requesting permission',
+        {},
+        error
+      );
+      return false;
+    }
   }
 }

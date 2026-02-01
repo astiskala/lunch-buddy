@@ -20,6 +20,7 @@ import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { VersionService } from '../../core/services/version.service';
+import { DiagnosticsService } from '../../core/services/diagnostics.service';
 
 @Component({
   selector: 'category-preferences-dialog',
@@ -32,6 +33,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly logger = inject(LoggerService);
   private readonly versionService = inject(VersionService);
+  protected readonly diagnostics = inject(DiagnosticsService);
 
   readonly dialogElement =
     viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
@@ -203,5 +205,42 @@ export class CategoryPreferencesDialogComponent implements OnInit {
 
   canMoveDown(index: number): boolean {
     return index < this.visibleCategories().length - 1;
+  }
+
+  async toggleDiagnostics(event: Event): Promise<void> {
+    const target = event.target as HTMLInputElement;
+    if (target.checked) {
+      await this.diagnostics.enable();
+    } else {
+      await this.diagnostics.disable();
+    }
+  }
+
+  async copySupportCode(): Promise<void> {
+    const session = this.diagnostics.session();
+    if (session) {
+      try {
+        await navigator.clipboard.writeText(session.supportCode);
+        this.logger.info('Support code copied to clipboard');
+      } catch (err) {
+        this.logger.error('Failed to copy support code', err);
+      }
+    }
+  }
+
+  async flushLogs(): Promise<void> {
+    await this.diagnostics.flush();
+    this.logger.info('Logs sent successfully');
+  }
+
+  async disableAndDeleteLogs(): Promise<void> {
+    if (
+      confirm(
+        'Are you sure you want to disable diagnostics and delete all server-side logs for this session?'
+      )
+    ) {
+      await this.diagnostics.disable(true);
+      this.logger.info('Diagnostics disabled and logs deleted');
+    }
   }
 }

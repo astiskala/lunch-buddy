@@ -10,16 +10,21 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
 import { lunchmoneyInterceptor } from './core/interceptors/lunchmoney.interceptor';
+import { diagnosticsInterceptor } from './core/interceptors/diagnostics.interceptor';
+import { provideDiagnostics } from './core/providers/diagnostics.provider';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([lunchmoneyInterceptor])),
+    provideHttpClient(
+      withInterceptors([diagnosticsInterceptor, lunchmoneyInterceptor])
+    ),
     provideServiceWorker('custom-service-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerImmediately',
     }),
+    provideDiagnostics(),
   ],
 };

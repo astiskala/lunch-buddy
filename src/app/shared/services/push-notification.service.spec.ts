@@ -111,12 +111,12 @@ describe('PushNotificationService', () => {
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects when the permission request fails', async () => {
+  it('returns false when the permission request fails', async () => {
     channel.permission = 'default';
     const failure = new Error('request failed');
     channel.requestPermissionSpy.and.returnValue(Promise.reject(failure));
 
-    await expectAsync(service.ensurePermission()).toBeRejectedWith(failure);
+    await expectAsync(service.ensurePermission()).toBeResolvedTo(false);
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
   });
 });
