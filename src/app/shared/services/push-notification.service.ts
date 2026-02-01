@@ -81,6 +81,22 @@ export class PushNotificationService {
   private readonly channel = inject(PUSH_NOTIFICATION_CHANNEL);
   private readonly diagnostics = inject(DiagnosticsService);
 
+  async isPrivateMode(): Promise<boolean> {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (typeof navigator === 'undefined' || !navigator.storage?.estimate) {
+      return false;
+    }
+
+    try {
+      const { quota } = await navigator.storage.estimate();
+      // Heuristic: Chrome incognito quota is usually very low (< 128MB)
+      // while regular mode is typically several GBs.
+      return !!quota && quota < 128 * 1024 * 1024;
+    } catch {
+      return false;
+    }
+  }
+
   async ensurePermission(): Promise<PermissionResult> {
     const isSupported = this.channel.isSupported();
     this.diagnostics.log('info', 'push', 'Ensuring permission', {
@@ -127,25 +143,48 @@ export class PushNotificationService {
     }
 
     try {
+      const startTime = Date.now();
       const requestResult = await this.channel.requestPermission();
+      const duration = Date.now() - startTime;
+
       this.diagnostics.log('info', 'push', 'Permission request result', {
         result: requestResult,
         priorState: current,
+        duration,
       });
+
       if (requestResult === 'granted') {
         this.diagnostics.log('info', 'push', 'Permission granted by user');
         return { granted: true };
       }
+
+      // If the permission was denied almost immediately (< 150ms), it's likely
+      // blocked by the browser (e.g. Incognito mode or "always block").
+      // Real user interaction usually takes at least 300ms-500ms.
+      let isAutoDenied = requestResult === 'denied' && duration < 150;
+
+      // If it wasn't instantly denied but still denied, check if we're in a
+      // private/incognito mode which often blocks these requests by default.
+      if (requestResult === 'denied' && !isAutoDenied) {
+        if (await this.isPrivateMode()) {
+          isAutoDenied = true;
+        }
+      }
+
       const result: PermissionResult = {
         granted: false,
-        denialReason: 'denied-by-user',
+        denialReason: isAutoDenied ? 'denied-by-browser' : 'denied-by-user',
       };
+
       this.diagnostics.log('warn', 'push', 'Permission denied', {
         reason: result.denialReason,
         granted: result.granted,
         requestResult,
         priorState: current,
+        duration,
+        isAutoDenied,
       });
+
       return result;
     } catch (error) {
       this.diagnostics.log(

@@ -106,13 +106,46 @@ describe('PushNotificationService', () => {
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('returns denied-by-user when permission request is denied', async () => {
+  it('returns denied-by-user when permission request is denied by user', async () => {
     channel.permission = 'default';
-    channel.requestPermissionSpy.and.resolveTo('denied');
+    channel.requestPermissionSpy.and.callFake(async () => {
+      // Simulate user taking time to decide
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return 'denied';
+    });
 
     const result = await service.ensurePermission();
     expect(result).toEqual({ granted: false, denialReason: 'denied-by-user' });
     expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns denied-by-browser when permission is instantly denied (auto-denied)', async () => {
+    channel.permission = 'default';
+    channel.requestPermissionSpy.and.resolveTo('denied');
+
+    const result = await service.ensurePermission();
+    expect(result).toEqual({
+      granted: false,
+      denialReason: 'denied-by-browser',
+    });
+    expect(channel.requestPermissionSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns denied-by-browser when permission is denied and private mode is detected', async () => {
+    channel.permission = 'default';
+    channel.requestPermissionSpy.and.callFake(async () => {
+      // Simulate user taking time to decide, so timing doesn't trigger it
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return 'denied';
+    });
+
+    spyOn(service, 'isPrivateMode').and.resolveTo(true);
+
+    const result = await service.ensurePermission();
+    expect(result).toEqual({
+      granted: false,
+      denialReason: 'denied-by-browser',
+    });
   });
 
   it('returns denied-by-browser when permission is already denied', async () => {
