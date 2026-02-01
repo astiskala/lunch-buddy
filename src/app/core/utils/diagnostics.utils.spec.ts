@@ -76,10 +76,22 @@ describe('DiagnosticsUtils', () => {
       expect(result[1]?.['safe']).toBe(1);
     });
 
-    it('should NOT redact when includeExtra is true', () => {
-      const input = { email: 'test@example.com' };
-      const result = redact(input, true) as Record<string, unknown>;
-      expect(result['email']).toBe('test@example.com');
+    it('should redact new financial and personal keys', () => {
+      const input = {
+        name: 'John Doe',
+        amount: 100.5,
+        category: 'Food',
+        description: 'Lunch with friends',
+        payee: 'McDonalds',
+        safe: 'stay',
+      };
+      const result = redact(input) as Record<string, unknown>;
+      expect(result['name']).toBe('[REDACTED]');
+      expect(result['amount']).toBe('[REDACTED]');
+      expect(result['category']).toBe('[REDACTED]');
+      expect(result['description']).toBe('[REDACTED]');
+      expect(result['payee']).toBe('[REDACTED]');
+      expect(result['safe']).toBe('stay');
     });
 
     it('should return non-objects as-is', () => {

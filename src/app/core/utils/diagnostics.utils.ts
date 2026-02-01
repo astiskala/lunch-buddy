@@ -54,6 +54,7 @@ export function errorToString(error: unknown): string {
 }
 
 const REDACTED_KEYS = [
+  // Authentication & Infrastructure
   'token',
   'key',
   'auth',
@@ -61,9 +62,23 @@ const REDACTED_KEYS = [
   'password',
   'secret',
   'cookie',
+  'api_key',
+  'access_token',
+  'refresh_token',
+  'writekey',
+
+  // Personal Information
   'email',
   'phone',
   'address',
+  'first_name',
+  'last_name',
+  'full_name',
+  'username',
+  'name',
+  'title',
+
+  // Financial Information
   'amount',
   'balance',
   'budget',
@@ -72,31 +87,47 @@ const REDACTED_KEYS = [
   'category',
   'notes',
   'memo',
+  'description',
+  'desc',
+  'account_number',
+  'routing_number',
+  'iban',
+  'swift',
+  'bic',
+  'totals',
 ];
 
-export function redact(obj: unknown, includeExtra = false, depth = 0): unknown {
+/**
+ * Redacts sensitive information from an object.
+ * Recursively traverses objects and arrays.
+ */
+export function redact(obj: unknown, depth = 0): unknown {
   if (!obj || typeof obj !== 'object' || depth > 10) {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => redact(item, includeExtra, depth + 1));
+    return obj.map(item => redact(item, depth + 1));
   }
 
   const redacted: Record<string, unknown> = {};
   const record = obj as Record<string, unknown>;
+
   for (const key in record) {
     if (Object.prototype.hasOwnProperty.call(record, key)) {
       const lowerKey = key.toLowerCase();
-      if (REDACTED_KEYS.some(k => lowerKey.includes(k)) && !includeExtra) {
+      const value = record[key];
+
+      if (REDACTED_KEYS.some(k => lowerKey.includes(k))) {
         redacted[key] = '[REDACTED]';
-      } else if (typeof record[key] === 'object' && record[key] !== null) {
-        redacted[key] = redact(record[key], includeExtra, depth + 1);
+      } else if (typeof value === 'object' && value !== null) {
+        redacted[key] = redact(value, depth + 1);
       } else {
-        redacted[key] = record[key];
+        redacted[key] = value;
       }
     }
   }
+
   return redacted;
 }
 

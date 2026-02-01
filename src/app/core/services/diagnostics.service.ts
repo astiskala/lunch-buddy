@@ -155,7 +155,7 @@ export class DiagnosticsService {
       area,
       message,
       correlationId: uuidv4(),
-      details: redact(details, true),
+      details: redact(details),
       error: error ? normalizeError(error) : undefined,
     };
 

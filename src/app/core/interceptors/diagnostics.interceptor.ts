@@ -26,6 +26,14 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
   const url = new URL(req.url, globalThis.location.origin);
   const path = url.pathname;
 
+  const params: Record<string, string | string[]> = {};
+  req.params.keys().forEach(key => {
+    const values = req.params.getAll(key);
+    if (values) {
+      params[key] = values.length === 1 ? values[0] : values;
+    }
+  });
+
   return next(req).pipe(
     tap({
       next: (event: HttpEvent<unknown>) => {
@@ -41,6 +49,13 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
               status: event.status,
               duration,
               correlationId,
+              request: {
+                params,
+                body: req.body,
+              },
+              response: {
+                body: event.body,
+              },
             }
           );
         }
@@ -48,8 +63,10 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
       error: (error: unknown) => {
         const duration = Date.now() - startTime;
         let status = 0;
+        let responseBody: unknown = undefined;
         if (error instanceof HttpErrorResponse) {
           status = error.status;
+          responseBody = error.error;
         }
         diagnostics.log(
           'error',
@@ -61,6 +78,13 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
             status,
             duration,
             correlationId,
+            request: {
+              params,
+              body: req.body,
+            },
+            response: {
+              body: responseBody,
+            },
           },
           error
         );
