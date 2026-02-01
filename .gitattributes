@@ -1,0 +1,3 @@
+# Mark auto-generated files to avoid merge conflicts
+src/environments/runtime-env.generated.ts merge=ours
+src/environments/version.ts merge=ours
