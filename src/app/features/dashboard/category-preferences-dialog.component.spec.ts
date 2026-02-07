@@ -84,9 +84,10 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
     expect(ensurePermissionSpy).toHaveBeenCalled();
     expect(component.notificationsEnabled()).toBeFalse();
     expect(input.checked).toBeFalse();
-    expect(component.notificationError()).toContain(
-      'Notifications are blocked'
+    expect(component.notificationError()?.message).toContain(
+      'blocked this notification request'
     );
+    expect(component.notificationError()?.links.length).toBeGreaterThan(0);
   });
 
   it('shows user-denied message when permission denied by user', async () => {
@@ -98,13 +99,17 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
 
     await component.handleNotificationsChange(event);
 
-    expect(component.notificationError()).toContain(
+    expect(component.notificationError()?.message).toContain(
       'You denied the notification permission'
     );
+    expect(component.notificationError()?.links.length).toBeGreaterThan(0);
   });
 
   it('clears error message when disabling notifications', async () => {
-    component.notificationError.set('Some previous error');
+    component.notificationError.set({
+      message: 'Some previous error',
+      links: [],
+    });
     component.notificationsEnabled.set(true);
     const event = createToggleEvent(false);
 
@@ -134,6 +139,7 @@ describe('CategoryPreferencesDialogComponent', () => {
     hiddenCategoryIds: [2],
     notificationsEnabled: true,
     includeAllTransactions: false,
+    hideGroupedCategories: true,
   };
 
   const setRequiredInputs = (): void => {
@@ -146,7 +152,7 @@ describe('CategoryPreferencesDialogComponent', () => {
   beforeEach(async () => {
     ensurePermissionSpy = jasmine
       .createSpy('ensurePermission')
-      .and.resolveTo(true);
+      .and.resolveTo({ granted: true });
 
     await TestBed.configureTestingModule({
       imports: [CategoryPreferencesDialogComponent],
@@ -176,6 +182,7 @@ describe('CategoryPreferencesDialogComponent', () => {
     );
     expect(component.notificationsEnabled()).toBeTrue();
     expect(component.includeAllTransactions()).toBeFalse();
+    expect(component.hideGroupedCategories()).toBeTrue();
   });
 
   it('emits normalized preferences on save', () => {
@@ -191,6 +198,7 @@ describe('CategoryPreferencesDialogComponent', () => {
     component.hiddenIds.set(new Set([3]));
     component.notificationsEnabled.set(true);
     component.includeAllTransactions.set(false);
+    component.hideGroupedCategories.set(true);
 
     const preferencesSpy = spyOn(component.preferencesChange, 'emit');
     const closeSpy = spyOn(component.dialogClose, 'emit');
@@ -202,6 +210,7 @@ describe('CategoryPreferencesDialogComponent', () => {
       hiddenCategoryIds: [3],
       notificationsEnabled: true,
       includeAllTransactions: false,
+      hideGroupedCategories: true,
     });
     expect(closeSpy).toHaveBeenCalled();
   });
@@ -211,6 +220,7 @@ describe('CategoryPreferencesDialogComponent', () => {
     component.hiddenIds.set(new Set([2]));
     component.notificationsEnabled.set(true);
     component.includeAllTransactions.set(false);
+    component.hideGroupedCategories.set(true);
 
     component.resetPreferences();
 
@@ -218,5 +228,16 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(component.hiddenIds().size).toBe(0);
     expect(component.notificationsEnabled()).toBeFalse();
     expect(component.includeAllTransactions()).toBeTrue();
+    expect(component.hideGroupedCategories()).toBeFalse();
+  });
+
+  it('keeps visible categories collapsed by default and toggles open state', () => {
+    expect(component.visibleCategoriesExpanded()).toBeFalse();
+
+    component.toggleVisibleCategoriesSection();
+    expect(component.visibleCategoriesExpanded()).toBeTrue();
+
+    component.toggleVisibleCategoriesSection();
+    expect(component.visibleCategoriesExpanded()).toBeFalse();
   });
 });

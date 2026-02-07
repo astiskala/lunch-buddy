@@ -121,6 +121,8 @@ html {
   --color-warning-bg: #fff3e0;
   --color-error: #f44336;
   --color-error-bg: #ffebee;
+  --color-error-border: #fca5a5;
+  --color-error-text: #7f1d1d;
 
   // Shadows
   --shadow-sm: 0 2px 8px rgb(0 0 0 / 8%);
@@ -172,7 +174,9 @@ html {
     --color-warning: #ffb74d;
     --color-warning-bg: #3d2f1a;
     --color-error: #ef5350;
-    --color-error-bg: #3d1a1a;
+    --color-error-bg: #441417;
+    --color-error-border: #f87171;
+    --color-error-text: #fecaca;
 
     // Shadows
     --shadow-sm: 0 2px 8px rgb(0 0 0 / 40%);

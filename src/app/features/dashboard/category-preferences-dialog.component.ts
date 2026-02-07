@@ -24,11 +24,21 @@ import {
 import { LoggerService } from '../../core/services/logger.service';
 import { VersionService } from '../../core/services/version.service';
 import { DiagnosticsService } from '../../core/services/diagnostics.service';
+import {
+  buildBlockedNotificationGuidance,
+  NotificationHelpLink,
+} from '../../shared/utils/notification-guidance.util';
 
-const DENIAL_MESSAGES: Record<PermissionDenialReason, string> = {
+interface NotificationErrorDetails {
+  message: string;
+  links: NotificationHelpLink[];
+}
+
+const DENIAL_MESSAGES: Record<
+  Exclude<PermissionDenialReason, 'denied-by-browser'>,
+  string
+> = {
   'not-supported': 'Push notifications are not supported in this browser.',
-  'denied-by-browser':
-    'Notifications are blocked. If you are in Incognito/Private mode, notifications are disabled by default. Please use a regular browser window or check your browser settings.',
   'denied-by-user':
     'You denied the notification permission. To enable notifications, please allow them in your browser settings.',
   'request-failed':
@@ -62,8 +72,10 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   readonly orderedIds = signal<(number | null)[]>([]);
   readonly hiddenIds = signal<Set<number | null>>(new Set());
   readonly notificationsEnabled = signal(false);
-  readonly notificationError = signal<string | null>(null);
+  readonly notificationError = signal<NotificationErrorDetails | null>(null);
   readonly includeAllTransactions = signal(true);
+  readonly hideGroupedCategories = signal(false);
+  readonly visibleCategoriesExpanded = signal(false);
 
   readonly allCategories = computed(() => [
     ...this.items(),
@@ -94,6 +106,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
       const shouldOpen = this.open();
 
       if (!shouldOpen) {
+        this.visibleCategoriesExpanded.set(false);
         if (dialog.open && typeof dialog.close === 'function') {
           dialog.close();
         }
@@ -124,6 +137,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
     this.notificationsEnabled.set(prefs.notificationsEnabled);
     this.includeAllTransactions.set(prefs.includeAllTransactions);
+    this.hideGroupedCategories.set(prefs.hideGroupedCategories);
   }
 
   private ensureOrderContains(current: (number | null)[]): (number | null)[] {
@@ -170,6 +184,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.hiddenIds.set(new Set());
     this.notificationsEnabled.set(false);
     this.includeAllTransactions.set(true);
+    this.hideGroupedCategories.set(false);
   }
 
   handleSave(): void {
@@ -178,6 +193,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
       hiddenCategoryIds: Array.from(this.hiddenIds()),
       notificationsEnabled: this.notificationsEnabled(),
       includeAllTransactions: this.includeAllTransactions(),
+      hideGroupedCategories: this.hideGroupedCategories(),
     };
 
     this.preferencesChange.emit(newPreferences);
@@ -202,19 +218,34 @@ export class CategoryPreferencesDialogComponent implements OnInit {
         this.notificationsEnabled.set(true);
         this.notificationError.set(null);
       } else {
+        const notificationError = this.resolveNotificationError(
+          result.denialReason
+        );
         this.notificationsEnabled.set(false);
         target.checked = false;
-        const message = result.denialReason
-          ? DENIAL_MESSAGES[result.denialReason]
-          : 'Notifications could not be enabled.';
-        this.notificationError.set(message);
+        this.notificationError.set(notificationError);
+        this.diagnostics.log(
+          'warn',
+          'push',
+          'Push notification permission denied in settings',
+          {
+            denialReason: result.denialReason ?? 'unknown',
+            userAgent: this.readUserAgent(),
+            links: notificationError.links.map(link => link.url),
+            notificationPermission:
+              typeof Notification === 'undefined'
+                ? 'unsupported'
+                : Notification.permission,
+          }
+        );
       }
     } catch (error) {
       this.logger.error('Failed to enable push notifications', error);
       this.notificationsEnabled.set(false);
-      this.notificationError.set(
-        'An unexpected error occurred. Please try again.'
-      );
+      this.notificationError.set({
+        message: 'An unexpected error occurred. Please try again.',
+        links: [],
+      });
       target.checked = false;
     }
   }
@@ -222,6 +253,15 @@ export class CategoryPreferencesDialogComponent implements OnInit {
   handleIncludeAllTransactionsChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.includeAllTransactions.set(target.checked);
+  }
+
+  handleHideGroupedCategoriesChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.hideGroupedCategories.set(target.checked);
+  }
+
+  toggleVisibleCategoriesSection(): void {
+    this.visibleCategoriesExpanded.update(expanded => !expanded);
   }
 
   canMoveUp(index: number): boolean {
@@ -267,5 +307,41 @@ export class CategoryPreferencesDialogComponent implements OnInit {
       await this.diagnostics.disable(true);
       this.logger.info('Diagnostics disabled and logs deleted');
     }
+  }
+
+  private resolveNotificationError(
+    denialReason: PermissionDenialReason | undefined
+  ): NotificationErrorDetails {
+    if (denialReason === 'denied-by-browser') {
+      return buildBlockedNotificationGuidance(this.readUserAgent());
+    }
+
+    if (denialReason === 'denied-by-user') {
+      const guidance = buildBlockedNotificationGuidance(this.readUserAgent());
+      return {
+        message: DENIAL_MESSAGES['denied-by-user'],
+        links: guidance.links,
+      };
+    }
+
+    if (denialReason) {
+      return {
+        message: DENIAL_MESSAGES[denialReason],
+        links: [],
+      };
+    }
+
+    return {
+      message: 'Notifications could not be enabled.',
+      links: [],
+    };
+  }
+
+  private readUserAgent(): string {
+    if (typeof navigator === 'undefined') {
+      return '';
+    }
+
+    return navigator.userAgent;
   }
 }

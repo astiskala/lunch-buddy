@@ -199,19 +199,19 @@
 
 .error-state {
   background: var(--color-error-bg);
-  border: 1px solid var(--color-error);
+  border: 1px solid var(--color-error-border, var(--color-error));
   border-radius: 8px;
   padding: 24px;
   margin: 24px 0;
   text-align: center;
 
   h3 {
-    color: var(--color-error);
+    color: var(--color-error-text, var(--color-error));
     margin: 0 0 12px;
   }
 
   .error-message {
-    color: var(--color-error);
+    color: var(--color-error-text, var(--color-error));
     margin: 8px 0;
   }
 

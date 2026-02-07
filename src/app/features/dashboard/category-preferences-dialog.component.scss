@@ -149,11 +149,12 @@ dialog.dialog-container {
   margin-top: 12px;
   padding: 12px;
   background-color: var(--color-error-bg, #fef2f2);
-  border: 1px solid var(--color-error-border, #fecaca);
+  border: 1px solid var(--color-error-border, #fca5a5);
   border-radius: 8px;
-  color: var(--color-error-text, #991b1b);
+  color: var(--color-error-text, #7f1d1d);
   font-size: 13px;
   line-height: 1.4;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
 
   mat-icon {
     flex-shrink: 0;
@@ -163,8 +164,35 @@ dialog.dialog-container {
     color: var(--color-error, #dc2626);
   }
 
-  span {
+  .notification-error-content {
+    display: flex;
     flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .notification-error-message {
+    font-weight: 500;
+  }
+
+  .notification-error-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  a {
+    color: var(--color-error-text, #7f1d1d);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 }
 
@@ -181,6 +209,40 @@ dialog.dialog-container {
     margin: 0;
     font-size: 13px;
     color: var(--color-text-tertiary);
+  }
+}
+
+.section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border-dark);
+  }
+
+  .section-title {
+    margin-bottom: 0;
+  }
+
+  .section-chevron {
+    flex-shrink: 0;
+    color: var(--color-primary);
+    font-size: 12px;
+    line-height: 1;
   }
 }
 

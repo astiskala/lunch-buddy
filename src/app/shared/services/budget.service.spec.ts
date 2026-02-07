@@ -19,6 +19,7 @@ const defaultPreferences: CategoryPreferences = {
   hiddenCategoryIds: [],
   notificationsEnabled: false,
   includeAllTransactions: true,
+  hideGroupedCategories: false,
 };
 
 class MockLunchMoneyService {
@@ -410,6 +411,66 @@ describe('BudgetService background sync', () => {
     expect(expenses.length).toBe(1);
     expect(expenses[0].isGroup).toBeTrue();
     expect(expenses[0].categoryName).toBe('Household Essentials');
+  });
+
+  it('shows group rows instead of grouped leaf categories when enabled', () => {
+    initService();
+    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+
+    lunchMoney.budgetSummary$.next([
+      createSummary(monthKey, {
+        category_id: 900,
+        category_name: 'Dining Group',
+        is_group: true,
+        group_id: 900,
+      }),
+      createSummary(monthKey, {
+        category_id: 901,
+        category_name: 'Dining Out',
+        group_id: 900,
+        is_group: false,
+      }),
+      createSummary(monthKey, {
+        category_id: 902,
+        category_name: 'Coffee',
+        group_id: 900,
+        is_group: false,
+      }),
+      createSummary(monthKey, {
+        category_id: 903,
+        category_name: 'Rent',
+        group_id: null,
+        is_group: false,
+      }),
+    ]);
+
+    expect(service.getExpenses().map(item => item.categoryId)).toEqual([
+      901, 902, 903,
+    ]);
+
+    service.updatePreferences(current => ({
+      ...current,
+      hideGroupedCategories: true,
+    }));
+
+    expect(service.getExpenses().map(item => item.categoryId)).toEqual([
+      900, 903,
+    ]);
+  });
+
+  it('formats object-shaped budget load errors into readable messages', () => {
+    spyOn(lunchMoney, 'getBudgetSummary').and.returnValue(
+      new Observable<BudgetSummaryItem[]>(subscriber => {
+        subscriber.error({ code: 503, detail: 'Upstream unavailable' });
+      })
+    );
+
+    initService();
+
+    const [error] = service.getErrors();
+    expect(error).toBeDefined();
+    expect(error.message).toContain('"code":503');
+    expect(error.message).not.toBe('[object Object]');
   });
 
   it('recovers from recurring expense load failures', () => {

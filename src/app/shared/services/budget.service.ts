@@ -30,12 +30,17 @@ import {
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { DiagnosticsService } from '../../core/services/diagnostics.service';
+import {
+  normalizeError,
+  NormalizedError,
+} from '../../core/utils/diagnostics.utils';
 
 export interface CategoryPreferences {
   customOrder: (number | null)[];
   hiddenCategoryIds: (number | null)[];
   notificationsEnabled: boolean;
   includeAllTransactions: boolean;
+  hideGroupedCategories: boolean;
 }
 
 const defaultCategoryPreferences: CategoryPreferences = {
@@ -43,6 +48,7 @@ const defaultCategoryPreferences: CategoryPreferences = {
   hiddenCategoryIds: [],
   notificationsEnabled: false,
   includeAllTransactions: true,
+  hideGroupedCategories: false,
 };
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
@@ -81,43 +87,23 @@ export class BudgetService {
 
   // Computed values
   protected readonly expenses = computed(() => {
-    const data = this.budgetData();
     const prefs = this.preferences();
-    const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(
-      item => !item.isIncome && !hiddenIds.has(item.categoryId)
-    );
-    return rankBudgetProgress(items, prefs.customOrder);
+    return this.getVisibleItemsByType(false, prefs);
   });
 
   protected readonly hiddenExpenses = computed(() => {
-    const data = this.budgetData();
     const prefs = this.preferences();
-    const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(
-      item => !item.isIncome && hiddenIds.has(item.categoryId)
-    );
-    return rankBudgetProgress(items, prefs.customOrder);
+    return this.getHiddenItemsByType(false, prefs);
   });
 
   protected readonly incomes = computed(() => {
-    const data = this.budgetData();
     const prefs = this.preferences();
-    const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(
-      item => item.isIncome && !hiddenIds.has(item.categoryId)
-    );
-    return rankBudgetProgress(items, prefs.customOrder);
+    return this.getVisibleItemsByType(true, prefs);
   });
 
   protected readonly hiddenIncomes = computed(() => {
-    const data = this.budgetData();
     const prefs = this.preferences();
-    const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    const items = data.filter(
-      item => item.isIncome && hiddenIds.has(item.categoryId)
-    );
-    return rankBudgetProgress(items, prefs.customOrder);
+    return this.getHiddenItemsByType(true, prefs);
   });
 
   protected readonly currency = computed(() => {
@@ -265,6 +251,8 @@ export class BudgetService {
           }
         },
         error: (error: unknown) => {
+          const normalizedError = normalizeError(error);
+          const displayError = this.toDisplayError(error, normalizedError);
           this.logger.error('Failed to refresh budget data', error);
           this.diagnostics.log(
             'error',
@@ -273,12 +261,16 @@ export class BudgetService {
             {
               startDate,
               endDate,
+              normalizedError: {
+                name: normalizedError.name,
+                message: normalizedError.message,
+                hasStack: !!normalizedError.stack,
+              },
+              displayMessage: displayError.message,
             },
             error
           );
-          this.errors.set([
-            error instanceof Error ? error : new Error(String(error)),
-          ]);
+          this.errors.set([displayError]);
           this.isLoading.set(false);
         },
       });
@@ -329,20 +321,8 @@ export class BudgetService {
     const monthKey = this.monthKey;
     const monthProgress = this.monthProgressRatio();
     const includeAll = this.preferences().includeAllTransactions;
-    const filterBudgetableItems = (
-      items: BudgetProgress[]
-    ): BudgetProgress[] => {
-      const budgetable = items.filter(item => !item.excludeFromBudget);
-      const hasCategoryBudgets = budgetable.some(
-        item => !item.isGroup && item.categoryId !== null
-      );
-
-      if (hasCategoryBudgets) {
-        return budgetable.filter(item => !item.isGroup);
-      }
-
-      return budgetable;
-    };
+    const filterBudgetableItems = (items: BudgetProgress[]): BudgetProgress[] =>
+      items.filter(item => !item.excludeFromBudget);
 
     // Separate uncategorised from regular summaries
     const uncategorisedSummaries: BudgetSummaryItem[] = [];
@@ -661,6 +641,118 @@ export class BudgetService {
   private canUseNavigator(): boolean {
     return (
       typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
+    );
+  }
+
+  private getVisibleItemsByType(
+    isIncome: boolean,
+    prefs: CategoryPreferences
+  ): BudgetProgress[] {
+    const hiddenIds = new Set(prefs.hiddenCategoryIds);
+    return this.getOrderedItemsByType(isIncome, prefs).filter(
+      item => !hiddenIds.has(item.categoryId)
+    );
+  }
+
+  private getHiddenItemsByType(
+    isIncome: boolean,
+    prefs: CategoryPreferences
+  ): BudgetProgress[] {
+    const hiddenIds = new Set(prefs.hiddenCategoryIds);
+    return this.getOrderedItemsByType(isIncome, prefs).filter(item =>
+      hiddenIds.has(item.categoryId)
+    );
+  }
+
+  private getOrderedItemsByType(
+    isIncome: boolean,
+    prefs: CategoryPreferences
+  ): BudgetProgress[] {
+    const typeItems = this.budgetData().filter(
+      item => item.isIncome === isIncome && !item.excludeFromBudget
+    );
+    const hasCategoryBudgets = typeItems.some(
+      item => !item.isGroup && item.categoryId !== null
+    );
+    const baseItems = hasCategoryBudgets
+      ? typeItems.filter(item => !item.isGroup)
+      : typeItems;
+    const rankedItems = rankBudgetProgress(baseItems, prefs.customOrder);
+
+    if (!prefs.hideGroupedCategories) {
+      return rankedItems;
+    }
+
+    return this.collapseGroupedCategories(rankedItems, typeItems);
+  }
+
+  private collapseGroupedCategories(
+    items: BudgetProgress[],
+    typeItems: BudgetProgress[]
+  ): BudgetProgress[] {
+    const groupById = new Map<number, BudgetProgress>();
+    for (const candidate of typeItems) {
+      if (candidate.isGroup && candidate.categoryId !== null) {
+        groupById.set(candidate.categoryId, candidate);
+      }
+    }
+
+    const emittedGroups = new Set<number>();
+    const collapsed: BudgetProgress[] = [];
+
+    for (const item of items) {
+      if (item.isGroup) {
+        collapsed.push(item);
+        if (item.categoryId !== null) {
+          emittedGroups.add(item.categoryId);
+        }
+        continue;
+      }
+
+      const groupId = item.groupId;
+      if (groupId === null) {
+        collapsed.push(item);
+        continue;
+      }
+
+      if (emittedGroups.has(groupId)) {
+        continue;
+      }
+
+      const groupItem = groupById.get(groupId);
+      if (groupItem) {
+        collapsed.push(groupItem);
+        emittedGroups.add(groupId);
+      } else {
+        collapsed.push(item);
+      }
+    }
+
+    return collapsed;
+  }
+
+  private toDisplayError(
+    error: unknown,
+    normalizedError: NormalizedError
+  ): Error {
+    if (
+      error instanceof Error &&
+      error.message.trim().length > 0 &&
+      error.message !== '[object Object]'
+    ) {
+      return error;
+    }
+
+    if (
+      normalizedError.message.trim().length > 0 &&
+      normalizedError.message !== '[object Object]' &&
+      normalizedError.message !== '{}'
+    ) {
+      return new Error(normalizedError.message);
+    }
+
+    return new Error(
+      'Unexpected error while loading budget data. Please retry in a moment.'
     );
   }
 }
