@@ -10,7 +10,9 @@ import {
   viewChild,
   ElementRef,
   effect,
+  OnDestroy,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -52,11 +54,18 @@ const DENIAL_MESSAGES: Record<
   styleUrls: ['./category-preferences-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CategoryPreferencesDialogComponent implements OnInit {
+export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly logger = inject(LoggerService);
   private readonly versionService = inject(VersionService);
+  private readonly document = inject(DOCUMENT);
   protected readonly diagnostics = inject(DiagnosticsService);
+  private readonly bodyScrollLockCountAttribute =
+    'data-dialog-scroll-lock-count';
+  private readonly bodyOverflowAttribute = 'data-dialog-original-overflow';
+  private readonly bodyTouchActionAttribute =
+    'data-dialog-original-touch-action';
+  private isBodyScrollLocked = false;
 
   readonly dialogElement =
     viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
@@ -106,6 +115,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
       const shouldOpen = this.open();
 
       if (!shouldOpen) {
+        this.unlockBodyScroll();
         this.visibleCategoriesExpanded.set(false);
         if (dialog.open && typeof dialog.close === 'function') {
           dialog.close();
@@ -115,6 +125,7 @@ export class CategoryPreferencesDialogComponent implements OnInit {
         return;
       }
 
+      this.lockBodyScroll();
       if (!dialog.open) {
         if (typeof dialog.showModal === 'function') {
           try {
@@ -138,6 +149,10 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     this.notificationsEnabled.set(prefs.notificationsEnabled);
     this.includeAllTransactions.set(prefs.includeAllTransactions);
     this.hideGroupedCategories.set(prefs.hideGroupedCategories);
+  }
+
+  ngOnDestroy(): void {
+    this.unlockBodyScroll();
   }
 
   private ensureOrderContains(current: (number | null)[]): (number | null)[] {
@@ -343,5 +358,61 @@ export class CategoryPreferencesDialogComponent implements OnInit {
     }
 
     return navigator.userAgent;
+  }
+
+  private lockBodyScroll(): void {
+    if (this.isBodyScrollLocked) {
+      return;
+    }
+
+    const body = this.document.body;
+
+    const rawLockCount = Number.parseInt(
+      body.getAttribute(this.bodyScrollLockCountAttribute) ?? '0',
+      10
+    );
+    const lockCount =
+      Number.isFinite(rawLockCount) && rawLockCount > 0 ? rawLockCount : 0;
+    if (lockCount === 0) {
+      body.setAttribute(this.bodyOverflowAttribute, body.style.overflow);
+      body.setAttribute(this.bodyTouchActionAttribute, body.style.touchAction);
+      body.style.overflow = 'hidden';
+      body.style.touchAction = 'none';
+    }
+
+    body.setAttribute(this.bodyScrollLockCountAttribute, String(lockCount + 1));
+    this.isBodyScrollLocked = true;
+  }
+
+  private unlockBodyScroll(): void {
+    if (!this.isBodyScrollLocked) {
+      return;
+    }
+
+    const body = this.document.body;
+
+    const lockCount = Number.parseInt(
+      body.getAttribute(this.bodyScrollLockCountAttribute) ?? '0',
+      10
+    );
+    const nextCount =
+      Number.isFinite(lockCount) && lockCount > 0 ? lockCount - 1 : 0;
+
+    if (nextCount === 0) {
+      const previousOverflow =
+        body.getAttribute(this.bodyOverflowAttribute) ?? '';
+      const previousTouchAction =
+        body.getAttribute(this.bodyTouchActionAttribute) ?? '';
+
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction;
+      body.removeAttribute(this.bodyScrollLockCountAttribute);
+      body.removeAttribute(this.bodyOverflowAttribute);
+      body.removeAttribute(this.bodyTouchActionAttribute);
+    } else {
+      body.setAttribute(this.bodyScrollLockCountAttribute, String(nextCount));
+    }
+
+    this.isBodyScrollLocked = false;
   }
 }

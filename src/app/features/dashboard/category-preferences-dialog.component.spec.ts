@@ -171,6 +171,14 @@ describe('CategoryPreferencesDialogComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
+    document.body.removeAttribute('data-dialog-scroll-lock-count');
+    document.body.removeAttribute('data-dialog-original-overflow');
+    document.body.removeAttribute('data-dialog-original-touch-action');
+  });
+
   it('initializes local state from preferences on init', () => {
     setRequiredInputs();
 
@@ -239,5 +247,47 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     component.toggleVisibleCategoriesSection();
     expect(component.visibleCategoriesExpanded()).toBeFalse();
+  });
+
+  it('locks body scroll while the dialog is open and restores it when closed', () => {
+    document.body.style.overflow = 'auto';
+    document.body.style.touchAction = 'pan-y';
+    setRequiredInputs();
+
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.body.style.touchAction).toBe('none');
+    expect(document.body.getAttribute('data-dialog-scroll-lock-count')).toBe(
+      '1'
+    );
+
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+
+    expect(document.body.style.overflow).toBe('auto');
+    expect(document.body.style.touchAction).toBe('pan-y');
+    expect(
+      document.body.hasAttribute('data-dialog-scroll-lock-count')
+    ).toBeFalse();
+  });
+
+  it('releases body scroll lock when destroyed while open', () => {
+    document.body.style.overflow = 'visible';
+    document.body.style.touchAction = 'auto';
+    setRequiredInputs();
+
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    expect(document.body.style.overflow).toBe('hidden');
+
+    fixture.destroy();
+
+    expect(document.body.style.overflow).toBe('visible');
+    expect(document.body.style.touchAction).toBe('auto');
+    expect(
+      document.body.hasAttribute('data-dialog-scroll-lock-count')
+    ).toBeFalse();
   });
 });

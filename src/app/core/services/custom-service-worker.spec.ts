@@ -419,7 +419,7 @@ describe('custom service worker API handler', () => {
     expect(newCached).toBeFalsy();
   });
 
-  it('serves cached app shell content when navigating offline', async () => {
+  it('prefers fresh app shell content over cached content when navigation succeeds', async () => {
     if (
       typeof caches === 'undefined' ||
       !appShellHandler ||
@@ -439,6 +439,14 @@ describe('custom service worker API handler', () => {
       })
     );
 
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(
+        new Response('<html>network-shell</html>', {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' },
+        })
+      );
+
     const request = createNavigationRequest(
       new URL('/', globalThis.location.origin)
     );
@@ -446,6 +454,48 @@ describe('custom service worker API handler', () => {
     if (isAppShellRequest) {
       expect(isAppShellRequest(request, new URL(request.url))).toBeTrue();
     }
+
+    const result = await appShellHandler(request);
+    expect(await result.text()).toBe('<html>network-shell</html>');
+
+    const persisted = await cache.match(appShellUrl);
+    expect(await persisted?.text()).toBe('<html>network-shell</html>');
+  });
+
+  it('falls back to cached app shell content when navigation fetch fails', async () => {
+    if (
+      typeof caches === 'undefined' ||
+      !appShellHandler ||
+      !shellCacheName ||
+      !appShellUrl
+    ) {
+      pending('Shell cache API not available in this environment');
+      return;
+    }
+
+    const cache = await caches.open(shellCacheName);
+    await cache.put(
+      appShellUrl,
+      new Response('<html>cached-shell</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      })
+    );
+
+    const failingFetch: typeof fetch = (
+      _input: RequestInfo | URL,
+      _init?: RequestInit
+    ) => Promise.reject(new Error('network down'));
+
+    Object.defineProperty(globalThis, 'fetch', {
+      value: failingFetch,
+      writable: true,
+      configurable: true,
+    });
+
+    const request = createNavigationRequest(
+      new URL('/', globalThis.location.origin)
+    );
 
     const result = await appShellHandler(request);
     expect(await result.text()).toBe('<html>cached-shell</html>');

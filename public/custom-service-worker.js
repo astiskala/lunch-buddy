@@ -10,7 +10,7 @@ const STATE_KEY = 'state';
 const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 const API_CACHE_NAME = 'lunchbuddy-api-cache-v3';
-const SHELL_CACHE_NAME = 'lunchbuddy-shell-v1';
+const SHELL_CACHE_NAME = 'lunchbuddy-shell-v2';
 const SHELL_CACHE_PREFIX = 'lunchbuddy-shell-';
 const APP_SHELL_URL = '/index.html';
 const OFFLINE_URL = '/offline.html';
@@ -175,24 +175,33 @@ function hasShellAssetExtension(pathname) {
 
 async function handleAppShellRequest(request) {
   if (request.mode === 'navigate') {
-    const cachedIndex = await caches.match(APP_SHELL_URL, {
-      ignoreSearch: true,
-    });
-    if (cachedIndex) {
-      return cachedIndex;
-    }
-
     try {
-      const response = await fetch(request);
+      // Prefer fresh HTML so hashed bundle references stay in sync across deploys.
+      const response = await fetchWithTimeout(
+        request.clone(),
+        NETWORK_TIMEOUT_MS
+      );
       if (shouldCacheShellResponse(response)) {
         await storeShellResponse(APP_SHELL_URL, response.clone());
+        return response;
       }
-      return response;
+
+      const cachedIndex = await caches.match(APP_SHELL_URL, {
+        ignoreSearch: true,
+      });
+      return cachedIndex ?? response;
     } catch (error) {
       console.warn(
-        '[WARN] custom-service-worker: navigation fetch failed, serving offline fallback',
+        '[WARN] custom-service-worker: navigation fetch failed, serving cached shell fallback',
         error
       );
+      const cachedIndex = await caches.match(APP_SHELL_URL, {
+        ignoreSearch: true,
+      });
+      if (cachedIndex) {
+        return cachedIndex;
+      }
+
       const offlineResponse = await caches.match(OFFLINE_URL, {
         ignoreSearch: true,
       });
