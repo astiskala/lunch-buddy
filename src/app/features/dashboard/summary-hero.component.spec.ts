@@ -113,7 +113,7 @@ describe('SummaryHeroComponent', () => {
     expect(button).not.toBeNull();
     button?.click();
 
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('should emit previousMonth event when previous button clicked', () => {
@@ -133,7 +133,7 @@ describe('SummaryHeroComponent', () => {
     expect(button).not.toBeNull();
     button?.click();
 
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('should emit nextMonth event when enabled and clicked', () => {
@@ -152,10 +152,10 @@ describe('SummaryHeroComponent', () => {
       'button[aria-label="View next month"]'
     );
     expect(button).not.toBeNull();
-    expect(button?.disabled).toBeFalse();
+    expect(button?.disabled).toBe(false);
     button?.click();
 
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('should hide next month button when viewing current month', () => {
@@ -187,7 +187,7 @@ describe('SummaryHeroComponent', () => {
     expect(button).not.toBeNull();
     button?.click();
 
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('should display month name', () => {

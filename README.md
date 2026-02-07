@@ -90,7 +90,7 @@ static mock server.
 ## Commands
 
 - `npm start` - Development server
-- `npm test` - Unit tests
+- `npm test` - Unit tests (Vitest via Angular test builder; no `--browsers` flag)
 - `npm run test:watch` - Unit tests in watch mode
 - `npm run test:e2e` - E2E tests
 - `npm run lint` - Lint and fix

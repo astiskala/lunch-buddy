@@ -97,7 +97,7 @@ describe('isRecurringInstancePending', () => {
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-10T00:00:00.000Z'),
       })
-    ).toBeTrue();
+    ).toBe(true);
   });
 
   it('returns false for cleared instances when already occurred', () => {
@@ -114,7 +114,7 @@ describe('isRecurringInstancePending', () => {
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-20T00:00:00.000Z'),
       })
-    ).toBeFalse();
+    ).toBe(false);
   });
 
   it('keeps cleared instances within the window when past allowance is enabled', () => {
@@ -134,7 +134,7 @@ describe('isRecurringInstancePending', () => {
         windowStart: new Date('2025-10-01T00:00:00.000Z'),
         windowEnd: new Date('2025-10-31T23:59:59.000Z'),
       })
-    ).toBeTrue();
+    ).toBe(true);
   });
 
   it('keeps cleared instances that are still upcoming', () => {
@@ -151,7 +151,7 @@ describe('isRecurringInstancePending', () => {
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-20T00:00:00.000Z'),
       })
-    ).toBeTrue();
+    ).toBe(true);
   });
 
   it('treats unexpected statuses defensively as pending', () => {
@@ -168,7 +168,7 @@ describe('isRecurringInstancePending', () => {
       isRecurringInstancePending(instance, {
         referenceDate: new Date('2025-10-10T00:00:00.000Z'),
       })
-    ).toBeTrue();
+    ).toBe(true);
   });
 
   it('detects found transactions near the occurrence date', () => {
@@ -187,9 +187,9 @@ describe('isRecurringInstancePending', () => {
 
     expect(
       hasFoundTransactionForOccurrence(instance, { toleranceDays: 3 })
-    ).toBeTrue();
+    ).toBe(true);
     expect(
       hasFoundTransactionForOccurrence(instance, { toleranceDays: 0 })
-    ).toBeFalse();
+    ).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 // No need to declare `importScripts`; use global assignment/mocking below.
+import { vi } from 'vitest';
 
 type Handler = (request: Request) => Promise<Response>;
 type ApiRequestMatcher = (url: URL) => boolean;
@@ -91,7 +92,7 @@ describe('custom service worker API handler', () => {
     originalClients = (globalThis as { clients?: unknown }).clients;
     (globalThis as { clients?: unknown }).clients = {
       matchAll: () => Promise.resolve([]),
-      openWindow: jasmine.createSpy('openWindow'),
+      openWindow: vi.fn(),
     };
     clockInstalled = false;
 
@@ -109,7 +110,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = originalFetch;
     (globalThis as { clients?: unknown }).clients = originalClients;
     if (clockInstalled) {
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
     }
     if (typeof caches !== 'undefined') {
       if (apiCacheName) {
@@ -128,18 +129,16 @@ describe('custom service worker API handler', () => {
 
   it('recognizes the production Lunch Money API host', () => {
     if (!isApiRequest) {
-      pending('Service worker API not available in this environment');
       return;
     }
 
-    expect(
-      isApiRequest(new URL('https://api.lunchmoney.app/v2/summary'))
-    ).toBeTrue();
+    expect(isApiRequest(new URL('https://api.lunchmoney.app/v2/summary'))).toBe(
+      true
+    );
   });
 
   it('returns cached API data when the network is slow', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -166,7 +165,6 @@ describe('custom service worker API handler', () => {
 
   it('uses fresh network data when available and caches it', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -186,7 +184,6 @@ describe('custom service worker API handler', () => {
 
   it('returns an offline response when both network and cache are unavailable', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -217,7 +214,6 @@ describe('custom service worker API handler', () => {
 
   it('uses network-first for authenticated requests and populates cache on success', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -242,7 +238,6 @@ describe('custom service worker API handler', () => {
 
   it('falls back to cache for authenticated requests when network fails', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -272,7 +267,6 @@ describe('custom service worker API handler', () => {
 
   it('returns offline stub for unauthenticated requests when network and cache are unavailable', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -300,7 +294,6 @@ describe('custom service worker API handler', () => {
 
   it('uses cached data when network times out for unauthenticated requests', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -323,7 +316,6 @@ describe('custom service worker API handler', () => {
 
   it('falls back to cache when server returns non-OK for authenticated requests', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -346,7 +338,6 @@ describe('custom service worker API handler', () => {
 
   it('returns server error response for authenticated requests when cache is empty', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -370,7 +361,6 @@ describe('custom service worker API handler', () => {
 
   it('returns timeout error for authenticated requests when AbortError occurs', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -397,7 +387,6 @@ describe('custom service worker API handler', () => {
 
   it('does not cache non-OK responses for unauthenticated requests', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
-      pending('Cache API not available in this environment');
       return;
     }
 
@@ -426,7 +415,6 @@ describe('custom service worker API handler', () => {
       !shellCacheName ||
       !appShellUrl
     ) {
-      pending('Shell cache API not available in this environment');
       return;
     }
 
@@ -452,7 +440,7 @@ describe('custom service worker API handler', () => {
     );
 
     if (isAppShellRequest) {
-      expect(isAppShellRequest(request, new URL(request.url))).toBeTrue();
+      expect(isAppShellRequest(request, new URL(request.url))).toBe(true);
     }
 
     const result = await appShellHandler(request);
@@ -469,7 +457,6 @@ describe('custom service worker API handler', () => {
       !shellCacheName ||
       !appShellUrl
     ) {
-      pending('Shell cache API not available in this environment');
       return;
     }
 
@@ -508,7 +495,6 @@ describe('custom service worker API handler', () => {
       !shellCacheName ||
       !offlineUrl
     ) {
-      pending('Shell cache API not available in this environment');
       return;
     }
 

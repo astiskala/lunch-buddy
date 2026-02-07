@@ -318,7 +318,7 @@ describe('LunchMoneyService', () => {
 
     expect(req.request.params.get('start_date')).toBe('2025-11-01');
     expect(req.request.params.get('end_date')).toBe('2025-11-30');
-    expect(req.request.params.has('category_id')).toBeFalse();
+    expect(req.request.params.has('category_id')).toBe(false);
     req.flush(mockResponse);
   });
 

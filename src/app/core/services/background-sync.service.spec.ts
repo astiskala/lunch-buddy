@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { vi, type Mock } from 'vitest';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 import { BackgroundSyncService } from './background-sync.service';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
@@ -11,20 +13,20 @@ interface PrivateApi {
 }
 
 interface PeriodicSyncSpies {
-  getTags: jasmine.Spy<() => Promise<string[]>>;
-  register: jasmine.Spy<
+  getTags: Mock<() => Promise<string[]>>;
+  register: Mock<
     (tag: string, options: { minInterval: number }) => Promise<void>
   >;
-  unregister: jasmine.Spy<(tag: string) => Promise<void>>;
+  unregister: Mock<(tag: string) => Promise<void>>;
 }
 
 interface SyncSpies {
-  register: jasmine.Spy<(tag: string) => Promise<void>>;
+  register: Mock<(tag: string) => Promise<void>>;
 }
 
 interface RegistrationFixture {
   registration: ServiceWorkerRegistration;
-  workerPostMessage: jasmine.Spy<(message: unknown) => void>;
+  workerPostMessage: Mock<(message: unknown) => void>;
   periodic?: PeriodicSyncSpies;
   sync?: SyncSpies;
 }
@@ -44,21 +46,21 @@ interface RegistrationOverrides {
 }
 
 describe('BackgroundSyncService', () => {
-  let loggerSpy: jasmine.SpyObj<LoggerService>;
-  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let loggerSpy: SpyObj<LoggerService>;
+  let authServiceSpy: SpyObj<AuthService>;
   let apiKeySubject: BehaviorSubject<string | null>;
 
   const setup = (platformId: object | string = 'browser') => {
     apiKeySubject = new BehaviorSubject<string | null>(null);
 
-    loggerSpy = jasmine.createSpyObj<LoggerService>('LoggerService', [
+    loggerSpy = createSpyObj<LoggerService>('LoggerService', [
       'debug',
       'info',
       'warn',
       'error',
     ]);
 
-    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', [], {
+    authServiceSpy = createSpyObj<AuthService>('AuthService', [], {
       apiKey$: apiKeySubject.asObservable(),
     });
 
@@ -81,10 +83,8 @@ describe('BackgroundSyncService', () => {
     overrides: RegistrationOverrides = {}
   ): RegistrationFixture => {
     const workerPostMessage = overrides.worker?.postMessage
-      ? jasmine
-          .createSpy('postMessage')
-          .and.callFake(overrides.worker.postMessage)
-      : jasmine.createSpy('postMessage');
+      ? vi.fn().mockImplementation(overrides.worker.postMessage)
+      : vi.fn();
 
     const registration = {
       active: { postMessage: workerPostMessage } as unknown as ServiceWorker,
@@ -107,15 +107,15 @@ describe('BackgroundSyncService', () => {
         ((_tag: string) => Promise.resolve());
 
       const periodic: PeriodicSyncSpies = {
-        getTags: jasmine.createSpy('getTags').and.callFake(() => getTagsImpl()),
-        register: jasmine
-          .createSpy('registerPeriodicSync')
-          .and.callFake((tag: string, options: { minInterval: number }) =>
+        getTags: vi.fn().mockImplementation(() => getTagsImpl()),
+        register: vi
+          .fn()
+          .mockImplementation((tag: string, options: { minInterval: number }) =>
             registerImpl(tag, options)
           ),
-        unregister: jasmine
-          .createSpy('unregisterPeriodicSync')
-          .and.callFake((tag: string) => unregisterImpl(tag)),
+        unregister: vi
+          .fn()
+          .mockImplementation((tag: string) => unregisterImpl(tag)),
       };
 
       (
@@ -129,9 +129,9 @@ describe('BackgroundSyncService', () => {
         overrides.sync?.register ?? ((_tag: string) => Promise.resolve());
 
       const sync: SyncSpies = {
-        register: jasmine
-          .createSpy('registerSync')
-          .and.callFake((tag: string) => registerImpl(tag)),
+        register: vi
+          .fn()
+          .mockImplementation((tag: string) => registerImpl(tag)),
       };
 
       (registration as unknown as { sync: SyncSpies }).sync = sync;
@@ -194,10 +194,9 @@ describe('BackgroundSyncService', () => {
     });
 
     it('skips browser-only work when updating preferences', async () => {
-      const getRegistrationSpy = spyOn(
-        service as unknown as PrivateApi,
-        'getRegistration'
-      ).and.stub();
+      const getRegistrationSpy = vi
+        .spyOn(service as unknown as PrivateApi, 'getRegistration')
+        .mockResolvedValue(null);
 
       await service.updateBudgetPreferences({
         hiddenCategoryIds: [1, 2],
@@ -227,7 +226,9 @@ describe('BackgroundSyncService', () => {
     it('pushes configuration updates and registers periodic sync', async () => {
       const fixture = createRegistration({ periodicSync: {} });
 
-      spyOn(privateApi, 'getRegistration').and.resolveTo(fixture.registration);
+      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
+        fixture.registration
+      );
 
       await privateApi.updateApiCredentials('test-api-key');
       await service.updateBudgetPreferences({
@@ -235,8 +236,13 @@ describe('BackgroundSyncService', () => {
         notificationsEnabled: true,
         currency: 'USD',
       });
-
-      const payload = fixture.workerPostMessage.calls.mostRecent().args[0] as {
+      const messageCall = fixture.workerPostMessage.mock.calls.at(-1);
+      expect(messageCall).toBeDefined();
+      if (!messageCall) {
+        throw new Error('Expected worker postMessage to be called');
+      }
+      const [lastMessage] = messageCall;
+      const payload = lastMessage as {
         type: string;
         payload: {
           apiKey: string | null;
@@ -246,7 +252,7 @@ describe('BackgroundSyncService', () => {
 
       expect(payload.type).toBe('LUNCHBUDDY_CONFIG_UPDATE');
       expect(payload.payload.apiKey).toBe('test-api-key');
-      expect(payload.payload.preferences.notificationsEnabled).toBeTrue();
+      expect(payload.payload.preferences.notificationsEnabled).toBe(true);
 
       const periodic = expectPeriodicSync(fixture);
       expect(periodic.getTags).toHaveBeenCalled();
@@ -263,7 +269,9 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      spyOn(privateApi, 'getRegistration').and.resolveTo(fixture.registration);
+      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
+        fixture.registration
+      );
 
       await privateApi.updateApiCredentials('valid-key');
       await service.updateBudgetPreferences({
@@ -286,7 +294,9 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      spyOn(privateApi, 'getRegistration').and.resolveTo(fixture.registration);
+      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
+        fixture.registration
+      );
 
       await privateApi.updateApiCredentials('api-key');
       await service.updateBudgetPreferences({
@@ -295,13 +305,18 @@ describe('BackgroundSyncService', () => {
         currency: null,
       });
 
-      const warnCalls = loggerSpy.warn.calls;
-      expect(warnCalls.any()).toBeTrue();
-      const [warnMessage, warnError] = warnCalls.mostRecent().args;
+      const warnCalls = loggerSpy.warn.mock.calls;
+      expect(warnCalls.length > 0).toBe(true);
+      const latestWarnCall = warnCalls.at(-1);
+      expect(latestWarnCall).toBeDefined();
+      if (!latestWarnCall) {
+        throw new Error('Expected warn logger to be called');
+      }
+      const [warnMessage, warnError] = latestWarnCall;
       expect(warnMessage).toBe(
         'BackgroundSyncService: failed to unregister periodic sync'
       );
-      expect(warnError).toEqual(jasmine.any(Error));
+      expect(warnError).toEqual(expect.any(Error));
     });
 
     it('falls back to one-off sync when periodic sync is unavailable', async () => {
@@ -312,7 +327,9 @@ describe('BackgroundSyncService', () => {
         sync: {},
       });
 
-      spyOn(privateApi, 'getRegistration').and.resolveTo(fixture.registration);
+      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
+        fixture.registration
+      );
 
       await privateApi.updateApiCredentials('api-key');
       await service.updateBudgetPreferences({
@@ -321,13 +338,18 @@ describe('BackgroundSyncService', () => {
         currency: null,
       });
 
-      const warnCalls = loggerSpy.warn.calls;
-      expect(warnCalls.any()).toBeTrue();
-      const [warnMessage, warnError] = warnCalls.mostRecent().args;
+      const warnCalls = loggerSpy.warn.mock.calls;
+      expect(warnCalls.length > 0).toBe(true);
+      const latestWarnCall = warnCalls.at(-1);
+      expect(latestWarnCall).toBeDefined();
+      if (!latestWarnCall) {
+        throw new Error('Expected warn logger to be called');
+      }
+      const [warnMessage, warnError] = latestWarnCall;
       expect(warnMessage).toBe(
         'BackgroundSyncService: periodic sync unavailable'
       );
-      expect(warnError).toEqual(jasmine.any(Error));
+      expect(warnError).toEqual(expect.any(Error));
 
       const sync = expectSyncManager(fixture);
       expect(sync.register).toHaveBeenCalledWith(
@@ -345,7 +367,9 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      spyOn(privateApi, 'getRegistration').and.resolveTo(fixture.registration);
+      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
+        fixture.registration
+      );
 
       await privateApi.updateApiCredentials('api-key');
       await service.updateBudgetPreferences({
@@ -354,13 +378,18 @@ describe('BackgroundSyncService', () => {
         currency: null,
       });
 
-      const warnCalls = loggerSpy.warn.calls;
-      expect(warnCalls.any()).toBeTrue();
-      const [warnMessage, warnError] = warnCalls.mostRecent().args;
+      const warnCalls = loggerSpy.warn.mock.calls;
+      expect(warnCalls.length > 0).toBe(true);
+      const latestWarnCall = warnCalls.at(-1);
+      expect(latestWarnCall).toBeDefined();
+      if (!latestWarnCall) {
+        throw new Error('Expected warn logger to be called');
+      }
+      const [warnMessage, warnError] = latestWarnCall;
       expect(warnMessage).toBe(
         'BackgroundSyncService: sync registration failed'
       );
-      expect(warnError).toEqual(jasmine.any(Error));
+      expect(warnError).toEqual(expect.any(Error));
     });
 
     it('logs when posting configuration to the worker fails', async () => {
@@ -372,17 +401,24 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      spyOn(privateApi, 'getRegistration').and.resolveTo(fixture.registration);
+      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
+        fixture.registration
+      );
 
       await privateApi.updateApiCredentials('any-key');
 
-      const errorCalls = loggerSpy.error.calls;
-      expect(errorCalls.any()).toBeTrue();
-      const [errorMessage, errorValue] = errorCalls.mostRecent().args;
+      const errorCalls = loggerSpy.error.mock.calls;
+      expect(errorCalls.length > 0).toBe(true);
+      const latestErrorCall = errorCalls.at(-1);
+      expect(latestErrorCall).toBeDefined();
+      if (!latestErrorCall) {
+        throw new Error('Expected error logger to be called');
+      }
+      const [errorMessage, errorValue] = latestErrorCall;
       expect(errorMessage).toBe(
         'BackgroundSyncService: failed to post config to service worker'
       );
-      expect(errorValue).toEqual(jasmine.any(Error));
+      expect(errorValue).toEqual(expect.any(Error));
     });
 
     it('waits for service worker readiness when none are registered yet', async () => {
@@ -396,9 +432,7 @@ describe('BackgroundSyncService', () => {
       Object.defineProperty(navigator, 'serviceWorker', {
         configurable: true,
         value: {
-          getRegistration: jasmine
-            .createSpy('getRegistration')
-            .and.resolveTo(null),
+          getRegistration: vi.fn().mockResolvedValue(null),
           ready: readyDeferred.promise,
         },
       });

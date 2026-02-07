@@ -5,6 +5,7 @@ import {
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
 } from '@angular/router';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 import { loginRedirectGuard } from './login-redirect.guard';
 import { AuthService } from '../services/auth.service';
 
@@ -18,15 +19,15 @@ describe('loginRedirectGuard', () => {
     parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
   }
 
-  let authService: jasmine.SpyObj<AuthServiceStub>;
-  let router: jasmine.SpyObj<RouterStub>;
+  let authService: SpyObj<AuthServiceStub>;
+  let router: SpyObj<RouterStub>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
-      'AuthService',
-      ['ready', 'hasApiKey']
-    );
-    const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['parseUrl']);
+    const authServiceSpy = createSpyObj<AuthServiceStub>('AuthService', [
+      'ready',
+      'hasApiKey',
+    ]);
+    const routerSpy = createSpyObj<RouterStub>('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -38,13 +39,13 @@ describe('loginRedirectGuard', () => {
 
     authService = authServiceSpy;
     router = routerSpy;
-    authService.ready.and.resolveTo();
+    authService.ready.mockResolvedValue();
   });
 
   it('should redirect to dashboard when user already has an API key', async () => {
-    authService.hasApiKey.and.returnValue(true);
+    authService.hasApiKey.mockReturnValue(true);
     const dashboardUrl = {} as ReturnType<Router['parseUrl']>;
-    router.parseUrl.and.returnValue(dashboardUrl);
+    router.parseUrl.mockReturnValue(dashboardUrl);
 
     const result = await TestBed.runInInjectionContext(() =>
       loginRedirectGuard(
@@ -58,7 +59,7 @@ describe('loginRedirectGuard', () => {
   });
 
   it('should allow activation when user is not authenticated', async () => {
-    authService.hasApiKey.and.returnValue(false);
+    authService.hasApiKey.mockReturnValue(false);
 
     const result = await TestBed.runInInjectionContext(
       () =>

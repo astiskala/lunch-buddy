@@ -129,7 +129,7 @@ describe('Date Utils', () => {
     it('detects dates before the reference day', () => {
       const reference = new Date(2025, 10, 10, 12);
       const earlier = new Date(2025, 10, 9, 23);
-      expect(isPastDate(earlier, reference)).toBeTrue();
+      expect(isPastDate(earlier, reference)).toBe(true);
     });
   });
 });

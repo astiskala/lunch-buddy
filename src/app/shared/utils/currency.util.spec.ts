@@ -118,7 +118,7 @@ describe('Currency Utils', () => {
       const result = formatCurrencyWithCode(50, 'USD', {
         originalCurrency: 'usd',
       });
-      expect(result.endsWith('USD')).toBeFalse();
+      expect(result.endsWith('USD')).toBe(false);
     });
   });
 });

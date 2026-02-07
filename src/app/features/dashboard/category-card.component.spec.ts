@@ -8,6 +8,7 @@ import {
 } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { of } from 'rxjs';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 
 describe('CategoryCardComponent', () => {
   interface TestActivityEntry {
@@ -148,7 +149,7 @@ describe('CategoryCardComponent', () => {
   });
   let component: CategoryCardComponent;
   let fixture: ComponentFixture<CategoryCardComponent>;
-  let mockLunchmoneyService: jasmine.SpyObj<LunchMoneyService>;
+  let mockLunchmoneyService: SpyObj<LunchMoneyService>;
 
   const mockItem: BudgetProgress = {
     categoryId: 1,
@@ -172,11 +173,11 @@ describe('CategoryCardComponent', () => {
   };
 
   beforeEach(async () => {
-    mockLunchmoneyService = jasmine.createSpyObj<LunchMoneyService>(
+    mockLunchmoneyService = createSpyObj<LunchMoneyService>(
       'LunchMoneyService',
       ['getCategoryTransactions']
     );
-    mockLunchmoneyService.getCategoryTransactions.and.returnValue(
+    mockLunchmoneyService.getCategoryTransactions.mockReturnValue(
       of({ transactions: [], total: 0, has_more: false })
     );
 
@@ -373,7 +374,7 @@ describe('CategoryCardComponent', () => {
     });
 
     const entry = component.activityEntries()[0];
-    expect(component.shouldShowOriginalAmount(entry)).toBeTrue();
+    expect(component.shouldShowOriginalAmount(entry)).toBe(true);
     const formatted = component.formatOriginalAmount(entry);
     expect(formatted).toContain('SGD');
   });
@@ -381,7 +382,7 @@ describe('CategoryCardComponent', () => {
   it('should toggle details when clicked', () => {
     setupComponent(fixture, { item: mockItem });
 
-    expect(component.showDetails()).toBeFalse();
+    expect(component.showDetails()).toBe(false);
 
     const hostElement = fixture.nativeElement as HTMLElement;
     const card = hostElement.querySelector<HTMLElement>('.category-card');
@@ -389,7 +390,7 @@ describe('CategoryCardComponent', () => {
     card?.click();
     fixture.detectChanges();
 
-    expect(component.showDetails()).toBeTrue();
+    expect(component.showDetails()).toBe(true);
   });
 
   it('should collapse when clicking details on expanded card', () => {
@@ -406,7 +407,7 @@ describe('CategoryCardComponent', () => {
     details?.click();
     fixture.detectChanges();
 
-    expect(component.showDetails()).toBeFalse();
+    expect(component.showDetails()).toBe(false);
   });
 
   it('includes cleared recurring instances from the current window in upcoming totals', () => {

@@ -5,10 +5,11 @@ import {
   PUSH_NOTIFICATION_CHANNEL,
   PushNotificationService,
 } from './push-notification.service';
+import { vi, type Mock } from 'vitest';
 
 interface MockNotificationCtor {
   permission: NotificationPermission;
-  requestPermission: jasmine.Spy<
+  requestPermission: Mock<
     () => NotificationPermission | Promise<NotificationPermission>
   >;
   instances: { title: string; options?: NotificationOptions }[];
@@ -26,10 +27,7 @@ type MutableNavigatorWithServiceWorker = Omit<Navigator, 'serviceWorker'> & {
 class MockNotificationChannel implements NotificationChannel {
   supported = true;
   permission: NotificationPermission = 'default';
-  requestPermissionSpy =
-    jasmine.createSpy<() => Promise<NotificationPermission>>(
-      'requestPermission'
-    );
+  requestPermissionSpy = vi.fn<() => Promise<NotificationPermission>>();
 
   isSupported(): boolean {
     return this.supported;
@@ -51,7 +49,7 @@ class MockNotificationChannel implements NotificationChannel {
   reset(): void {
     this.supported = true;
     this.permission = 'default';
-    this.requestPermissionSpy.calls.reset();
+    this.requestPermissionSpy.mockClear();
   }
 }
 
@@ -61,7 +59,7 @@ describe('PushNotificationService', () => {
 
   beforeEach(() => {
     channel = new MockNotificationChannel();
-    channel.requestPermissionSpy.and.resolveTo('granted');
+    channel.requestPermissionSpy.mockResolvedValue('granted');
 
     TestBed.configureTestingModule({
       providers: [
@@ -108,7 +106,7 @@ describe('PushNotificationService', () => {
 
   it('returns denied-by-user when permission request is denied by user', async () => {
     channel.permission = 'default';
-    channel.requestPermissionSpy.and.callFake(async () => {
+    channel.requestPermissionSpy.mockImplementation(async () => {
       // Simulate user taking time to decide
       await new Promise(resolve => setTimeout(resolve, 200));
       return 'denied';
@@ -121,7 +119,7 @@ describe('PushNotificationService', () => {
 
   it('returns denied-by-browser when permission is instantly denied (auto-denied)', async () => {
     channel.permission = 'default';
-    channel.requestPermissionSpy.and.resolveTo('denied');
+    channel.requestPermissionSpy.mockResolvedValue('denied');
 
     const result = await service.ensurePermission();
     expect(result).toEqual({
@@ -133,13 +131,13 @@ describe('PushNotificationService', () => {
 
   it('returns denied-by-browser when permission is denied and private mode is detected', async () => {
     channel.permission = 'default';
-    channel.requestPermissionSpy.and.callFake(async () => {
+    channel.requestPermissionSpy.mockImplementation(async () => {
       // Simulate user taking time to decide, so timing doesn't trigger it
       await new Promise(resolve => setTimeout(resolve, 200));
       return 'denied';
     });
 
-    spyOn(service, 'isPrivateMode').and.resolveTo(true);
+    vi.spyOn(service, 'isPrivateMode').mockResolvedValue(true);
 
     const result = await service.ensurePermission();
     expect(result).toEqual({
@@ -162,7 +160,7 @@ describe('PushNotificationService', () => {
   it('returns request-failed when the permission request fails', async () => {
     channel.permission = 'default';
     const failure = new Error('request failed');
-    channel.requestPermissionSpy.and.returnValue(Promise.reject(failure));
+    channel.requestPermissionSpy.mockReturnValue(Promise.reject(failure));
 
     const result = await service.ensurePermission();
     expect(result).toEqual({ granted: false, denialReason: 'request-failed' });
@@ -174,13 +172,13 @@ describe('default notification channel', () => {
   let channel: NotificationChannel;
   let notificationBackup: typeof Notification | undefined;
   let serviceWorkerDescriptor: PropertyDescriptor | undefined;
-  let requestPermissionSpy: jasmine.Spy<
+  let requestPermissionSpy: Mock<
     () => NotificationPermission | Promise<NotificationPermission>
   >;
-  let showNotificationSpy: jasmine.Spy<
+  let showNotificationSpy: Mock<
     (title: string, options?: NotificationOptions) => Promise<void>
   >;
-  let getRegistrationSpy: jasmine.Spy<
+  let getRegistrationSpy: Mock<
     () => Promise<ServiceWorkerRegistration | undefined>
   >;
   let mockNotificationCtor: MockNotificationCtor;
@@ -188,12 +186,8 @@ describe('default notification channel', () => {
   let navigatorWithServiceWorker: MutableNavigatorWithServiceWorker | undefined;
 
   beforeEach(() => {
-    requestPermissionSpy = jasmine
-      .createSpy('requestPermission')
-      .and.returnValue(Promise.resolve('granted'));
-    showNotificationSpy = jasmine
-      .createSpy('showNotification')
-      .and.returnValue(Promise.resolve());
+    requestPermissionSpy = vi.fn().mockReturnValue(Promise.resolve('granted'));
+    showNotificationSpy = vi.fn().mockReturnValue(Promise.resolve());
 
     class TestNotification {
       static readonly permission: NotificationPermission = 'default';
@@ -221,7 +215,7 @@ describe('default notification channel', () => {
       navigator,
       'serviceWorker'
     );
-    getRegistrationSpy = jasmine.createSpy('getRegistration').and.returnValue(
+    getRegistrationSpy = vi.fn().mockReturnValue(
       Promise.resolve({
         showNotification: showNotificationSpy,
       } as unknown as ServiceWorkerRegistration)
@@ -264,7 +258,7 @@ describe('default notification channel', () => {
   });
 
   it('reports support when Notification API is available', () => {
-    expect(channel.isSupported()).toBeTrue();
+    expect(channel.isSupported()).toBe(true);
   });
 
   it('reads existing permission state from the Notification API', () => {
@@ -279,7 +273,7 @@ describe('default notification channel', () => {
   });
 
   it('treats permission request errors as denied', async () => {
-    requestPermissionSpy.and.returnValue(Promise.reject(new Error('fail')));
+    requestPermissionSpy.mockReturnValue(Promise.reject(new Error('fail')));
     const result = await channel.requestPermission();
     expect(result).toBe('denied');
   });
@@ -295,7 +289,7 @@ describe('default notification channel', () => {
   });
 
   it('falls back to Notification constructor when no registration exists', async () => {
-    getRegistrationSpy.and.returnValue(Promise.resolve(undefined));
+    getRegistrationSpy.mockReturnValue(Promise.resolve(undefined));
 
     await channel.showNotification('Fallback', { body: 'offline' });
 
@@ -307,7 +301,7 @@ describe('default notification channel', () => {
   });
 
   it('falls back to Notification constructor when registration lookup fails', async () => {
-    getRegistrationSpy.and.returnValue(Promise.reject(new Error('sw failure')));
+    getRegistrationSpy.mockReturnValue(Promise.reject(new Error('sw failure')));
 
     await channel.showNotification('Failure', { body: 'fallback' });
 

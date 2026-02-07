@@ -84,7 +84,7 @@
             "buildTarget": "lunch-buddy:build:development",
             "tsConfig": "tsconfig.spec.json",
             "runner": "vitest",
-            "setupFiles": ["src/test/vitest-jasmine-compat.ts"],
+            "setupFiles": ["src/test/vitest-setup.ts"],
             "coverageReporters": ["html", "text-summary", "lcovonly", "json"],
             "coverageExclude": ["public/**"],
             "coverageThresholds": {

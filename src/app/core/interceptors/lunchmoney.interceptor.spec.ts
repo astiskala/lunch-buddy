@@ -10,6 +10,7 @@ import {
 } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 import { lunchmoneyInterceptor } from './lunchmoney.interceptor';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -17,11 +18,11 @@ import { environment } from '../../../environments/environment';
 describe('lunchmoneyInterceptor', () => {
   let httpClient: HttpClient;
   let httpMock: HttpTestingController;
-  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let authServiceSpy: SpyObj<AuthService>;
 
   beforeEach(() => {
     const apiKeySubject = new BehaviorSubject<string | null>('test-api-key');
-    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', [
+    authServiceSpy = createSpyObj<AuthService>('AuthService', [
       'ready',
       'getApiKey',
     ]);
@@ -29,8 +30,8 @@ describe('lunchmoneyInterceptor', () => {
       configurable: true,
       value: apiKeySubject.asObservable(),
     });
-    authServiceSpy.ready.and.returnValue(Promise.resolve());
-    authServiceSpy.getApiKey.and.returnValue('test-api-key');
+    authServiceSpy.ready.mockReturnValue(Promise.resolve());
+    authServiceSpy.getApiKey.mockReturnValue('test-api-key');
 
     TestBed.configureTestingModule({
       providers: [
@@ -72,7 +73,7 @@ describe('lunchmoneyInterceptor', () => {
   });
 
   it('should handle missing API key gracefully', async () => {
-    authServiceSpy.getApiKey.and.returnValue(null);
+    authServiceSpy.getApiKey.mockReturnValue(null);
 
     httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
@@ -86,7 +87,7 @@ describe('lunchmoneyInterceptor', () => {
 
   it('should wait for auth service to be ready', async () => {
     let readyResolved = false;
-    authServiceSpy.ready.and.returnValue(
+    authServiceSpy.ready.mockReturnValue(
       new Promise(resolve => {
         setTimeout(() => {
           readyResolved = true;

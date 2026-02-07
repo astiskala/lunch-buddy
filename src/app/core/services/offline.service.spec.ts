@@ -37,17 +37,17 @@ describe('OfflineService', () => {
   });
 
   it('exposes initial online/offline state from the navigator', () => {
-    expect(service.getOnlineStatus()()).toBeTrue();
-    expect(service.getOfflineStatus()()).toBeFalse();
+    expect(service.getOnlineStatus()()).toBe(true);
+    expect(service.getOfflineStatus()()).toBe(false);
   });
 
   it('updates signals when offline/online events are fired', () => {
     globalThis.window.dispatchEvent(new Event('offline'));
-    expect(service.getOnlineStatus()()).toBeFalse();
-    expect(service.getOfflineStatus()()).toBeTrue();
+    expect(service.getOnlineStatus()()).toBe(false);
+    expect(service.getOfflineStatus()()).toBe(true);
 
     globalThis.window.dispatchEvent(new Event('online'));
-    expect(service.getOnlineStatus()()).toBeTrue();
-    expect(service.getOfflineStatus()()).toBeFalse();
+    expect(service.getOnlineStatus()()).toBe(true);
+    expect(service.getOfflineStatus()()).toBe(false);
   });
 });

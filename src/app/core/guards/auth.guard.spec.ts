@@ -5,6 +5,7 @@ import {
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
 } from '@angular/router';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
 
@@ -18,15 +19,15 @@ describe('authGuard', () => {
     parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
   }
 
-  let authService: jasmine.SpyObj<AuthServiceStub>;
-  let router: jasmine.SpyObj<RouterStub>;
+  let authService: SpyObj<AuthServiceStub>;
+  let router: SpyObj<RouterStub>;
 
   beforeEach(() => {
-    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
-      'AuthService',
-      ['hasApiKey', 'ready']
-    );
-    const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['parseUrl']);
+    const authServiceSpy = createSpyObj<AuthServiceStub>('AuthService', [
+      'hasApiKey',
+      'ready',
+    ]);
+    const routerSpy = createSpyObj<RouterStub>('Router', ['parseUrl']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -39,11 +40,11 @@ describe('authGuard', () => {
     authService = authServiceSpy;
     router = routerSpy;
 
-    authService.ready.and.resolveTo();
+    authService.ready.mockResolvedValue();
   });
 
   it('should allow activation when user has API key', async () => {
-    authService.hasApiKey.and.returnValue(true);
+    authService.hasApiKey.mockReturnValue(true);
 
     const result = await TestBed.runInInjectionContext(
       () =>
@@ -58,9 +59,9 @@ describe('authGuard', () => {
   });
 
   it('should redirect to login when user has no API key', async () => {
-    authService.hasApiKey.and.returnValue(false);
+    authService.hasApiKey.mockReturnValue(false);
     const loginUrl = {} as ReturnType<Router['parseUrl']>;
-    router.parseUrl.and.returnValue(loginUrl);
+    router.parseUrl.mockReturnValue(loginUrl);
 
     const result = await TestBed.runInInjectionContext(() =>
       authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)

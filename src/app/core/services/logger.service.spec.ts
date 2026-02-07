@@ -1,20 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { vi, type Mock } from 'vitest';
 import { LoggerService } from './logger.service';
 
 describe('LoggerService', () => {
   let service: LoggerService;
-  let consoleDebugSpy: jasmine.Spy;
-  let consoleInfoSpy: jasmine.Spy;
-  let consoleWarnSpy: jasmine.Spy;
-  let consoleErrorSpy: jasmine.Spy;
+  let consoleDebugSpy: Mock;
+  let consoleInfoSpy: Mock;
+  let consoleWarnSpy: Mock;
+  let consoleErrorSpy: Mock;
 
   beforeEach(() => {
     // Setup console spies
-    consoleDebugSpy = spyOn(console, 'debug');
-    consoleInfoSpy = spyOn(console, 'info');
-    consoleWarnSpy = spyOn(console, 'warn');
-    consoleErrorSpy = spyOn(console, 'error');
+    consoleDebugSpy = vi.spyOn(console, 'debug');
+    consoleInfoSpy = vi.spyOn(console, 'info');
+    consoleWarnSpy = vi.spyOn(console, 'warn');
+    consoleErrorSpy = vi.spyOn(console, 'error');
 
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection()],

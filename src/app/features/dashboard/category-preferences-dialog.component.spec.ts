@@ -4,6 +4,7 @@ import { CategoryPreferencesDialogComponent } from './category-preferences-dialo
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
+import { vi, type Mock } from 'vitest';
 
 const createToggleEvent = (checked: boolean): Event =>
   ({
@@ -37,12 +38,10 @@ const buildCategory = (id: number, name: string): BudgetProgress => ({
 describe('CategoryPreferencesDialogComponent notifications', () => {
   let fixture: ComponentFixture<CategoryPreferencesDialogComponent>;
   let component: CategoryPreferencesDialogComponent;
-  let ensurePermissionSpy: jasmine.Spy;
+  let ensurePermissionSpy: Mock;
 
   beforeEach(async () => {
-    ensurePermissionSpy = jasmine
-      .createSpy('ensurePermission')
-      .and.resolveTo({ granted: true });
+    ensurePermissionSpy = vi.fn().mockResolvedValue({ granted: true });
 
     await TestBed.configureTestingModule({
       imports: [CategoryPreferencesDialogComponent],
@@ -67,12 +66,12 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
     await component.handleNotificationsChange(event);
 
     expect(ensurePermissionSpy).toHaveBeenCalled();
-    expect(component.notificationsEnabled()).toBeTrue();
+    expect(component.notificationsEnabled()).toBe(true);
     expect(component.notificationError()).toBeNull();
   });
 
   it('reverts the toggle when permission is denied', async () => {
-    ensurePermissionSpy.and.resolveTo({
+    ensurePermissionSpy.mockResolvedValue({
       granted: false,
       denialReason: 'denied-by-browser',
     });
@@ -82,8 +81,8 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
     await component.handleNotificationsChange(event);
 
     expect(ensurePermissionSpy).toHaveBeenCalled();
-    expect(component.notificationsEnabled()).toBeFalse();
-    expect(input.checked).toBeFalse();
+    expect(component.notificationsEnabled()).toBe(false);
+    expect(input.checked).toBe(false);
     expect(component.notificationError()?.message).toContain(
       'blocked this notification request'
     );
@@ -91,7 +90,7 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
   });
 
   it('shows user-denied message when permission denied by user', async () => {
-    ensurePermissionSpy.and.resolveTo({
+    ensurePermissionSpy.mockResolvedValue({
       granted: false,
       denialReason: 'denied-by-user',
     });
@@ -125,14 +124,14 @@ describe('CategoryPreferencesDialogComponent notifications', () => {
     await component.handleNotificationsChange(event);
 
     expect(ensurePermissionSpy).not.toHaveBeenCalled();
-    expect(component.notificationsEnabled()).toBeFalse();
+    expect(component.notificationsEnabled()).toBe(false);
   });
 });
 
 describe('CategoryPreferencesDialogComponent', () => {
   let fixture: ComponentFixture<CategoryPreferencesDialogComponent>;
   let component: CategoryPreferencesDialogComponent;
-  let ensurePermissionSpy: jasmine.Spy;
+  let ensurePermissionSpy: Mock;
 
   const basePreferences: CategoryPreferences = {
     customOrder: [1],
@@ -150,9 +149,7 @@ describe('CategoryPreferencesDialogComponent', () => {
   };
 
   beforeEach(async () => {
-    ensurePermissionSpy = jasmine
-      .createSpy('ensurePermission')
-      .and.resolveTo({ granted: true });
+    ensurePermissionSpy = vi.fn().mockResolvedValue({ granted: true });
 
     await TestBed.configureTestingModule({
       imports: [CategoryPreferencesDialogComponent],
@@ -188,9 +185,9 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(Array.from(component.hiddenIds())).toEqual(
       basePreferences.hiddenCategoryIds
     );
-    expect(component.notificationsEnabled()).toBeTrue();
-    expect(component.includeAllTransactions()).toBeFalse();
-    expect(component.hideGroupedCategories()).toBeTrue();
+    expect(component.notificationsEnabled()).toBe(true);
+    expect(component.includeAllTransactions()).toBe(false);
+    expect(component.hideGroupedCategories()).toBe(true);
   });
 
   it('emits normalized preferences on save', () => {
@@ -208,8 +205,8 @@ describe('CategoryPreferencesDialogComponent', () => {
     component.includeAllTransactions.set(false);
     component.hideGroupedCategories.set(true);
 
-    const preferencesSpy = spyOn(component.preferencesChange, 'emit');
-    const closeSpy = spyOn(component.dialogClose, 'emit');
+    const preferencesSpy = vi.spyOn(component.preferencesChange, 'emit');
+    const closeSpy = vi.spyOn(component.dialogClose, 'emit');
 
     component.handleSave();
 
@@ -234,19 +231,19 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     expect(component.orderedIds()).toEqual([]);
     expect(component.hiddenIds().size).toBe(0);
-    expect(component.notificationsEnabled()).toBeFalse();
-    expect(component.includeAllTransactions()).toBeTrue();
-    expect(component.hideGroupedCategories()).toBeFalse();
+    expect(component.notificationsEnabled()).toBe(false);
+    expect(component.includeAllTransactions()).toBe(true);
+    expect(component.hideGroupedCategories()).toBe(false);
   });
 
   it('keeps visible categories collapsed by default and toggles open state', () => {
-    expect(component.visibleCategoriesExpanded()).toBeFalse();
+    expect(component.visibleCategoriesExpanded()).toBe(false);
 
     component.toggleVisibleCategoriesSection();
-    expect(component.visibleCategoriesExpanded()).toBeTrue();
+    expect(component.visibleCategoriesExpanded()).toBe(true);
 
     component.toggleVisibleCategoriesSection();
-    expect(component.visibleCategoriesExpanded()).toBeFalse();
+    expect(component.visibleCategoriesExpanded()).toBe(false);
   });
 
   it('locks body scroll while the dialog is open and restores it when closed', () => {
@@ -268,9 +265,9 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     expect(document.body.style.overflow).toBe('auto');
     expect(document.body.style.touchAction).toBe('pan-y');
-    expect(
-      document.body.hasAttribute('data-dialog-scroll-lock-count')
-    ).toBeFalse();
+    expect(document.body.hasAttribute('data-dialog-scroll-lock-count')).toBe(
+      false
+    );
   });
 
   it('releases body scroll lock when destroyed while open', () => {
@@ -286,8 +283,8 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     expect(document.body.style.overflow).toBe('visible');
     expect(document.body.style.touchAction).toBe('auto');
-    expect(
-      document.body.hasAttribute('data-dialog-scroll-lock-count')
-    ).toBeFalse();
+    expect(document.body.hasAttribute('data-dialog-scroll-lock-count')).toBe(
+      false
+    );
   });
 });

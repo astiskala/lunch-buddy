@@ -19,7 +19,8 @@
 ## Testing Migration Context
 
 - Karma and `source-map-explorer` were removed from this repository.
-- Jasmine-style specs are supported via `/Users/adam/Source/lunch-buddy/src/test/vitest-jasmine-compat.ts`.
+- Specs are fully migrated to native Vitest mocks/spies (`vi.fn`, `vi.spyOn`).
+- Test setup is limited to `/Users/adam/Source/lunch-buddy/src/test/vitest-setup.ts` for browser storage polyfills.
 - App builds must not include test setup files. Keep `/Users/adam/Source/lunch-buddy/tsconfig.app.json` excluding `src/test/**/*.ts`.
 
 ## Change Expectations

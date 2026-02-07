@@ -83,7 +83,7 @@ describe('ProgressBarComponent', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     const wrapper = getRequiredElement(host, '.progress-bar-wrapper');
-    expect(wrapper.classList.contains('hero')).toBeTrue();
+    expect(wrapper.classList.contains('hero')).toBe(true);
     expect(wrapper.style.height).toBe('20px');
   });
 });

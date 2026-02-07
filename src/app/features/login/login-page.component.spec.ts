@@ -4,6 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { LoginPageComponent } from './login-page.component';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 
 describe('LoginPageComponent', () => {
   let component: LoginPageComponent;
@@ -17,19 +18,19 @@ describe('LoginPageComponent', () => {
     navigate: (commands: unknown[]) => Promise<boolean>;
   }
 
-  let authService: jasmine.SpyObj<AuthServiceStub>;
-  let router: jasmine.SpyObj<RouterStub>;
+  let authService: SpyObj<AuthServiceStub>;
+  let router: SpyObj<RouterStub>;
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
-    const authServiceSpy = jasmine.createSpyObj<AuthServiceStub>(
-      'AuthService',
-      ['getApiKey', 'setApiKey']
-    );
-    authServiceSpy.getApiKey.and.returnValue(null);
-    authServiceSpy.setApiKey.and.stub();
-    const routerSpy = jasmine.createSpyObj<RouterStub>('Router', ['navigate']);
-    routerSpy.navigate.and.resolveTo(true);
+    const authServiceSpy = createSpyObj<AuthServiceStub>('AuthService', [
+      'getApiKey',
+      'setApiKey',
+    ]);
+    authServiceSpy.getApiKey.mockReturnValue(null);
+    authServiceSpy.setApiKey.mockImplementation(() => undefined);
+    const routerSpy = createSpyObj<RouterStub>('Router', ['navigate']);
+    routerSpy.navigate.mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
       imports: [LoginPageComponent],

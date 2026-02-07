@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
+import { vi, type Mock } from 'vitest';
 import {
   BudgetSummaryItem,
   RecurringExpense,
@@ -11,6 +12,7 @@ import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
+import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 
@@ -138,12 +140,10 @@ const shiftMonthStart = (monthStart: string, monthDelta: number): string => {
 };
 
 interface LoggerSpies {
-  debug: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
-  info: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
-  warn: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
-  error: jasmine.Spy<
-    (message: string, error?: unknown, ...args: unknown[]) => void
-  >;
+  debug: Mock<(message: string, ...args: unknown[]) => void>;
+  info: Mock<(message: string, ...args: unknown[]) => void>;
+  warn: Mock<(message: string, ...args: unknown[]) => void>;
+  error: Mock<(message: string, error?: unknown, ...args: unknown[]) => void>;
 }
 
 describe('BudgetService background sync', () => {
@@ -162,17 +162,17 @@ describe('BudgetService background sync', () => {
     ) => Promise<void>;
   }
 
-  let backgroundSync: jasmine.SpyObj<BackgroundSyncStub>;
+  let backgroundSync: SpyObj<BackgroundSyncStub>;
   let service: BudgetService;
 
   beforeEach(() => {
     localStorage.clear();
     lunchMoney = new MockLunchMoneyService();
     loggerSpies = {
-      debug: jasmine.createSpy('debug'),
-      info: jasmine.createSpy('info'),
-      warn: jasmine.createSpy('warn'),
-      error: jasmine.createSpy('error'),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
     };
     logger = {
       debug: loggerSpies.debug,
@@ -180,12 +180,11 @@ describe('BudgetService background sync', () => {
       warn: loggerSpies.warn,
       error: loggerSpies.error,
     } as unknown as LoggerService;
-    backgroundSync = jasmine.createSpyObj<BackgroundSyncStub>(
-      'BackgroundSyncService',
-      ['updateBudgetPreferences']
-    );
+    backgroundSync = createSpyObj<BackgroundSyncStub>('BackgroundSyncService', [
+      'updateBudgetPreferences',
+    ]);
 
-    backgroundSync.updateBudgetPreferences.and.resolveTo();
+    backgroundSync.updateBudgetPreferences.mockResolvedValue();
   });
 
   const initService = () => {
@@ -211,10 +210,15 @@ describe('BudgetService background sync', () => {
     initService();
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
-    const [payload] =
-      backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
+    const latestSyncCall =
+      backgroundSync.updateBudgetPreferences.mock.calls.at(-1);
+    expect(latestSyncCall).toBeDefined();
+    if (!latestSyncCall) {
+      throw new Error('Expected updateBudgetPreferences to be called');
+    }
+    const [payload] = latestSyncCall;
     expect(payload).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         hiddenCategoryIds: [5],
         notificationsEnabled: true,
       })
@@ -223,7 +227,7 @@ describe('BudgetService background sync', () => {
 
   it('updates background sync when preferences change', () => {
     initService();
-    backgroundSync.updateBudgetPreferences.calls.reset();
+    backgroundSync.updateBudgetPreferences.mockClear();
 
     service.updatePreferences(current => ({
       ...current,
@@ -232,7 +236,7 @@ describe('BudgetService background sync', () => {
     }));
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalledTimes(1);
-    const [payload] = backgroundSync.updateBudgetPreferences.calls.argsFor(0);
+    const [payload] = backgroundSync.updateBudgetPreferences.mock.calls[0];
     expect(payload).toEqual({
       hiddenCategoryIds: [1, 2],
       notificationsEnabled: true,
@@ -243,14 +247,19 @@ describe('BudgetService background sync', () => {
   it('provides currency information after loading budget data', () => {
     storePreferences({ notificationsEnabled: true });
     initService();
-    backgroundSync.updateBudgetPreferences.calls.reset();
+    backgroundSync.updateBudgetPreferences.mockClear();
 
     const monthKey = service.getStartDate();
     lunchMoney.budgetSummary$.next([createSummary(monthKey, {})]);
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
-    const [payload] =
-      backgroundSync.updateBudgetPreferences.calls.mostRecent().args;
+    const latestSyncCall =
+      backgroundSync.updateBudgetPreferences.mock.calls.at(-1);
+    expect(latestSyncCall).toBeDefined();
+    if (!latestSyncCall) {
+      throw new Error('Expected updateBudgetPreferences to be called');
+    }
+    const [payload] = latestSyncCall;
     expect(payload.currency).toBe('USD');
   });
 
@@ -397,8 +406,8 @@ describe('BudgetService background sync', () => {
     const hiddenExpenses = service.getHiddenExpenses();
     const hiddenIncomes = service.getHiddenIncomes();
 
-    expect(hiddenExpenses.some(item => item.categoryId === 10)).toBeTrue();
-    expect(hiddenIncomes.some(item => item.categoryId === 20)).toBeTrue();
+    expect(hiddenExpenses.some(item => item.categoryId === 10)).toBe(true);
+    expect(hiddenIncomes.some(item => item.categoryId === 20)).toBe(true);
   });
 
   it('includes group budgets when category-level budgets are absent', () => {
@@ -418,7 +427,7 @@ describe('BudgetService background sync', () => {
     const expenses = service.getExpenses();
 
     expect(expenses.length).toBe(1);
-    expect(expenses[0].isGroup).toBeTrue();
+    expect(expenses[0].isGroup).toBe(true);
     expect(expenses[0].categoryName).toBe('Household Essentials');
   });
 
@@ -468,7 +477,7 @@ describe('BudgetService background sync', () => {
   });
 
   it('formats object-shaped budget load errors into readable messages', () => {
-    spyOn(lunchMoney, 'getBudgetSummary').and.returnValue(
+    vi.spyOn(lunchMoney, 'getBudgetSummary').mockReturnValue(
       new Observable<BudgetSummaryItem[]>(subscriber => {
         subscriber.error({ code: 503, detail: 'Upstream unavailable' });
       })
@@ -485,10 +494,9 @@ describe('BudgetService background sync', () => {
   it('recovers from recurring expense load failures', () => {
     initService();
     const failure = new Error('network');
-    const getRecurringExpensesSpy = spyOn(
-      lunchMoney,
-      'getRecurringExpenses'
-    ).and.returnValue(throwError(() => failure));
+    const getRecurringExpensesSpy = vi
+      .spyOn(lunchMoney, 'getRecurringExpenses')
+      .mockReturnValue(throwError(() => failure));
 
     service.loadRecurringExpenses();
 
@@ -501,14 +509,14 @@ describe('BudgetService background sync', () => {
 
   it('navigates to previous months and keeps month progress at 100%', () => {
     initService();
-    const refreshSpy = spyOn(service, 'refresh').and.callThrough();
+    const refreshSpy = vi.spyOn(service, 'refresh');
     const initialMonth = service.getStartDate();
 
     service.goToPreviousMonth();
 
     expect(service.getStartDate()).toBe(shiftMonthStart(initialMonth, -1));
     expect(service.getMonthProgressRatio()).toBe(1);
-    expect(service.getCanNavigateToNextMonth()).toBeTrue();
+    expect(service.getCanNavigateToNextMonth()).toBe(true);
     expect(refreshSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -519,7 +527,7 @@ describe('BudgetService background sync', () => {
     service.goToPreviousMonth();
     service.goToNextMonth();
     expect(service.getStartDate()).toBe(currentMonth);
-    expect(service.getCanNavigateToNextMonth()).toBeFalse();
+    expect(service.getCanNavigateToNextMonth()).toBe(false);
 
     service.goToNextMonth();
     expect(service.getStartDate()).toBe(currentMonth);
@@ -527,14 +535,14 @@ describe('BudgetService background sync', () => {
 
   it('refresh reuses budget and recurring loaders', () => {
     initService();
-    const loadBudgetSpy = spyOn(
+    const loadBudgetSpy = vi.spyOn(
       service as unknown as { loadBudgetData: () => void },
       'loadBudgetData'
-    ).and.callThrough();
-    const loadRecurringSpy = spyOn(
+    );
+    const loadRecurringSpy = vi.spyOn(
       service as unknown as { loadRecurringExpenses: () => void },
       'loadRecurringExpenses'
-    ).and.callThrough();
+    );
 
     service.refresh();
 

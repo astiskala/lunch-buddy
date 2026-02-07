@@ -6,23 +6,22 @@ import {
   VersionReadyEvent,
 } from '@angular/service-worker';
 import { Subject } from 'rxjs';
+import { vi, type Mock } from 'vitest';
 import { AppUpdateService } from './app-update.service';
 import { LoggerService } from './logger.service';
 
 interface LoggerSpies {
-  debug: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
-  info: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
-  warn: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
-  error: jasmine.Spy<
-    (message: string, error?: unknown, ...args: unknown[]) => void
-  >;
+  debug: Mock<(message: string, ...args: unknown[]) => void>;
+  info: Mock<(message: string, ...args: unknown[]) => void>;
+  warn: Mock<(message: string, ...args: unknown[]) => void>;
+  error: Mock<(message: string, error?: unknown, ...args: unknown[]) => void>;
 }
 
 interface MutableSwUpdate {
   isEnabled: boolean;
   versionUpdates: Subject<VersionEvent>;
-  checkForUpdate: jasmine.Spy<() => Promise<boolean>>;
-  activateUpdate: jasmine.Spy<() => Promise<boolean>>;
+  checkForUpdate: Mock<() => Promise<boolean>>;
+  activateUpdate: Mock<() => Promise<boolean>>;
 }
 
 const createSwUpdate = (
@@ -33,12 +32,8 @@ const createSwUpdate = (
   return {
     isEnabled: true,
     versionUpdates,
-    checkForUpdate: jasmine
-      .createSpy('checkForUpdate')
-      .and.returnValue(Promise.resolve(false)),
-    activateUpdate: jasmine
-      .createSpy('activateUpdate')
-      .and.returnValue(Promise.resolve(true)),
+    checkForUpdate: vi.fn().mockReturnValue(Promise.resolve(false)),
+    activateUpdate: vi.fn().mockReturnValue(Promise.resolve(true)),
     ...overrides,
   };
 };
@@ -46,21 +41,23 @@ const createSwUpdate = (
 describe('AppUpdateService', () => {
   let logger: LoggerService;
   let loggerSpies: LoggerSpies;
-  let reloadSpy: jasmine.Spy<() => void>;
+  let reloadSpy: Mock<() => void>;
 
   beforeAll(() => {
-    reloadSpy = spyOn(
-      AppUpdateService.prototype as unknown as { reloadWindow: () => void },
-      'reloadWindow'
-    ).and.stub();
+    reloadSpy = vi
+      .spyOn(
+        AppUpdateService.prototype as unknown as { reloadWindow: () => void },
+        'reloadWindow'
+      )
+      .mockImplementation(() => undefined);
   });
 
   beforeEach(() => {
     loggerSpies = {
-      debug: jasmine.createSpy('debug'),
-      info: jasmine.createSpy('info'),
-      warn: jasmine.createSpy('warn'),
-      error: jasmine.createSpy('error'),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
     };
     logger = {
       debug: loggerSpies.debug,
@@ -68,7 +65,7 @@ describe('AppUpdateService', () => {
       warn: loggerSpies.warn,
       error: loggerSpies.error,
     } as unknown as LoggerService;
-    reloadSpy.calls.reset();
+    reloadSpy.mockClear();
   });
 
   afterEach(() => {
@@ -76,7 +73,7 @@ describe('AppUpdateService', () => {
   });
 
   afterAll(() => {
-    reloadSpy.and.callThrough();
+    reloadSpy.mockRestore();
   });
 
   const configure = (swUpdate: Partial<MutableSwUpdate> | null) => {
@@ -114,9 +111,7 @@ describe('AppUpdateService', () => {
   it('logs a warning if checkForUpdate rejects', async () => {
     const error = new Error('check failure');
     const swUpdate = createSwUpdate({
-      checkForUpdate: jasmine
-        .createSpy('checkForUpdate')
-        .and.returnValue(Promise.reject(error)),
+      checkForUpdate: vi.fn().mockReturnValue(Promise.reject(error)),
     });
     configure(swUpdate);
 
@@ -142,14 +137,17 @@ describe('AppUpdateService', () => {
       latestVersion: { hash: 'new', appData: undefined },
     };
     versionUpdates.next(event);
-
-    await swUpdate.activateUpdate.calls.mostRecent().returnValue;
+    await vi.waitFor(() => {
+      expect(swUpdate.activateUpdate).toHaveBeenCalledTimes(1);
+    });
+    await vi.waitFor(() => {
+      expect(reloadSpy).toHaveBeenCalled();
+    });
 
     expect(swUpdate.activateUpdate).toHaveBeenCalledTimes(1);
     expect(loggerSpies.info).toHaveBeenCalledWith(
       'AppUpdateService: new version ready, activating'
     );
-    expect(reloadSpy).toHaveBeenCalled();
   });
 
   it('logs and still reloads when activateUpdate fails', async () => {
@@ -157,9 +155,7 @@ describe('AppUpdateService', () => {
     const error = new Error('activate failure');
     const swUpdate = createSwUpdate({
       versionUpdates,
-      activateUpdate: jasmine
-        .createSpy('activateUpdate')
-        .and.returnValue(Promise.reject(error)),
+      activateUpdate: vi.fn().mockReturnValue(Promise.reject(error)),
     });
     configure(swUpdate);
 
@@ -171,10 +167,15 @@ describe('AppUpdateService', () => {
       latestVersion: { hash: 'new', appData: undefined },
     };
     versionUpdates.next(event);
-
-    await swUpdate.activateUpdate.calls
-      .mostRecent()
-      .returnValue.catch(() => undefined);
+    await vi.waitFor(() => {
+      expect(swUpdate.activateUpdate).toHaveBeenCalledTimes(1);
+    });
+    await vi.waitFor(() => {
+      expect(loggerSpies.warn).toHaveBeenCalledWith(
+        'AppUpdateService: activateUpdate failed',
+        error
+      );
+    });
 
     expect(loggerSpies.warn).toHaveBeenCalledWith(
       'AppUpdateService: activateUpdate failed',

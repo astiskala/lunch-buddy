@@ -3,42 +3,43 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { Subject } from 'rxjs';
+import { vi, type Mock } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
 import { AppUpdateService } from './core/services/app-update.service';
 
 describe('App', () => {
   let versionUpdates$: Subject<VersionReadyEvent>;
-  let activateUpdateSpy: jasmine.Spy<() => Promise<boolean>>;
+  let activateUpdateSpy: Mock<() => Promise<boolean>>;
   let swUpdateMock: Pick<SwUpdate, 'versionUpdates' | 'activateUpdate'>;
-  let reloadSpy: jasmine.Spy<() => void>;
-  let consoleErrorSpy: jasmine.Spy;
-  let appUpdateServiceInitSpy: jasmine.Spy<() => Promise<void>>;
+  let reloadSpy: Mock<() => void>;
+  let consoleErrorSpy: Mock;
+  let appUpdateServiceInitSpy: Mock<() => Promise<void>>;
   let appUpdateServiceMock: Pick<AppUpdateService, 'init'>;
 
   beforeAll(() => {
-    reloadSpy = spyOn(
-      App.prototype as unknown as { reloadPage: () => void },
-      'reloadPage'
-    ).and.stub();
-    consoleErrorSpy = spyOn(console, 'error').and.stub();
+    reloadSpy = vi
+      .spyOn(
+        App.prototype as unknown as { reloadPage: () => void },
+        'reloadPage'
+      )
+      .mockImplementation(() => undefined);
+    consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
   });
 
   beforeEach(async () => {
     versionUpdates$ = new Subject<VersionReadyEvent>();
-    activateUpdateSpy = jasmine
-      .createSpy('activateUpdate')
-      .and.returnValue(Promise.resolve(true));
-    appUpdateServiceInitSpy = jasmine
-      .createSpy('init')
-      .and.returnValue(Promise.resolve());
+    activateUpdateSpy = vi.fn().mockReturnValue(Promise.resolve(true));
+    appUpdateServiceInitSpy = vi.fn().mockReturnValue(Promise.resolve());
     appUpdateServiceMock = { init: appUpdateServiceInitSpy };
     swUpdateMock = {
       versionUpdates: versionUpdates$.asObservable(),
       activateUpdate: activateUpdateSpy,
     };
-    reloadSpy.calls.reset();
-    consoleErrorSpy.calls.reset();
+    reloadSpy.mockClear();
+    consoleErrorSpy.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [App],
@@ -62,8 +63,8 @@ describe('App', () => {
   });
 
   afterAll(() => {
-    reloadSpy.and.callThrough();
-    consoleErrorSpy.and.callThrough();
+    reloadSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should create the app', () => {
@@ -94,18 +95,21 @@ describe('App', () => {
       latestVersion: { hash: 'new-hash', appData: undefined },
     };
     versionUpdates$.next(event);
-    const activation = activateUpdateSpy.calls.mostRecent().returnValue;
-    await activation;
+    await vi.waitFor(() => {
+      expect(activateUpdateSpy).toHaveBeenCalledTimes(1);
+    });
+    await vi.waitFor(() => {
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+    });
 
     expect(activateUpdateSpy).toHaveBeenCalledTimes(1);
-    expect(reloadSpy).toHaveBeenCalledTimes(1);
     expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
   it('logs an error when update activation fails', async () => {
     const fixture = TestBed.createComponent(App);
     const failure = new Error('activation failed');
-    activateUpdateSpy.and.returnValue(Promise.reject(failure));
+    activateUpdateSpy.mockReturnValue(Promise.reject(failure));
     fixture.detectChanges();
 
     const event: VersionReadyEvent = {
@@ -114,14 +118,17 @@ describe('App', () => {
       latestVersion: { hash: 'new-hash', appData: undefined },
     };
     versionUpdates$.next(event);
-    const activation = activateUpdateSpy.calls.mostRecent().returnValue;
-    await activation.catch(() => undefined);
+    await vi.waitFor(() => {
+      expect(activateUpdateSpy).toHaveBeenCalledTimes(1);
+    });
+    await vi.waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to activate update:',
+        failure
+      );
+    });
 
     expect(activateUpdateSpy).toHaveBeenCalledTimes(1);
     expect(reloadSpy).not.toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to activate update:',
-      failure
-    );
   });
 });

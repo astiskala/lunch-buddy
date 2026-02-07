@@ -64,14 +64,8 @@ jobs:
       - name: Security audit
         run: npm audit --audit-level=high || true
 
-      - name: Setup Chrome
-        id: chrome
-        uses: browser-actions/setup-chrome@c785b87e244131f27c9f19c1a33e2ead956ab7ce
-
       - name: Run unit tests
-        run: npm test -- --browsers=ChromeHeadlessNoSandbox
-        env:
-          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: npm test
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7

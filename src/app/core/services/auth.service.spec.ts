@@ -2,12 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
 import { firstValueFrom, skip } from 'rxjs';
+import { vi } from 'vitest';
 import { BackgroundSyncService } from './background-sync.service';
 
 class MockBackgroundSyncService {
-  updateApiCredentials = jasmine
-    .createSpy('updateApiCredentials')
-    .and.resolveTo(undefined);
+  updateApiCredentials = vi.fn().mockResolvedValue(undefined);
 }
 
 describe('AuthService', () => {
@@ -43,13 +42,13 @@ describe('AuthService', () => {
 
   it('should return false when no API key is stored', async () => {
     await service.ready();
-    expect(service.hasApiKey()).toBeFalse();
+    expect(service.hasApiKey()).toBe(false);
   });
 
   it('should store and retrieve API key', () => {
     service.setApiKey(TEST_API_KEY);
     expect(service.getApiKey()).toBe(TEST_API_KEY);
-    expect(service.hasApiKey()).toBeTrue();
+    expect(service.hasApiKey()).toBe(true);
   });
 
   it('should persist API key to localStorage', () => {
