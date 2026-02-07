@@ -1,6 +1,26 @@
 <div class="summary-hero">
   <div class="header">
-    <h2>{{ monthName() }}</h2>
+    <div class="month-controls">
+      <button
+        type="button"
+        class="month-nav-btn"
+        (click)="previousMonth.emit()"
+        aria-label="View previous month">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <h2>{{ monthName() }}</h2>
+      @if (canGoToNextMonth()) {
+        <button
+          type="button"
+          class="month-nav-btn"
+          (click)="nextMonth.emit()"
+          aria-label="View next month">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      } @else {
+        <span class="month-nav-spacer" aria-hidden="true"></span>
+      }
+    </div>
     <div class="action-buttons">
       <button
         mat-stroked-button

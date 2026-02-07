@@ -1,8 +1,69 @@
 <div class="dashboard-container">
   @if (showInitialLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading budget data...</p>
+    <div class="skeleton-dashboard" aria-hidden="true">
+      <div class="dashboard-header skeleton-header">
+        <div class="brand">
+          <img
+            ngSrc="icons/lunch-buddy.svg"
+            width="40"
+            height="40"
+            alt="Lunch Buddy logo"
+            priority
+            class="brand-logo" />
+          <span class="brand-name">Lunch Buddy</span>
+        </div>
+        <div class="header-status">
+          <div class="status-row">
+            <div class="skeleton-block skeleton-refresh-text"></div>
+            <div class="skeleton-block skeleton-refresh-icon"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="skeleton-hero">
+        <div class="skeleton-hero-header">
+          <div class="skeleton-block skeleton-month"></div>
+          <div class="skeleton-hero-actions">
+            <div class="skeleton-block skeleton-hero-action"></div>
+            <div class="skeleton-block skeleton-hero-action"></div>
+          </div>
+        </div>
+        <div class="skeleton-hero-grid">
+          @for (section of [0, 1]; track section) {
+            <div class="skeleton-hero-section">
+              <div class="skeleton-block skeleton-section-title"></div>
+              <div class="skeleton-block skeleton-progress-bar"></div>
+              <div class="skeleton-metrics">
+                <div class="skeleton-block skeleton-metric"></div>
+                <div class="skeleton-block skeleton-metric"></div>
+                <div class="skeleton-block skeleton-metric"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="skeleton-segmented">
+        <div class="skeleton-block skeleton-segment"></div>
+        <div class="skeleton-block skeleton-segment"></div>
+      </div>
+
+      <div class="skeleton-filters">
+        <div class="skeleton-block skeleton-filter"></div>
+        <div class="skeleton-block skeleton-filter"></div>
+        <div class="skeleton-block skeleton-filter"></div>
+      </div>
+
+      <div class="skeleton-list">
+        @for (card of [0, 1, 2]; track card) {
+          <div class="skeleton-list-card">
+            <div class="skeleton-block skeleton-list-title"></div>
+            <div class="skeleton-block skeleton-list-bar"></div>
+            <div class="skeleton-block skeleton-list-line"></div>
+            <div class="skeleton-block skeleton-list-line short"></div>
+          </div>
+        }
+      </div>
     </div>
   } @else if (errors().length > 0) {
     <div class="error-state">
@@ -44,6 +105,7 @@
 
     <summary-hero
       [monthStart]="startDate()"
+      [canGoToNextMonth]="canNavigateToNextMonth()"
       [monthProgressRatio]="monthProgressRatio()"
       [totalExpenseSpent]="totalExpenseSpent()"
       [totalExpenseBudget]="totalExpenseBudget()"
@@ -52,6 +114,8 @@
       [totalIncomeBudget]="totalIncomeBudget()"
       [totalIncomeUpcoming]="totalIncomeUpcoming()"
       [currency]="currency()"
+      (previousMonth)="goToPreviousMonth()"
+      (nextMonth)="goToNextMonth()"
       (customize)="openPreferencesDialog()"
       (logout)="logout()" />
 

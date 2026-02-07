@@ -67,6 +67,7 @@ export class SummaryHeroComponent {
   private readonly locale = inject(LOCALE_ID);
 
   readonly monthStart = input.required<string>();
+  readonly canGoToNextMonth = input(false);
   readonly monthProgressRatio = input.required<number>();
   readonly totalExpenseSpent = input.required<number>();
   readonly totalExpenseBudget = input.required<number>();
@@ -76,6 +77,8 @@ export class SummaryHeroComponent {
   readonly totalIncomeUpcoming = input<number>(0);
   readonly currency = input<string | null>(null);
 
+  readonly previousMonth = output();
+  readonly nextMonth = output();
   readonly customize = output();
   readonly logout = output();
 

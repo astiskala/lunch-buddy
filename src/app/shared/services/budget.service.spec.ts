@@ -128,6 +128,15 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
   );
 };
 
+const shiftMonthStart = (monthStart: string, monthDelta: number): string => {
+  const [yearText, monthText] = monthStart.split('-');
+  const year = Number.parseInt(yearText, 10);
+  const month = Number.parseInt(monthText, 10);
+  const shifted = new Date(year, month - 1 + monthDelta, 1);
+  const shiftedMonth = String(shifted.getMonth() + 1).padStart(2, '0');
+  return `${shifted.getFullYear().toString()}-${shiftedMonth}-01`;
+};
+
 interface LoggerSpies {
   debug: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
   info: jasmine.Spy<(message: string, ...args: unknown[]) => void>;
@@ -236,7 +245,7 @@ describe('BudgetService background sync', () => {
     initService();
     backgroundSync.updateBudgetPreferences.calls.reset();
 
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+    const monthKey = service.getStartDate();
     lunchMoney.budgetSummary$.next([createSummary(monthKey, {})]);
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
@@ -247,7 +256,7 @@ describe('BudgetService background sync', () => {
 
   it('creates a single uncategorised expense entry for negative-only transactions', () => {
     initService();
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+    const monthKey = service.getStartDate();
 
     lunchMoney.categoryTransactionsResponse = {
       has_more: false,
@@ -295,7 +304,7 @@ describe('BudgetService background sync', () => {
 
   it('splits uncategorised totals into expense and income entries when both exist', () => {
     initService();
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+    const monthKey = service.getStartDate();
 
     lunchMoney.categoryTransactionsResponse = {
       has_more: false,
@@ -350,7 +359,7 @@ describe('BudgetService background sync', () => {
 
   it('exposes hidden expenses and incomes based on preferences', () => {
     initService();
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+    const monthKey = service.getStartDate();
 
     lunchMoney.budgetSummary$.next([
       createSummary(monthKey, {
@@ -394,7 +403,7 @@ describe('BudgetService background sync', () => {
 
   it('includes group budgets when category-level budgets are absent', () => {
     initService();
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+    const monthKey = service.getStartDate();
 
     lunchMoney.budgetSummary$.next([
       createSummary(monthKey, {
@@ -415,7 +424,7 @@ describe('BudgetService background sync', () => {
 
   it('shows group rows instead of grouped leaf categories when enabled', () => {
     initService();
-    const monthKey = (service as unknown as { monthKey: string }).monthKey;
+    const monthKey = service.getStartDate();
 
     lunchMoney.budgetSummary$.next([
       createSummary(monthKey, {
@@ -488,6 +497,32 @@ describe('BudgetService background sync', () => {
       'Failed to load recurring expenses',
       failure
     );
+  });
+
+  it('navigates to previous months and keeps month progress at 100%', () => {
+    initService();
+    const refreshSpy = spyOn(service, 'refresh').and.callThrough();
+    const initialMonth = service.getStartDate();
+
+    service.goToPreviousMonth();
+
+    expect(service.getStartDate()).toBe(shiftMonthStart(initialMonth, -1));
+    expect(service.getMonthProgressRatio()).toBe(1);
+    expect(service.getCanNavigateToNextMonth()).toBeTrue();
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows moving back to current month but prevents moving into future months', () => {
+    initService();
+    const currentMonth = service.getStartDate();
+
+    service.goToPreviousMonth();
+    service.goToNextMonth();
+    expect(service.getStartDate()).toBe(currentMonth);
+    expect(service.getCanNavigateToNextMonth()).toBeFalse();
+
+    service.goToNextMonth();
+    expect(service.getStartDate()).toBe(currentMonth);
   });
 
   it('refresh reuses budget and recurring loaders', () => {

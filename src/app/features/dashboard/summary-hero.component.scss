@@ -18,11 +18,55 @@
     gap: 16px;
     margin-bottom: 18px;
 
-    h2 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--color-secondary);
+    .month-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      h2 {
+        margin: 0;
+        min-width: 200px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--color-secondary);
+      }
+
+      .month-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: var(--color-secondary);
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: var(--color-secondary-dark);
+        }
+
+        &:focus-visible {
+          outline: 2px solid rgb(251 183 0 / 35%);
+          outline-offset: 2px;
+          border-radius: 6px;
+        }
+
+        mat-icon {
+          width: 28px;
+          height: 28px;
+          font-size: 28px;
+          line-height: 1;
+        }
+      }
+
+      .month-nav-spacer {
+        width: 28px;
+        height: 28px;
+      }
     }
   }
 
@@ -169,8 +213,11 @@
     padding: 24px;
 
     .header {
-      h2 {
-        font-size: 24px;
+      .month-controls {
+        h2 {
+          min-width: 160px;
+          font-size: 24px;
+        }
       }
 
       margin-bottom: 8px;
@@ -198,6 +245,24 @@
         .btn-label {
           display: none;
         }
+      }
+    }
+
+    .month-controls {
+      .month-nav-btn {
+        width: 26px;
+        height: 26px;
+
+        mat-icon {
+          width: 26px;
+          height: 26px;
+          font-size: 26px;
+        }
+      }
+
+      .month-nav-spacer {
+        width: 26px;
+        height: 26px;
       }
     }
 
@@ -250,6 +315,18 @@
 
         &:active {
           background: rgb(251 183 0 / 30%);
+        }
+      }
+    }
+
+    .header {
+      .month-controls {
+        .month-nav-btn {
+          color: var(--color-secondary-light);
+
+          &:hover {
+            color: var(--color-secondary);
+          }
         }
       }
     }

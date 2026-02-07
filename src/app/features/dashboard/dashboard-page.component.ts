@@ -71,6 +71,8 @@ export class DashboardPageComponent {
   protected readonly endDate = this.budgetService.getEndDate;
   protected readonly monthProgressRatio =
     this.budgetService.getMonthProgressRatio;
+  protected readonly canNavigateToNextMonth =
+    this.budgetService.getCanNavigateToNextMonth;
   protected readonly recurringByCategory =
     this.budgetService.getRecurringByCategory;
   protected readonly errors = this.budgetService.getErrors;
@@ -264,6 +266,16 @@ export class DashboardPageComponent {
 
   refresh(): void {
     this.budgetService.refresh();
+  }
+
+  goToPreviousMonth(): void {
+    this.showHidden.set(false);
+    this.budgetService.goToPreviousMonth();
+  }
+
+  goToNextMonth(): void {
+    this.showHidden.set(false);
+    this.budgetService.goToNextMonth();
   }
 
   async logout(): Promise<void> {
