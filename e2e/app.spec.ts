@@ -226,16 +226,21 @@ test.describe('Dashboard', () => {
     expect(focusedElementsCount).toBeGreaterThan(0);
   });
 
-  test('should display customize dialog when requested', async ({ page }) => {
+  test('should display settings dialog when requested', async ({ page }) => {
     await page.goto('/dashboard');
 
-    const customizeButton = page.getByRole('button', { name: /customise/i });
+    const customizeButton = page.getByRole('button', {
+      name: 'Open settings',
+      exact: true,
+    });
     await expect(customizeButton).toBeVisible();
 
     await customizeButton.click();
 
     const dialogHeading = page.getByRole('heading', {
-      name: /customize your dashboard/i,
+      level: 2,
+      name: 'Settings',
+      exact: true,
     });
 
     await expect(dialogHeading).toBeVisible();
