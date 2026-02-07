@@ -92,7 +92,7 @@
         }
       </div>
 
-      <!-- Visible Categories -->
+      <!-- Category Settings -->
       <div class="setting-section">
         <button
           type="button"
@@ -101,7 +101,7 @@
           aria-controls="visible-categories-list"
           (click)="toggleVisibleCategoriesSection()">
           <div class="section-title">
-            <h3>Visible categories ({{ visibleCategories().length }})</h3>
+            <h3>Category settings ({{ visibleCategories().length }})</h3>
             <p>Reorder or hide categories to match what you care about most.</p>
           </div>
           <span class="section-chevron" aria-hidden="true">
@@ -155,6 +155,15 @@
                 </div>
               </div>
             }
+          </div>
+          <div class="section-reset-action">
+            <button
+              mat-stroked-button
+              color="primary"
+              (click)="resetPreferences()">
+              <mat-icon fontIcon="restart_alt"></mat-icon>
+              Reset category defaults
+            </button>
           </div>
         }
       </div>
@@ -250,13 +259,6 @@
 
       <div class="dialog-actions">
         <div class="actions-left">
-          <button
-            mat-stroked-button
-            color="primary"
-            (click)="resetPreferences()">
-            <mat-icon fontIcon="restart_alt"></mat-icon>
-            Reset
-          </button>
           <span class="version">Version {{ version }}</span>
           <a
             class="github-link"
