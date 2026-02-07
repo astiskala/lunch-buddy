@@ -66,11 +66,16 @@ export class BudgetService {
   private readonly diagnostics = inject(DiagnosticsService);
 
   // Month information
-  readonly monthRange = getCurrentMonthRange();
-  protected readonly monthKey = toIsoDate(this.monthRange.start);
-  protected readonly startDate = signal(this.monthKey);
-  protected readonly endDate = signal(toIsoDate(this.monthRange.end));
+  private readonly currentMonthRange = getCurrentMonthRange();
+  private readonly currentMonthStartKey = toIsoDate(
+    this.currentMonthRange.start
+  );
+  protected readonly startDate = signal(this.currentMonthStartKey);
+  protected readonly endDate = signal(toIsoDate(this.currentMonthRange.end));
   protected readonly monthProgressRatio = signal(getMonthProgress());
+  protected readonly canNavigateToNextMonth = computed(
+    () => this.startDate() < this.currentMonthStartKey
+  );
 
   // Data state
   protected readonly budgetData = signal<BudgetProgress[]>([]);
@@ -299,6 +304,14 @@ export class BudgetService {
     this.loadRecurringExpenses();
   }
 
+  goToPreviousMonth(): void {
+    this.shiftDisplayedMonth(-1);
+  }
+
+  goToNextMonth(): void {
+    this.shiftDisplayedMonth(1);
+  }
+
   // Public getters for components
   getExpenses = this.expenses;
   getHiddenExpenses = this.hiddenExpenses;
@@ -314,11 +327,12 @@ export class BudgetService {
   getRecurringByCategory = this.recurringByCategory;
   getLastRefresh = this.lastRefresh;
   getReferenceDate = this.referenceDate;
+  getCanNavigateToNextMonth = this.canNavigateToNextMonth;
 
   private buildBudgetProgressFromSummaries(
     summaries: BudgetSummaryItem[]
   ): Observable<BudgetProgress[]> {
-    const monthKey = this.monthKey;
+    const monthKey = this.startDate();
     const monthProgress = this.monthProgressRatio();
     const includeAll = this.preferences().includeAllTransactions;
     const filterBudgetableItems = (items: BudgetProgress[]): BudgetProgress[] =>
@@ -642,6 +656,68 @@ export class BudgetService {
     return (
       typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
     );
+  }
+
+  private shiftDisplayedMonth(monthDelta: number): void {
+    if (!Number.isInteger(monthDelta) || monthDelta === 0) {
+      return;
+    }
+
+    const currentStart = this.parseMonthStart(this.startDate());
+    if (!currentStart) {
+      return;
+    }
+
+    const targetStart = new Date(
+      currentStart.getFullYear(),
+      currentStart.getMonth() + monthDelta,
+      1
+    );
+    const targetKey = toIsoDate(targetStart);
+
+    if (
+      targetKey > this.currentMonthStartKey ||
+      targetKey === this.startDate()
+    ) {
+      return;
+    }
+
+    const targetRange = getCurrentMonthRange(targetStart);
+    this.startDate.set(targetKey);
+    this.endDate.set(toIsoDate(targetRange.end));
+    this.monthProgressRatio.set(this.resolveMonthProgress(targetStart));
+    this.refresh();
+  }
+
+  private resolveMonthProgress(monthStart: Date): number {
+    if (this.isSameMonth(monthStart, this.currentMonthRange.start)) {
+      return getMonthProgress();
+    }
+    return monthStart.getTime() < this.currentMonthRange.start.getTime()
+      ? 1
+      : 0;
+  }
+
+  private isSameMonth(a: Date, b: Date): boolean {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+  }
+
+  private parseMonthStart(value: string): Date | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) {
+      return null;
+    }
+
+    const year = Number.parseInt(match[1], 10);
+    const month = Number.parseInt(match[2], 10);
+    if (!Number.isFinite(year) || !Number.isFinite(month)) {
+      return null;
+    }
+    if (month < 1 || month > 12) {
+      return null;
+    }
+
+    return new Date(year, month - 1, 1);
   }
 
   private getVisibleItemsByType(

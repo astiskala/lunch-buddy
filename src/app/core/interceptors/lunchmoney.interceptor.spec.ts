@@ -63,10 +63,8 @@ describe('lunchmoneyInterceptor', () => {
     req.flush({});
   });
 
-  it('should not add Authorization header for non-Lunch Money requests', done => {
-    httpClient.get('https://example.com/api/data').subscribe(() => {
-      done();
-    });
+  it('should not add Authorization header for non-Lunch Money requests', () => {
+    httpClient.get('https://example.com/api/data').subscribe();
 
     const req = httpMock.expectOne('https://example.com/api/data');
     expect(req.request.headers.has('Authorization')).toBe(false);

@@ -178,22 +178,179 @@
   animation: spin 1s linear infinite;
 }
 
-.loading-state {
+.skeleton-dashboard {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 16px;
+  gap: 0;
 
-  .spinner {
-    @include spinner;
+  .skeleton-block {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border-radius: 10px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgb(255 255 255 / 50%) 45%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.2s ease-in-out infinite;
+    }
   }
 
-  p {
-    color: var(--color-text-tertiary);
-    font-size: 16px;
-    margin: 0;
+  .skeleton-refresh-text {
+    width: 180px;
+    height: 16px;
+  }
+
+  .skeleton-refresh-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+  }
+
+  .skeleton-hero {
+    background: var(--gradient-primary);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .skeleton-hero-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .skeleton-month {
+    width: 200px;
+    height: 32px;
+    border-radius: 12px;
+  }
+
+  .skeleton-hero-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .skeleton-hero-action {
+    width: 96px;
+    height: 40px;
+    border-radius: 22px;
+  }
+
+  .skeleton-hero-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+
+  .skeleton-hero-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .skeleton-section-title {
+    width: 110px;
+    height: 20px;
+    border-radius: 8px;
+  }
+
+  .skeleton-progress-bar {
+    width: 100%;
+    height: 16px;
+    border-radius: 999px;
+  }
+
+  .skeleton-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .skeleton-metric {
+    width: 100%;
+    height: 42px;
+    border-radius: 8px;
+  }
+
+  .skeleton-segmented {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 4px;
+    border-radius: 999px;
+    margin-top: 32px;
+    border: 1px solid rgb(var(--color-primary-rgb) / 25%);
+    background: rgb(var(--color-primary-rgb) / 8%);
+  }
+
+  .skeleton-segment {
+    height: 44px;
+    border-radius: 999px;
+  }
+
+  .skeleton-filters {
+    display: flex;
+    gap: 10px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .skeleton-filter {
+    width: 140px;
+    height: 36px;
+    border-radius: 20px;
+  }
+
+  .skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .skeleton-list-card {
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .skeleton-list-title {
+    width: 50%;
+    height: 20px;
+    border-radius: 8px;
+  }
+
+  .skeleton-list-bar {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+  }
+
+  .skeleton-list-line {
+    width: 100%;
+    height: 14px;
+    border-radius: 6px;
+
+    &.short {
+      width: 65%;
+    }
   }
 }
 
@@ -338,6 +495,28 @@
     width: 100%;
     justify-content: space-between;
   }
+
+  .skeleton-dashboard {
+    .skeleton-hero {
+      padding: 24px;
+    }
+
+    .skeleton-hero-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .skeleton-month {
+      width: 170px;
+      height: 28px;
+    }
+
+    .skeleton-hero-actions {
+      .skeleton-hero-action {
+        width: 44px;
+      }
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -375,6 +554,20 @@
       &::ng-deep .mat-button-toggle-button:focus-visible {
         outline-color: rgb(var(--color-primary-rgb) / 70%);
       }
+    }
+  }
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-dashboard {
+    .skeleton-block::after {
+      animation: none;
     }
   }
 }

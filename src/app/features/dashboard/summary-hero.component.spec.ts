@@ -116,6 +116,62 @@ describe('SummaryHeroComponent', () => {
     expect(emitted).toBeTrue();
   });
 
+  it('should emit previousMonth event when previous button clicked', () => {
+    let emitted = false;
+    component.previousMonth.subscribe(() => (emitted = true));
+
+    fixture.componentRef.setInput('monthStart', '2025-10-01');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalExpenseSpent', 500);
+    fixture.componentRef.setInput('totalExpenseBudget', 1000);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const button = hostElement.querySelector<HTMLButtonElement>(
+      'button[aria-label="View previous month"]'
+    );
+    expect(button).not.toBeNull();
+    button?.click();
+
+    expect(emitted).toBeTrue();
+  });
+
+  it('should emit nextMonth event when enabled and clicked', () => {
+    let emitted = false;
+    component.nextMonth.subscribe(() => (emitted = true));
+
+    fixture.componentRef.setInput('monthStart', '2025-10-01');
+    fixture.componentRef.setInput('canGoToNextMonth', true);
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalExpenseSpent', 500);
+    fixture.componentRef.setInput('totalExpenseBudget', 1000);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const button = hostElement.querySelector<HTMLButtonElement>(
+      'button[aria-label="View next month"]'
+    );
+    expect(button).not.toBeNull();
+    expect(button?.disabled).toBeFalse();
+    button?.click();
+
+    expect(emitted).toBeTrue();
+  });
+
+  it('should hide next month button when viewing current month', () => {
+    fixture.componentRef.setInput('monthStart', '2025-10-01');
+    fixture.componentRef.setInput('monthProgressRatio', 0.5);
+    fixture.componentRef.setInput('totalExpenseSpent', 500);
+    fixture.componentRef.setInput('totalExpenseBudget', 1000);
+    fixture.detectChanges();
+
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const button = hostElement.querySelector<HTMLButtonElement>(
+      'button[aria-label="View next month"]'
+    );
+    expect(button).toBeNull();
+  });
+
   it('should emit logout event when button clicked', () => {
     let emitted = false;
     component.logout.subscribe(() => (emitted = true));

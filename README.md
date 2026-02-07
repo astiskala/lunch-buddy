@@ -91,10 +91,10 @@ static mock server.
 
 - `npm start` - Development server
 - `npm test` - Unit tests
+- `npm run test:watch` - Unit tests in watch mode
 - `npm run test:e2e` - E2E tests
 - `npm run lint` - Lint and fix
 - `npm run build` - Production build
-- `npm run analyze` - Bundle analysis
 
 ## Contributing
 

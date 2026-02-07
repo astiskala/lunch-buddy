@@ -38,6 +38,7 @@ npm start
 - `npm start` also keeps the generated runtime environment file in sync.
 - If you change environment overrides, use `npm run generate:env` to refresh
   `src/environments/runtime-env.generated.ts`.
+- If port `4200` is already in use, run `npm start -- --port 4201`.
 
 ### Before you open a PR
 
@@ -74,11 +75,10 @@ static mock server.
 
 - `npm start` - Development server with hot reload
 - `npm test` - Run unit tests (headless, with coverage)
-- `npm run test:watch` - Run unit tests in watch mode (with UI)
+- `npm run test:watch` - Run unit tests in watch mode
 - `npm run test:e2e` - Run Playwright E2E tests
 - `npm run lint` - Lint and auto-fix TypeScript + SCSS
 - `npm run build` - Production build
-- `npm run analyze` - Analyze bundle sizes
 
 ## Commit Message Format
 
