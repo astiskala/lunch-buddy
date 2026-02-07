@@ -3,7 +3,6 @@
   "version": "1.17.0",
   "private": true,
   "scripts": {
-    "analyze": "npm run build && source-map-explorer dist/lunch-buddy/browser/**/*.js",
     "build": "ng build",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
@@ -25,8 +24,8 @@
     "release": "semantic-release",
     "start": "ng serve",
     "test:e2e": "playwright test",
-    "test:watch": "ng test",
-    "test": "ng test --browsers=ChromeHeadless --no-watch --code-coverage"
+    "test:watch": "ng test --watch",
+    "test": "ng test --watch=false --coverage"
   },
   "prettier": {
     "tabWidth": 2,
@@ -63,9 +62,9 @@
     "*.{json,md,yml,yaml}": "prettier --write"
   },
   "overrides": {
-    "tar": "7.5.2",
+    "tar": "7.5.7",
     "npm": {
-      "tar": "7.5.2"
+      "tar": "7.5.7"
     }
   },
   "dependencies": {
@@ -92,6 +91,7 @@
     "@angular/build": "^21.1.2",
     "@angular/cli": "^21.1.2",
     "@angular/compiler-cli": "^21.1.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "@axe-core/playwright": "^4.11.0",
     "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^20.4.1",
@@ -106,7 +106,6 @@
     "@semantic-release/github": "^12.0.0",
     "@semantic-release/release-notes-generator": "^14.1.0",
     "@types/jasmine": "^6.0.0",
-    "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "@vercel/node": "^5.5.28",
@@ -117,16 +116,10 @@
     "eslint-plugin-rxjs-x": "^0.8.4",
     "eslint-plugin-unused-imports": "^4.3.0",
     "husky": "^9.1.7",
-    "jasmine-core": "~5.13.0",
-    "karma": "~6.4.4",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.1",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
+    "jsdom": "^28.0.0",
     "lint-staged": "^16.2.6",
     "prettier": "^3.6.2",
     "semantic-release": "^25.0.1",
-    "source-map-explorer": "^2.5.3",
     "stylelint": "^16.25.0",
     "stylelint-config-prettier-scss": "^1.0.0",
     "stylelint-config-standard": "^39.0.1",
@@ -134,7 +127,8 @@
     "stylelint-scss": "^6.14.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.54.0",
-    "vercel": "^50.9.6"
+    "vercel": "^50.9.6",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=22.x"

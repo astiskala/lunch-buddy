@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
-import { skip } from 'rxjs';
+import { firstValueFrom, skip } from 'rxjs';
 import { BackgroundSyncService } from './background-sync.service';
 
 class MockBackgroundSyncService {
@@ -96,12 +96,10 @@ describe('AuthService', () => {
     expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
   });
 
-  it('should emit the current API key to subscribers', done => {
-    service.apiKey$.pipe(skip(1)).subscribe(apiKey => {
-      expect(apiKey).toBe(TEST_API_KEY);
-      done();
-    });
-
+  it('should emit the current API key to subscribers', async () => {
+    const apiKeyPromise = firstValueFrom(service.apiKey$.pipe(skip(1)));
     service.setApiKey(TEST_API_KEY);
+    const apiKey = await apiKeyPromise;
+    expect(apiKey).toBe(TEST_API_KEY);
   });
 });

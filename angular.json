@@ -79,22 +79,20 @@
           "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
+            "buildTarget": "lunch-buddy:build:development",
             "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": ["src/styles.scss"],
-            "stylePreprocessorOptions": {
-              "includePaths": ["src"]
-            },
-            "codeCoverage": true,
-            "karmaConfig": "karma.conf.js"
+            "runner": "vitest",
+            "setupFiles": ["src/test/vitest-jasmine-compat.ts"],
+            "coverageReporters": ["html", "text-summary", "lcovonly", "json"],
+            "coverageExclude": ["public/**"],
+            "coverageThresholds": {
+              "statements": 73,
+              "branches": 57,
+              "functions": 70,
+              "lines": 73
+            }
           }
         },
         "lint": {

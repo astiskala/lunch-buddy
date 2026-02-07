@@ -16,12 +16,13 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 18px;
+    margin-left: -8px;
+    margin-bottom: 10px;
 
     .month-controls {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
 
       h2 {
         margin: 0;
@@ -74,7 +75,7 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
 
     .action-btn {
@@ -215,7 +216,7 @@
     .header {
       .month-controls {
         h2 {
-          min-width: 160px;
+          min-width: 140px;
           font-size: 24px;
         }
       }
@@ -226,17 +227,17 @@
     .action-buttons {
       .action-btn {
         &.mat-mdc-outlined-button {
-          min-width: 44px;
-          width: 44px;
+          min-width: 36px;
+          width: 36px;
           padding: 0;
-          border-radius: 22px;
+          border-radius: 18px;
           justify-content: center;
           gap: 0;
 
           --mdc-filled-button-horizontal-padding: 0;
           --mdc-outlined-button-horizontal-padding: 0;
-          --mdc-filled-button-container-height: 44px;
-          --mdc-outlined-button-container-height: 44px;
+          --mdc-filled-button-container-height: 34px;
+          --mdc-outlined-button-container-height: 36px;
           --mdc-outlined-button-outline-color: rgb(251 183 0 / 65%);
 
           background: rgb(251 183 0 / 16%);
