@@ -43,6 +43,7 @@ export class DiagnosticsService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly versionService = inject(VersionService);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+  private readonly hasStorage = this.canUseLocalStorage();
 
   readonly isEnabled = signal<boolean>(false);
   readonly session = signal<DiagnosticSession | null>(null);
@@ -69,6 +70,10 @@ export class DiagnosticsService {
   }
 
   private loadState() {
+    if (!this.hasStorage) {
+      return;
+    }
+
     const saved = localStorage.getItem('diag_config');
     if (saved) {
       try {
@@ -87,6 +92,10 @@ export class DiagnosticsService {
   }
 
   private saveState() {
+    if (!this.hasStorage) {
+      return;
+    }
+
     const state = {
       isEnabled: this.isEnabled(),
       session: this.session(),
@@ -139,7 +148,9 @@ export class DiagnosticsService {
     this.session.set(null);
     this.eventBuffer = [];
     this.stopFlushTimer();
-    localStorage.removeItem('diag_config');
+    if (this.hasStorage) {
+      localStorage.removeItem('diag_config');
+    }
   }
 
   log(
@@ -206,6 +217,21 @@ export class DiagnosticsService {
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
       this.flushTimer = null;
+    }
+  }
+
+  private canUseLocalStorage(): boolean {
+    if (!this.isBrowser) {
+      return false;
+    }
+
+    try {
+      const testKey = '__diag_storage_test__';
+      localStorage.setItem(testKey, '1');
+      localStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
     }
   }
 }
