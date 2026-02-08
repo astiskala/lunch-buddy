@@ -34,6 +34,9 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
     }
   });
 
+  const paramKeys = Object.keys(params);
+  const requestBodyPresent = req.body !== null && req.body !== undefined;
+
   return next(req).pipe(
     tap({
       next: (event: HttpEvent<unknown>) => {
@@ -50,11 +53,11 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
               duration,
               correlationId,
               request: {
-                params,
-                body: req.body,
+                paramKeys,
+                hasBody: requestBodyPresent,
               },
               response: {
-                body: event.body,
+                hasBody: event.body !== null && event.body !== undefined,
               },
             }
           );
@@ -79,11 +82,11 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
             duration,
             correlationId,
             request: {
-              params,
-              body: req.body,
+              paramKeys,
+              hasBody: requestBodyPresent,
             },
             response: {
-              body: responseBody,
+              hasBody: responseBody !== null && responseBody !== undefined,
             },
           },
           error
