@@ -10,7 +10,7 @@
  *   DIAGNOSTICS_ADMIN_TOKEN and NEXT_PUBLIC_BASE_URL (or default to localhost)
  */
 
-const supportCode = process.argv[2];
+const supportCode = process.argv[2]?.trim().toUpperCase();
 const adminToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 const baseUrl = process.env['VERCEL_URL']
   ? `https://${process.env['VERCEL_URL']}`
@@ -33,7 +33,7 @@ console.log(`Fetching logs for [${supportCode}] from ${baseUrl}...`);
 
 try {
   const resp = await fetchHelper(
-    `${baseUrl}/api/diagnostics/session?supportCode=${supportCode}`,
+    `${baseUrl}/api/diagnostics/session?supportCode=${encodeURIComponent(supportCode)}`,
     {
       headers: {
         'x-admin-token': adminToken,

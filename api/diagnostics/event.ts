@@ -1,10 +1,16 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { redis, getSessionKeys, TTL } from '../_lib/redis';
-import { hashWriteKey, safeCompare } from '../_lib/utils';
+import {
+  hashWriteKey,
+  safeCompare,
+  normalizeSupportCode,
+  isValidSupportCode,
+} from '../_lib/utils';
 
 const MAX_EVENTS_PER_REQ = 50;
 const MAX_EVENT_SIZE = 8192; // 8KB
 const RATE_LIMIT_PER_MIN = 60;
+const IP_RATE_LIMIT_PER_MIN = 120;
 const MAX_STORED_EVENTS = 1000;
 
 interface DiagnosticSessionMeta {
@@ -37,19 +43,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).end(`Method ${methodStr} Not Allowed`);
   }
 
-  const { supportCode, writeKey, events } = req.body as {
-    supportCode: string;
+  const {
+    supportCode: rawSupportCode,
+    writeKey,
+    events,
+  } = req.body as {
+    supportCode?: string;
     writeKey: string;
     events: unknown[];
   };
 
-  if (!supportCode || !writeKey || !Array.isArray(events)) {
+  if (!rawSupportCode || !writeKey || !Array.isArray(events)) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const supportCode = normalizeSupportCode(rawSupportCode);
+  if (!isValidSupportCode(supportCode)) {
+    return res.status(400).json({ error: 'Invalid supportCode format' });
   }
 
   const keys = getSessionKeys(supportCode);
 
   try {
+    // 0. Shared endpoint abuse resistance
+    if (!(await checkIpRateLimit(req, IP_RATE_LIMIT_PER_MIN, 'event'))) {
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
+
     // 1. Validate writeKey
     const [storedHash, meta] = await Promise.all([
       redis.get<string>(keys.writeKeyHash),
@@ -57,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ]);
 
     if (!storedHash || !meta) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const providedHash = await hashWriteKey(writeKey);
@@ -110,4 +129,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Error ingesting events:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
+}
+
+function resolveClientIp(req: VercelRequest): string {
+  const headerValue = req.headers['x-forwarded-for'];
+  if (typeof headerValue === 'string') {
+    const ip = headerValue.split(',')[0]?.trim();
+    if (ip) {
+      return ip;
+    }
+  } else if (Array.isArray(headerValue) && headerValue.length > 0) {
+    const ip = headerValue[0]?.split(',')[0]?.trim();
+    if (ip) {
+      return ip;
+    }
+  }
+
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
+async function checkIpRateLimit(
+  req: VercelRequest,
+  limit: number,
+  action: string
+): Promise<boolean> {
+  const clientIp = resolveClientIp(req);
+  const minuteEpoch = Math.floor(Date.now() / 60000);
+  const rateLimitKey = `diag:ip:${clientIp}:${action}:${String(minuteEpoch)}`;
+
+  const count = await redis.incr(rateLimitKey);
+  if (count === 1) {
+    await redis.expire(rateLimitKey, 60);
+  }
+  return count <= limit;
 }

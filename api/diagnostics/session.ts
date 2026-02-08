@@ -5,7 +5,13 @@ import {
   generateSupportCode,
   generateOpaqueId,
   safeCompare,
+  normalizeSupportCode,
+  isValidSupportCode,
 } from '../_lib/utils';
+
+const CREATE_LIMIT_PER_MIN = 10;
+const GET_LIMIT_PER_MIN = 60;
+const DELETE_LIMIT_PER_MIN = 60;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method;
@@ -25,6 +31,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 async function createSession(req: VercelRequest, res: VercelResponse) {
   try {
+    if (!(await checkIpRateLimit(req, CREATE_LIMIT_PER_MIN, 'create'))) {
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
+
     const supportCode = generateSupportCode();
     const sessionId = generateOpaqueId();
     const writeKey = generateOpaqueId();
@@ -64,12 +74,16 @@ async function createSession(req: VercelRequest, res: VercelResponse) {
 }
 
 async function getSession(req: VercelRequest, res: VercelResponse) {
-  const { supportCode } = req.query;
+  const rawSupportCode = req.query['supportCode'];
   const adminToken = req.headers['x-admin-token'];
   const expectedToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 
-  if (!supportCode || typeof supportCode !== 'string') {
+  if (!rawSupportCode || typeof rawSupportCode !== 'string') {
     return res.status(400).json({ error: 'Missing supportCode' });
+  }
+  const supportCode = normalizeSupportCode(rawSupportCode);
+  if (!isValidSupportCode(supportCode)) {
+    return res.status(400).json({ error: 'Invalid supportCode format' });
   }
 
   if (
@@ -81,6 +95,10 @@ async function getSession(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    if (!(await checkIpRateLimit(req, GET_LIMIT_PER_MIN, 'get'))) {
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
+
     const keys = getSessionKeys(supportCode);
     const [meta, events] = await Promise.all([
       redis.get(keys.meta),
@@ -102,20 +120,28 @@ async function getSession(req: VercelRequest, res: VercelResponse) {
 }
 
 async function deleteSession(req: VercelRequest, res: VercelResponse) {
-  const { supportCode, writeKey } = req.body as {
+  const { supportCode: rawSupportCode, writeKey } = req.body as {
     supportCode: string;
     writeKey?: string;
   };
   const adminToken = req.headers['x-admin-token'];
   const expectedToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 
-  if (!supportCode) {
+  if (!rawSupportCode) {
     return res.status(400).json({ error: 'Missing supportCode' });
+  }
+  const supportCode = normalizeSupportCode(rawSupportCode);
+  if (!isValidSupportCode(supportCode)) {
+    return res.status(400).json({ error: 'Invalid supportCode format' });
   }
 
   const keys = getSessionKeys(supportCode);
 
   try {
+    if (!(await checkIpRateLimit(req, DELETE_LIMIT_PER_MIN, 'delete'))) {
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
+
     // Auth: either admin token or writeKey
     const isAdmin =
       expectedToken &&
@@ -128,7 +154,7 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
       }
       const storedHash = await redis.get<string>(keys.writeKeyHash);
       if (!storedHash) {
-        return res.status(404).json({ error: 'Session not found' });
+        return res.status(401).json({ error: 'Unauthorized' });
       }
       const providedHash = await hashWriteKey(writeKey);
       if (!safeCompare(providedHash, storedHash)) {
@@ -149,4 +175,37 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
     console.error('Error deleting session:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
+}
+
+function resolveClientIp(req: VercelRequest): string {
+  const headerValue = req.headers['x-forwarded-for'];
+  if (typeof headerValue === 'string') {
+    const ip = headerValue.split(',')[0]?.trim();
+    if (ip) {
+      return ip;
+    }
+  } else if (Array.isArray(headerValue) && headerValue.length > 0) {
+    const ip = headerValue[0]?.split(',')[0]?.trim();
+    if (ip) {
+      return ip;
+    }
+  }
+
+  return req.socket.remoteAddress ?? 'unknown';
+}
+
+async function checkIpRateLimit(
+  req: VercelRequest,
+  limit: number,
+  action: string
+): Promise<boolean> {
+  const clientIp = resolveClientIp(req);
+  const minuteEpoch = Math.floor(Date.now() / 60000);
+  const rateLimitKey = `diag:ip:${clientIp}:${action}:${String(minuteEpoch)}`;
+
+  const count = await redis.incr(rateLimitKey);
+  if (count === 1) {
+    await redis.expire(rateLimitKey, 60);
+  }
+  return count <= limit;
 }

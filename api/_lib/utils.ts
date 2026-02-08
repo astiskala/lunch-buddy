@@ -5,6 +5,12 @@ import {
   createHash,
 } from 'node:crypto';
 
+export const SUPPORT_CODE_LENGTH = 10;
+const SUPPORT_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const SUPPORT_CODE_PATTERN = new RegExp(
+  `^[${SUPPORT_CODE_ALPHABET}]{${String(SUPPORT_CODE_LENGTH)}}$`
+);
+
 /**
  * Hash a write key for storage
  */
@@ -29,11 +35,22 @@ export function safeCompare(a: string, b: string): boolean {
  * Generate a random support code (e.g. 8-10 chars)
  */
 export function generateSupportCode(): string {
-  // Use crypto.getRandomValues for cryptographically strong random values
-  const array = new Uint32Array(1);
-  webcrypto.getRandomValues(array);
-  const randomValue = array[0] / (0xffffffff + 1);
-  return randomValue.toString(36).substring(2, 12).toUpperCase();
+  const randomBytes = new Uint8Array(SUPPORT_CODE_LENGTH);
+  webcrypto.getRandomValues(randomBytes);
+
+  let code = '';
+  for (const value of randomBytes) {
+    code += SUPPORT_CODE_ALPHABET[value % SUPPORT_CODE_ALPHABET.length];
+  }
+  return code;
+}
+
+export function normalizeSupportCode(value: string): string {
+  return value.trim().toUpperCase();
+}
+
+export function isValidSupportCode(value: string): boolean {
+  return SUPPORT_CODE_PATTERN.test(value);
 }
 
 /**
