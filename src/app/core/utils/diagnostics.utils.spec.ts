@@ -71,11 +71,13 @@ describe('DiagnosticsUtils', () => {
     it('should redact sensitive keys', () => {
       const input = {
         token: 'secret-token',
+        apiKey: 'secret-key',
         user: { email: 'test@example.com' },
         safe: 'stay',
       };
       const result = redact(input) as Record<string, unknown>;
       expect(result['token']).toBe('[REDACTED]');
+      expect(result['apiKey']).toBe('[REDACTED]');
       const user = result['user'] as Record<string, unknown>;
       expect(user['email']).toBe('[REDACTED]');
       expect(result['safe']).toBe('stay');
@@ -88,21 +90,41 @@ describe('DiagnosticsUtils', () => {
       expect(result[1]?.['safe']).toBe(1);
     });
 
-    it('should redact new financial and personal keys', () => {
+    it('should allow composite keys that are safe for debugging', () => {
       const input = {
+        categoryName: 'Food',
+        budgetAmount: 100,
+        categoryId: 123,
+        monthKey: '2026-02-01',
+      };
+      const result = redact(input) as Record<string, unknown>;
+      expect(result['categoryName']).toBe('Food');
+      expect(result['budgetAmount']).toBe(100);
+      expect(result['categoryId']).toBe(123);
+      expect(result['monthKey']).toBe('2026-02-01');
+    });
+
+    it('should redact payees and exact names', () => {
+      const input = {
+        payee: 'Starbucks',
+        payee_name: 'Starbucks',
         name: 'John Doe',
+        notes: 'Personal note',
+      };
+      const result = redact(input) as Record<string, unknown>;
+      expect(result['payee']).toBe('[REDACTED]');
+      expect(result['payee_name']).toBe('[REDACTED]');
+      expect(result['name']).toBe('[REDACTED]');
+      expect(result['notes']).toBe('[REDACTED]');
+    });
+
+    it('should redact new financial and personal keys appropriately', () => {
+      const input = {
         amount: 100.5,
-        category: 'Food',
-        description: 'Lunch with friends',
-        payee: 'McDonalds',
         safe: 'stay',
       };
       const result = redact(input) as Record<string, unknown>;
-      expect(result['name']).toBe('[REDACTED]');
       expect(result['amount']).toBe('[REDACTED]');
-      expect(result['category']).toBe('[REDACTED]');
-      expect(result['description']).toBe('[REDACTED]');
-      expect(result['payee']).toBe('[REDACTED]');
       expect(result['safe']).toBe('stay');
     });
 

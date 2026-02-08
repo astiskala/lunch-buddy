@@ -55,47 +55,52 @@ export function errorToString(error: unknown): string {
 
 const STRIPPED_KEYS = ['authorization'];
 
-const REDACTED_KEYS = [
-  // Authentication & Infrastructure
+/**
+ * Keys that should be redacted if they are INCLUDED in the key name (case-insensitive).
+ * Use this for high-entropy secrets and raw PII that might appear in various field names.
+ */
+const REDACTED_PATTERNS = [
   'token',
-  'key',
-  'auth',
   'password',
   'secret',
   'cookie',
   'api_key',
+  'apikey',
   'access_token',
   'refresh_token',
   'writekey',
-
-  // Personal Information
   'email',
   'phone',
   'address',
+  'account_number',
+  'routing_number',
+  'iban',
+  'swift',
+  'bic',
+  'payee',
+];
+
+/**
+ * Keys that should be redacted ONLY if they match exactly (case-insensitive).
+ * Use this for common words that are sensitive on their own but safe as part of other keys.
+ * e.g. "name" is redacted, but "categoryName" is allowed.
+ */
+const REDACTED_KEYS = [
+  'key',
+  'auth',
   'first_name',
   'last_name',
   'full_name',
   'username',
   'name',
   'title',
-
-  // Financial Information
   'amount',
-  'balance',
   'budget',
-  'transaction',
-  'payee',
   'category',
   'notes',
   'memo',
   'description',
   'desc',
-  'account_number',
-  'routing_number',
-  'iban',
-  'swift',
-  'bic',
-  'totals',
 ];
 
 /**
@@ -123,7 +128,12 @@ export function redact(obj: unknown, depth = 0): unknown {
         continue;
       }
 
-      if (REDACTED_KEYS.some(k => lowerKey.includes(k))) {
+      const isRedactedPattern = REDACTED_PATTERNS.some(k =>
+        lowerKey.includes(k)
+      );
+      const isRedactedKey = REDACTED_KEYS.includes(lowerKey);
+
+      if (isRedactedPattern || isRedactedKey) {
         redacted[key] = '[REDACTED]';
       } else if (typeof value === 'object' && value !== null) {
         redacted[key] = redact(value, depth + 1);
