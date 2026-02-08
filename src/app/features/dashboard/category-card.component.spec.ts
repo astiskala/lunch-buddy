@@ -150,6 +150,13 @@ describe('CategoryCardComponent', () => {
   let component: CategoryCardComponent;
   let fixture: ComponentFixture<CategoryCardComponent>;
   let mockLunchmoneyService: SpyObj<LunchMoneyService>;
+  const decemberWindowInputs = {
+    startDate: '2025-12-01',
+    endDate: '2025-12-31',
+    monthProgressRatio: 0.5,
+    defaultCurrency: 'USD',
+    referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+  } as const;
 
   const mockItem: BudgetProgress = {
     categoryId: 1,
@@ -170,6 +177,88 @@ describe('CategoryCardComponent', () => {
     recurringItems: [],
     progressRatio: 0.5,
     status: 'on-track',
+  };
+
+  const buildRecurringInstance = (
+    expenseOverrides: Partial<RecurringInstance['expense']> = {},
+    occurrenceDate = new Date('2025-10-05T00:00:00.000Z')
+  ): RecurringInstance => {
+    const occurrenceIsoDate = occurrenceDate.toISOString().slice(0, 10);
+    const type = expenseOverrides.type ?? 'cleared';
+    const status =
+      expenseOverrides.status ??
+      (type === 'cleared' ? 'reviewed' : 'suggested');
+
+    return {
+      expense: {
+        id: 1,
+        start_date: '2024-01-01',
+        end_date: null,
+        cadence: 'monthly',
+        payee: 'Nest Aware',
+        amount: '12.00',
+        to_base: 12,
+        currency: 'USD',
+        description: null,
+        anchor_date: occurrenceIsoDate,
+        next_occurrence: occurrenceIsoDate,
+        category_id: mockItem.categoryId,
+        ...expenseOverrides,
+        type,
+        status,
+      },
+      occurrenceDate,
+    };
+  };
+
+  const expandCard = (): HTMLElement => {
+    const hostElement = fixture.nativeElement as HTMLElement;
+    const card = hostElement.querySelector<HTMLElement>('.category-card');
+    expect(card).not.toBeNull();
+    card?.click();
+    fixture.detectChanges();
+    return hostElement;
+  };
+
+  const expectOnlyTransactionEntries = (hostElement: HTMLElement): void => {
+    expect(hostElement.querySelectorAll('.badge.upcoming').length).toBe(0);
+
+    const activityEntries = component.activityEntries();
+    expect(
+      activityEntries.filter(entry => entry.kind === 'upcoming').length
+    ).toBe(0);
+    expect(
+      activityEntries.filter(entry => entry.kind === 'transaction').length
+    ).toBe(1);
+  };
+
+  const setupChargedRecurringScenario = (options: {
+    transaction: Partial<Transaction>;
+    recurringExpense: Partial<RecurringInstance['expense']>;
+    occurrenceDate?: Date;
+    inputs?: Omit<
+      ComponentInputs,
+      'item' | 'recurringExpenses' | 'includeAllTransactions'
+    >;
+  }): HTMLElement => {
+    const itemWithTransaction: BudgetProgress = {
+      ...mockItem,
+      transactionList: [buildTransaction(options.transaction)],
+    };
+
+    setupComponent(fixture, {
+      item: itemWithTransaction,
+      recurringExpenses: [
+        buildRecurringInstance(
+          options.recurringExpense,
+          options.occurrenceDate ?? new Date('2025-10-05T00:00:00.000Z')
+        ),
+      ],
+      includeAllTransactions: true,
+      ...options.inputs,
+    });
+
+    return expandCard();
   };
 
   beforeEach(async () => {
@@ -258,17 +347,10 @@ describe('CategoryCardComponent', () => {
   });
 
   it('should calculate month progress percent', () => {
-    fixture.componentRef.setInput('item', mockItem);
-    fixture.componentRef.setInput('startDate', '2025-10-01');
-    fixture.componentRef.setInput('endDate', '2025-10-31');
-    fixture.componentRef.setInput('monthProgressRatio', 0.75);
-    fixture.componentRef.setInput('defaultCurrency', 'USD');
-    fixture.componentRef.setInput(
-      'referenceDate',
-      new Date('2025-10-10T00:00:00.000Z')
-    );
-    fixture.componentRef.setInput('recurringExpenses', []);
-    fixture.detectChanges();
+    setupComponent(fixture, {
+      item: mockItem,
+      monthProgressRatio: 0.75,
+    });
 
     expect(component.monthProgressPercent()).toBe(75);
   });
@@ -411,34 +493,28 @@ describe('CategoryCardComponent', () => {
   });
 
   it('includes cleared recurring instances from the current window in upcoming totals', () => {
-    const createInstance = (
-      id: number,
-      type: 'cleared' | 'suggested',
-      amount: string,
-      payee: string
-    ): RecurringInstance => ({
-      expense: {
-        id,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
-        payee,
-        amount,
-        to_base: Number.parseFloat(amount),
-        currency: 'USD',
-        description: null,
-        anchor_date: '2025-10-15',
-        next_occurrence: '2025-10-15',
-        type,
-        status: type === 'cleared' ? 'reviewed' : 'suggested',
-        category_id: mockItem.categoryId,
-      },
-      occurrenceDate: new Date('2025-10-15T00:00:00.000Z'),
-    });
-
+    const occurrenceDate = new Date('2025-10-15T00:00:00.000Z');
     const instances = [
-      createInstance(1, 'suggested', '300', 'Ministry of Manpower'),
-      createInstance(2, 'cleared', '900', 'Nelda Aguinaldo'),
+      buildRecurringInstance(
+        {
+          id: 1,
+          type: 'suggested',
+          amount: '300',
+          to_base: 300,
+          payee: 'Ministry of Manpower',
+        },
+        occurrenceDate
+      ),
+      buildRecurringInstance(
+        {
+          id: 2,
+          type: 'cleared',
+          amount: '900',
+          to_base: 900,
+          payee: 'Nelda Aguinaldo',
+        },
+        occurrenceDate
+      ),
     ];
 
     setupComponent(fixture, {
@@ -456,25 +532,15 @@ describe('CategoryCardComponent', () => {
   });
 
   it('shows past-window recurring instances as due when not yet charged', () => {
-    const pastInstance: RecurringInstance = {
-      expense: {
+    const pastInstance = buildRecurringInstance(
+      {
         id: 9,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Nest Aware',
         amount: '12.00',
         to_base: 12,
-        currency: 'USD',
-        description: null,
-        anchor_date: '2025-10-05',
-        next_occurrence: '2025-10-05',
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
-      occurrenceDate: new Date('2025-10-05T00:00:00.000Z'),
-    };
+      new Date('2025-10-05T00:00:00.000Z')
+    );
 
     setupComponent(fixture, {
       item: mockItem,
@@ -483,10 +549,7 @@ describe('CategoryCardComponent', () => {
       includeAllTransactions: true,
     });
 
-    // Expand details to render activity
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
+    const hostElement = expandCard();
 
     const badgeText =
       hostElement.querySelector<HTMLElement>('.badge.upcoming')?.textContent ??
@@ -502,284 +565,130 @@ describe('CategoryCardComponent', () => {
 
   it('omits recurring entries that already have a matching charged transaction', () => {
     const recurringId = 55;
-    const chargedTxn = buildTransaction({
-      id: 999,
-      amount: '12.00',
-      to_base: 12,
-      recurring_id: recurringId,
-      date: '2025-10-05',
-      payee: 'Nest Aware',
-    });
-
-    const chargedInstance: RecurringInstance = {
-      expense: {
+    const hostElement = setupChargedRecurringScenario({
+      transaction: {
+        id: 999,
+        amount: '12.00',
+        to_base: 12,
+        recurring_id: recurringId,
+        date: '2025-10-05',
+        payee: 'Nest Aware',
+      },
+      recurringExpense: {
         id: recurringId,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Nest Aware',
         amount: '12.00',
         to_base: 12,
-        currency: 'USD',
-        description: null,
-        anchor_date: '2025-10-05',
-        next_occurrence: '2025-10-05',
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
       occurrenceDate: new Date('2025-10-05T00:00:00.000Z'),
-    };
-
-    const itemWithTxn: BudgetProgress = {
-      ...mockItem,
-      transactionList: [chargedTxn],
-    };
-
-    setupComponent(fixture, {
-      item: itemWithTxn,
-      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
-      recurringExpenses: [chargedInstance],
-      includeAllTransactions: true,
+      inputs: {
+        referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+      },
     });
 
-    // Expand details to render activity
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
-
-    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
-    expect(upcomingBadges.length).toBe(0);
-
-    const activityEntries = component.activityEntries();
-    expect(
-      activityEntries.filter(entry => entry.kind === 'upcoming').length
-    ).toBe(0);
-    expect(
-      activityEntries.filter(entry => entry.kind === 'transaction').length
-    ).toBe(1);
+    expectOnlyTransactionEntries(hostElement);
   });
 
   it('omits recurring entries when a matching transaction exists without a recurring id', () => {
-    const chargedTxn = buildTransaction({
-      id: 1000,
-      amount: '15.00',
-      to_base: 15,
-      recurring_id: null,
-      date: '2025-10-06',
-      payee: 'Nest Aware',
-    });
-
-    const chargedInstance: RecurringInstance = {
-      expense: {
+    const hostElement = setupChargedRecurringScenario({
+      transaction: {
+        id: 1000,
+        amount: '15.00',
+        to_base: 15,
+        recurring_id: null,
+        date: '2025-10-06',
+        payee: 'Nest Aware',
+      },
+      recurringExpense: {
         id: 77,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Nest Aware',
         amount: '15.00',
         to_base: 15,
-        currency: 'USD',
-        description: null,
-        anchor_date: '2025-10-06',
-        next_occurrence: '2025-10-06',
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
       occurrenceDate: new Date('2025-10-06T00:00:00.000Z'),
-    };
-
-    const itemWithTxn: BudgetProgress = {
-      ...mockItem,
-      transactionList: [chargedTxn],
-    };
-
-    setupComponent(fixture, {
-      item: itemWithTxn,
-      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
-      recurringExpenses: [chargedInstance],
-      includeAllTransactions: true,
+      inputs: {
+        referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+      },
     });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
-
-    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
-    expect(upcomingBadges.length).toBe(0);
-
-    const activityEntries = component.activityEntries();
-    expect(
-      activityEntries.filter(entry => entry.kind === 'upcoming').length
-    ).toBe(0);
-    expect(
-      activityEntries.filter(entry => entry.kind === 'transaction').length
-    ).toBe(1);
+    expectOnlyTransactionEntries(hostElement);
   });
 
   it('omits recurring entries when transaction recurring_id is a string', () => {
     const recurringId = '1966261';
-    const chargedTxn = buildTransaction({
-      id: 1234,
-      amount: '15.00',
-      to_base: 12.85,
-      recurring_id: recurringId as unknown as number, // simulate stringly value
-      date: '2025-12-05',
-      payee: 'Google',
-    });
-
-    const chargedInstance: RecurringInstance = {
-      expense: {
+    const hostElement = setupChargedRecurringScenario({
+      transaction: {
+        id: 1234,
+        amount: '15.00',
+        to_base: 12.85,
+        recurring_id: recurringId as unknown as number, // simulate stringly value
+        date: '2025-12-05',
+        payee: 'Google',
+      },
+      recurringExpense: {
         id: Number(recurringId),
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Google',
         amount: '11.50',
         to_base: 12.85,
         currency: 'SGD',
         description: 'Nest Aware',
-        anchor_date: '2025-12-05',
-        next_occurrence: '2025-12-05',
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
       occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
-    };
-
-    const itemWithTxn: BudgetProgress = {
-      ...mockItem,
-      transactionList: [chargedTxn],
-    };
-
-    setupComponent(fixture, {
-      item: itemWithTxn,
-      startDate: '2025-12-01',
-      endDate: '2025-12-31',
-      monthProgressRatio: 0.5,
-      defaultCurrency: 'USD',
-      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
-      recurringExpenses: [chargedInstance],
-      includeAllTransactions: true,
+      inputs: decemberWindowInputs,
     });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
-
-    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
-    expect(upcomingBadges.length).toBe(0);
-
-    const activityEntries = component.activityEntries();
-    expect(
-      activityEntries.filter(entry => entry.kind === 'upcoming').length
-    ).toBe(0);
-    expect(
-      activityEntries.filter(entry => entry.kind === 'transaction').length
-    ).toBe(1);
+    expectOnlyTransactionEntries(hostElement);
   });
 
   it('matches transactions to recurring entries when amounts differ due to currency', () => {
-    const chargedTxn = buildTransaction({
-      id: 2001,
-      amount: '15.00',
-      to_base: 12.85,
-      recurring_id: null,
-      date: '2025-12-05',
-      payee: 'Google',
-    });
-
-    const chargedInstance: RecurringInstance = {
-      expense: {
+    const hostElement = setupChargedRecurringScenario({
+      transaction: {
+        id: 2001,
+        amount: '15.00',
+        to_base: 12.85,
+        recurring_id: null,
+        date: '2025-12-05',
+        payee: 'Google',
+      },
+      recurringExpense: {
         id: 9999,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Google',
         amount: '11.50',
         to_base: 11.5,
         currency: 'SGD',
         description: 'Nest Aware',
-        anchor_date: '2025-12-05',
-        next_occurrence: '2025-12-05',
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
       occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
-    };
-
-    const itemWithTxn: BudgetProgress = {
-      ...mockItem,
-      transactionList: [chargedTxn],
-    };
-
-    setupComponent(fixture, {
-      item: itemWithTxn,
-      startDate: '2025-12-01',
-      endDate: '2025-12-31',
-      monthProgressRatio: 0.5,
-      defaultCurrency: 'USD',
-      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
-      recurringExpenses: [chargedInstance],
-      includeAllTransactions: true,
+      inputs: decemberWindowInputs,
     });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
-
-    const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
-    expect(upcomingBadges.length).toBe(0);
-    const activityEntries = component.activityEntries();
-    expect(
-      activityEntries.filter(entry => entry.kind === 'upcoming').length
-    ).toBe(0);
-    expect(
-      activityEntries.filter(entry => entry.kind === 'transaction').length
-    ).toBe(1);
+    expectOnlyTransactionEntries(hostElement);
   });
 
   it('treats found transactions as charged and hides upcoming entry', () => {
-    const chargedInstance: RecurringInstance = {
-      expense: {
+    const chargedInstance = buildRecurringInstance(
+      {
         id: 8888,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Google',
         amount: '11.50',
         to_base: 11.5,
         currency: 'SGD',
         description: 'Nest Aware',
-        anchor_date: '2025-12-05',
-        next_occurrence: '2025-12-05',
         found_transactions: [
           { date: '2025-12-05', transaction_id: 2328343028 },
         ],
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
-      occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
-    };
+      new Date('2025-12-05T00:00:00.000Z')
+    );
 
     setupComponent(fixture, {
       item: mockItem,
-      startDate: '2025-12-01',
-      endDate: '2025-12-31',
-      monthProgressRatio: 0.5,
-      defaultCurrency: 'USD',
-      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+      ...decemberWindowInputs,
       recurringExpenses: [chargedInstance],
       includeAllTransactions: true,
     });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
+    const hostElement = expandCard();
 
     const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
     expect(upcomingBadges.length).toBe(0);
@@ -790,43 +699,29 @@ describe('CategoryCardComponent', () => {
   });
 
   it('renders found transactions as regular activity when no fetched txn exists', () => {
-    const chargedInstance: RecurringInstance = {
-      expense: {
+    const chargedInstance = buildRecurringInstance(
+      {
         id: 4242,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Google',
         amount: '11.50',
         to_base: 11.5,
         currency: 'SGD',
         description: 'Nest Aware',
-        anchor_date: '2025-12-05',
-        next_occurrence: '2025-12-05',
         found_transactions: [
           { date: '2025-12-05', transaction_id: 2328343028 },
         ],
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
-      occurrenceDate: new Date('2025-12-05T00:00:00.000Z'),
-    };
+      new Date('2025-12-05T00:00:00.000Z')
+    );
 
     setupComponent(fixture, {
       item: mockItem,
-      startDate: '2025-12-01',
-      endDate: '2025-12-31',
-      monthProgressRatio: 0.5,
-      defaultCurrency: 'USD',
-      referenceDate: new Date('2025-12-10T00:00:00.000Z'),
+      ...decemberWindowInputs,
       recurringExpenses: [chargedInstance],
       includeAllTransactions: true,
     });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    hostElement.querySelector<HTMLElement>('.category-card')?.click();
-    fixture.detectChanges();
+    const hostElement = expandCard();
 
     const activityEntries = component.activityEntries();
     expect(
@@ -840,25 +735,15 @@ describe('CategoryCardComponent', () => {
   });
 
   it('should retain future cleared instances as upcoming', () => {
-    const futureCleared: RecurringInstance = {
-      expense: {
+    const futureCleared = buildRecurringInstance(
+      {
         id: 5,
-        start_date: '2024-01-01',
-        end_date: null,
-        cadence: 'monthly',
         payee: 'Upcoming Tax',
         amount: '200',
         to_base: 200,
-        currency: 'USD',
-        description: null,
-        anchor_date: '2025-10-25',
-        next_occurrence: '2025-10-25',
-        type: 'cleared',
-        status: 'reviewed',
-        category_id: mockItem.categoryId,
       },
-      occurrenceDate: new Date('2025-10-25T00:00:00.000Z'),
-    };
+      new Date('2025-10-25T00:00:00.000Z')
+    );
 
     setupComponent(fixture, {
       item: mockItem,

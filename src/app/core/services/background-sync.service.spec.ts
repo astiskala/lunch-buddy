@@ -45,6 +45,10 @@ interface RegistrationOverrides {
   };
 }
 
+type BudgetPreferencesPayload = Parameters<
+  BackgroundSyncService['updateBudgetPreferences']
+>[0];
+
 describe('BackgroundSyncService', () => {
   let loggerSpy: SpyObj<LoggerService>;
   let authServiceSpy: SpyObj<AuthService>;
@@ -176,6 +180,46 @@ describe('BackgroundSyncService', () => {
     };
   };
 
+  const baseBudgetPreferences: BudgetPreferencesPayload = {
+    hiddenCategoryIds: [],
+    notificationsEnabled: true,
+    currency: null,
+  };
+
+  const updateBudgetPreferences = (
+    service: BackgroundSyncService,
+    overrides: Partial<BudgetPreferencesPayload> = {}
+  ) =>
+    service.updateBudgetPreferences({
+      ...baseBudgetPreferences,
+      ...overrides,
+    });
+
+  const mockGetRegistration = (
+    privateApi: PrivateApi,
+    fixture: RegistrationFixture
+  ) =>
+    vi
+      .spyOn(privateApi, 'getRegistration')
+      .mockResolvedValue(fixture.registration);
+
+  const expectLatestLogCall = (
+    calls: [string, unknown][],
+    expectedMessage: string,
+    missingMessage: string
+  ) => {
+    expect(calls.length).toBeGreaterThan(0);
+    const latestCall = calls.at(-1);
+    expect(latestCall).toBeDefined();
+    if (!latestCall) {
+      throw new Error(missingMessage);
+    }
+
+    const [message, value] = latestCall;
+    expect(message).toBe(expectedMessage);
+    expect(value).toEqual(expect.any(Error));
+  };
+
   describe('on the server platform', () => {
     let service: BackgroundSyncService;
 
@@ -226,16 +270,10 @@ describe('BackgroundSyncService', () => {
     it('pushes configuration updates and registers periodic sync', async () => {
       const fixture = createRegistration({ periodicSync: {} });
 
-      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
-        fixture.registration
-      );
+      mockGetRegistration(privateApi, fixture);
 
       await privateApi.updateApiCredentials('test-api-key');
-      await service.updateBudgetPreferences({
-        hiddenCategoryIds: [],
-        notificationsEnabled: true,
-        currency: 'USD',
-      });
+      await updateBudgetPreferences(service, { currency: 'USD' });
       const messageCall = fixture.workerPostMessage.mock.calls.at(-1);
       expect(messageCall).toBeDefined();
       if (!messageCall) {
@@ -269,16 +307,10 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
-        fixture.registration
-      );
+      mockGetRegistration(privateApi, fixture);
 
       await privateApi.updateApiCredentials('valid-key');
-      await service.updateBudgetPreferences({
-        hiddenCategoryIds: [],
-        notificationsEnabled: false,
-        currency: null,
-      });
+      await updateBudgetPreferences(service, { notificationsEnabled: false });
 
       const periodic = expectPeriodicSync(fixture);
       expect(periodic.getTags).toHaveBeenCalled();
@@ -294,29 +326,16 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
-        fixture.registration
-      );
+      mockGetRegistration(privateApi, fixture);
 
       await privateApi.updateApiCredentials('api-key');
-      await service.updateBudgetPreferences({
-        hiddenCategoryIds: [],
-        notificationsEnabled: false,
-        currency: null,
-      });
+      await updateBudgetPreferences(service, { notificationsEnabled: false });
 
-      const warnCalls = loggerSpy.warn.mock.calls;
-      expect(warnCalls.length > 0).toBe(true);
-      const latestWarnCall = warnCalls.at(-1);
-      expect(latestWarnCall).toBeDefined();
-      if (!latestWarnCall) {
-        throw new Error('Expected warn logger to be called');
-      }
-      const [warnMessage, warnError] = latestWarnCall;
-      expect(warnMessage).toBe(
-        'BackgroundSyncService: failed to unregister periodic sync'
+      expectLatestLogCall(
+        loggerSpy.warn.mock.calls as [string, unknown][],
+        'BackgroundSyncService: failed to unregister periodic sync',
+        'Expected warn logger to be called'
       );
-      expect(warnError).toEqual(expect.any(Error));
     });
 
     it('falls back to one-off sync when periodic sync is unavailable', async () => {
@@ -327,29 +346,16 @@ describe('BackgroundSyncService', () => {
         sync: {},
       });
 
-      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
-        fixture.registration
-      );
+      mockGetRegistration(privateApi, fixture);
 
       await privateApi.updateApiCredentials('api-key');
-      await service.updateBudgetPreferences({
-        hiddenCategoryIds: [],
-        notificationsEnabled: true,
-        currency: null,
-      });
+      await updateBudgetPreferences(service);
 
-      const warnCalls = loggerSpy.warn.mock.calls;
-      expect(warnCalls.length > 0).toBe(true);
-      const latestWarnCall = warnCalls.at(-1);
-      expect(latestWarnCall).toBeDefined();
-      if (!latestWarnCall) {
-        throw new Error('Expected warn logger to be called');
-      }
-      const [warnMessage, warnError] = latestWarnCall;
-      expect(warnMessage).toBe(
-        'BackgroundSyncService: periodic sync unavailable'
+      expectLatestLogCall(
+        loggerSpy.warn.mock.calls as [string, unknown][],
+        'BackgroundSyncService: periodic sync unavailable',
+        'Expected warn logger to be called'
       );
-      expect(warnError).toEqual(expect.any(Error));
 
       const sync = expectSyncManager(fixture);
       expect(sync.register).toHaveBeenCalledWith(
@@ -367,29 +373,16 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
-        fixture.registration
-      );
+      mockGetRegistration(privateApi, fixture);
 
       await privateApi.updateApiCredentials('api-key');
-      await service.updateBudgetPreferences({
-        hiddenCategoryIds: [],
-        notificationsEnabled: true,
-        currency: null,
-      });
+      await updateBudgetPreferences(service);
 
-      const warnCalls = loggerSpy.warn.mock.calls;
-      expect(warnCalls.length > 0).toBe(true);
-      const latestWarnCall = warnCalls.at(-1);
-      expect(latestWarnCall).toBeDefined();
-      if (!latestWarnCall) {
-        throw new Error('Expected warn logger to be called');
-      }
-      const [warnMessage, warnError] = latestWarnCall;
-      expect(warnMessage).toBe(
-        'BackgroundSyncService: sync registration failed'
+      expectLatestLogCall(
+        loggerSpy.warn.mock.calls as [string, unknown][],
+        'BackgroundSyncService: sync registration failed',
+        'Expected warn logger to be called'
       );
-      expect(warnError).toEqual(expect.any(Error));
     });
 
     it('logs when posting configuration to the worker fails', async () => {
@@ -401,24 +394,15 @@ describe('BackgroundSyncService', () => {
         },
       });
 
-      vi.spyOn(privateApi, 'getRegistration').mockResolvedValue(
-        fixture.registration
-      );
+      mockGetRegistration(privateApi, fixture);
 
       await privateApi.updateApiCredentials('any-key');
 
-      const errorCalls = loggerSpy.error.mock.calls;
-      expect(errorCalls.length > 0).toBe(true);
-      const latestErrorCall = errorCalls.at(-1);
-      expect(latestErrorCall).toBeDefined();
-      if (!latestErrorCall) {
-        throw new Error('Expected error logger to be called');
-      }
-      const [errorMessage, errorValue] = latestErrorCall;
-      expect(errorMessage).toBe(
-        'BackgroundSyncService: failed to post config to service worker'
+      expectLatestLogCall(
+        loggerSpy.error.mock.calls as [string, unknown][],
+        'BackgroundSyncService: failed to post config to service worker',
+        'Expected error logger to be called'
       );
-      expect(errorValue).toEqual(expect.any(Error));
     });
 
     it('waits for service worker readiness when none are registered yet', async () => {

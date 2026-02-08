@@ -30,30 +30,19 @@ describe('StatusBadgeComponent', () => {
     fixture = TestBed.createComponent(StatusBadgeComponent);
   });
 
-  it('renders the label for over budget status', () => {
-    setStatus('over');
-
+  const expectRenderedStatus = (status: StatusType, label: string): void => {
+    setStatus(status);
     const host = fixture.nativeElement as HTMLElement;
     const badge = getRequiredElement(host, '.status-badge');
-    expect(badge.dataset['status']).toBe('over');
-    expect(badge.textContent.trim()).toBe('Over');
-  });
+    expect(badge.dataset['status']).toBe(status);
+    expect(badge.textContent.trim()).toBe(label);
+  };
 
-  it('renders the label for at-risk status', () => {
-    setStatus('at-risk');
-
-    const host = fixture.nativeElement as HTMLElement;
-    const badge = getRequiredElement(host, '.status-badge');
-    expect(badge.dataset['status']).toBe('at-risk');
-    expect(badge.textContent.trim()).toBe('At risk');
-  });
-
-  it('renders the label for on-track status', () => {
-    setStatus('on-track');
-
-    const host = fixture.nativeElement as HTMLElement;
-    const badge = getRequiredElement(host, '.status-badge');
-    expect(badge.dataset['status']).toBe('on-track');
-    expect(badge.textContent.trim()).toBe('On track');
+  it.each([
+    ['over', 'Over'],
+    ['at-risk', 'At risk'],
+    ['on-track', 'On track'],
+  ] as const)('renders the label for %s status', (status, label) => {
+    expectRenderedStatus(status, label);
   });
 });

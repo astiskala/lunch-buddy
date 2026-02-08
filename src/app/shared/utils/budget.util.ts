@@ -26,6 +26,40 @@ export const pickOccurrence = (
   return occurrences.find(item => item.current) ?? occurrences[0];
 };
 
+const resolveCategoryGroupName = (
+  groupId: number | null,
+  groupNameMap: Map<number, string>
+): string | null =>
+  groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+
+const buildSummaryItem = (item: {
+  categoryId: number;
+  categoryName: string;
+  categoryGroupName: string | null;
+  groupId: number | null;
+  isGroup: boolean;
+  isIncome: boolean;
+  excludeFromBudget: boolean;
+  excludeFromTotals: boolean;
+  totals: SummaryCategoryTotals;
+  occurrence?: SummaryCategoryOccurrence;
+  order: number | null;
+  archived: boolean;
+}): BudgetSummaryItem => ({
+  category_id: item.categoryId,
+  category_name: item.categoryName,
+  category_group_name: item.categoryGroupName,
+  group_id: item.groupId,
+  is_group: item.isGroup,
+  is_income: item.isIncome,
+  exclude_from_budget: item.excludeFromBudget,
+  exclude_from_totals: item.excludeFromTotals,
+  totals: item.totals,
+  occurrence: item.occurrence,
+  order: item.order,
+  archived: item.archived,
+});
+
 export const mergeSummaryWithCategories = (
   summary: SummaryResponse | null | undefined,
   categories: LunchMoneyCategory[] | null | undefined
@@ -48,23 +82,22 @@ export const mergeSummaryWithCategories = (
 
     const occurrence = pickOccurrence(entry.occurrences);
     const groupId = metadata?.group_id ?? null;
-    const categoryGroupName =
-      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+    const categoryGroupName = resolveCategoryGroupName(groupId, groupNameMap);
 
-    return {
-      category_id: entry.category_id,
-      category_name: metadata?.name ?? 'Uncategorized',
-      category_group_name: categoryGroupName,
-      group_id: groupId,
-      is_group: metadata?.is_group ?? false,
-      is_income: metadata?.is_income ?? false,
-      exclude_from_budget: metadata?.exclude_from_budget ?? false,
-      exclude_from_totals: metadata?.exclude_from_totals ?? false,
+    return buildSummaryItem({
+      categoryId: entry.category_id,
+      categoryName: metadata?.name ?? 'Uncategorized',
+      categoryGroupName,
+      groupId,
+      isGroup: metadata?.is_group ?? false,
+      isIncome: metadata?.is_income ?? false,
+      excludeFromBudget: metadata?.exclude_from_budget ?? false,
+      excludeFromTotals: metadata?.exclude_from_totals ?? false,
       totals: entry.totals,
       occurrence,
       order: metadata?.order ?? null,
       archived: metadata?.archived ?? false,
-    };
+    });
   });
 
   for (const category of categories ?? []) {
@@ -72,23 +105,23 @@ export const mergeSummaryWithCategories = (
       continue;
     }
     const groupId = category.group_id;
-    const categoryGroupName =
-      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+    const categoryGroupName = resolveCategoryGroupName(groupId, groupNameMap);
 
-    items.push({
-      category_id: category.id,
-      category_name: category.name,
-      category_group_name: categoryGroupName,
-      group_id: groupId,
-      is_group: category.is_group,
-      is_income: category.is_income,
-      exclude_from_budget: category.exclude_from_budget,
-      exclude_from_totals: category.exclude_from_totals,
-      totals: emptyTotals(),
-      occurrence: undefined,
-      order: category.order ?? null,
-      archived: category.archived,
-    });
+    items.push(
+      buildSummaryItem({
+        categoryId: category.id,
+        categoryName: category.name,
+        categoryGroupName,
+        groupId,
+        isGroup: category.is_group,
+        isIncome: category.is_income,
+        excludeFromBudget: category.exclude_from_budget,
+        excludeFromTotals: category.exclude_from_totals,
+        totals: emptyTotals(),
+        order: category.order ?? null,
+        archived: category.archived,
+      })
+    );
   }
 
   return items;

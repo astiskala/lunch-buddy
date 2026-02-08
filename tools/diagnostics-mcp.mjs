@@ -4,8 +4,18 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { execSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const VERCEL_CLI_PATH = require.resolve('vercel/dist/vc.js');
+
+const runVercelCli = (args, options = {}) =>
+  spawnSync(process.execPath, [VERCEL_CLI_PATH, ...args], {
+    shell: false,
+    ...options,
+  });
 
 /**
  * Project-specific MCP Server for Lunch Buddy.
@@ -83,101 +93,92 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+const textResult = text => ({ content: [{ type: 'text', text }] });
+
+const addEnvVar = (key, val) => {
+  try {
+    const { status, stderr, error } = runVercelCli(
+      ['env', 'add', key, 'production', val],
+      { stdio: 'pipe', encoding: 'utf-8' }
+    );
+
+    if (error) {
+      throw error;
+    }
+    if (status !== 0) {
+      throw new Error(stderr || 'Unknown error');
+    }
+
+    return `Added ${key} to production`;
+  } catch {
+    return `Note: Could not add ${key} (it might already exist). Use 'vercel env rm ${key}' first if you need to update it.`;
+  }
+};
+
+const handleSetupDiagnosticsEnv = args => {
+  const upstashUrl = args?.['upstashUrl'];
+  const upstashToken = args?.['upstashToken'];
+  const secret = args?.['secret'] || randomBytes(32).toString('hex');
+
+  const envs = [
+    ['UPSTASH_REDIS_REST_URL', upstashUrl],
+    ['UPSTASH_REDIS_REST_TOKEN', upstashToken],
+    ['DIAGNOSTICS_WRITE_SECRET', secret],
+  ];
+
+  const results = envs.map(([key, val]) => addEnvVar(key, val));
+
+  return textResult(
+    `Diagnostics setup initiated:\n${results.join('\n')}\n\nYour Diagnostic Secret is: ${secret}\nKeep this safe!`
+  );
+};
+
+const handleGenerateDiagnosticsSecret = () => {
+  return textResult(`Generated Secret: ${randomBytes(32).toString('hex')}`);
+};
+
+const handleListVercelEnv = () => {
+  const { status, stdout, stderr, error } = runVercelCli(
+    ['env', 'ls', 'production'],
+    { encoding: 'utf8' }
+  );
+
+  if (error) {
+    throw error;
+  }
+  if (status !== 0) {
+    throw new Error(stderr || 'Unknown error');
+  }
+
+  return textResult(stdout);
+};
+
+const handleTestUpstashConnection = async args => {
+  const url = args?.['upstashUrl'];
+  const token = args?.['upstashToken'];
+  const resp = await globalThis.fetch(`${url}/get/test_connection`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await resp.json();
+  return textResult(`Status: ${resp.status}\nResponse: ${JSON.stringify(data)}`);
+};
+
+const toolHandlers = {
+  setup_diagnostics_env: handleSetupDiagnosticsEnv,
+  generate_diagnostics_secret: handleGenerateDiagnosticsSecret,
+  list_vercel_env: handleListVercelEnv,
+  test_upstash_connection: handleTestUpstashConnection,
+};
+
 server.setRequestHandler(CallToolRequestSchema, async request => {
   const { name, arguments: args } = request.params;
 
   try {
-    switch (name) {
-      case 'setup_diagnostics_env': {
-        const upstashUrl = args?.['upstashUrl'];
-        const upstashToken = args?.['upstashToken'];
-        const secret = args?.['secret'] || randomBytes(32).toString('hex');
-
-        const results = [];
-        const envs = [
-          ['UPSTASH_REDIS_REST_URL', upstashUrl],
-          ['UPSTASH_REDIS_REST_TOKEN', upstashToken],
-          ['DIAGNOSTICS_WRITE_SECRET', secret],
-        ];
-
-        for (const [key, val] of envs) {
-          try {
-            // Use spawnSync with arguments instead of execSync with a string
-            // to prevent shell command injection vulnerabilities.
-            const { status, stderr } = spawnSync(
-              'npx',
-              ['vercel', 'env', 'add', key, 'production', val],
-              { stdio: 'pipe', encoding: 'utf-8' }
-            );
-
-            if (status === 0) {
-              results.push(`Added ${key} to production`);
-            } else {
-              throw new Error(stderr || 'Unknown error');
-            }
-          } catch {
-            results.push(
-              `Note: Could not add ${key} (it might already exist). Use 'vercel env rm ${key}' first if you need to update it.`
-            );
-          }
-        }
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Diagnostics setup initiated:\n${results.join('\n')}\n\nYour Diagnostic Secret is: ${secret}\nKeep this safe!`,
-            },
-          ],
-        };
-      }
-
-      case 'generate_diagnostics_secret': {
-        const secret = randomBytes(32).toString('hex');
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Generated Secret: ${secret}`,
-            },
-          ],
-        };
-      }
-
-      case 'list_vercel_env': {
-        const output = execSync('npx vercel env ls production', {
-          encoding: 'utf8',
-        });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: output,
-            },
-          ],
-        };
-      }
-
-      case 'test_upstash_connection': {
-        const url = args?.['upstashUrl'];
-        const token = args?.['upstashToken'];
-        const resp = await globalThis.fetch(`${url}/get/test_connection`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await resp.json();
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Status: ${resp.status}\nResponse: ${JSON.stringify(data)}`,
-            },
-          ],
-        };
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
+    const handler = toolHandlers[name];
+    if (!handler) {
+      throw new Error(`Unknown tool: ${name}`);
     }
+    return await handler(args);
   } catch (error) {
     return {
       isError: true,

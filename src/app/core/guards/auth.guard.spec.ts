@@ -1,58 +1,27 @@
-import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
-import {
-  Router,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-} from '@angular/router';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 import { authGuard } from './auth.guard';
-import { AuthService } from '../services/auth.service';
+import {
+  type AuthServiceGuardSpy,
+  type GuardTestContext,
+  type RouterGuardSpy,
+  setupGuardTestContext,
+} from '../../../test/guard-spec.helpers';
+import { Router } from '@angular/router';
 
 describe('authGuard', () => {
-  interface AuthServiceStub {
-    hasApiKey: () => boolean;
-    ready: () => Promise<void>;
-  }
-
-  interface RouterStub {
-    parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
-  }
-
-  let authService: SpyObj<AuthServiceStub>;
-  let router: SpyObj<RouterStub>;
+  let guardContext: GuardTestContext;
+  let authService: AuthServiceGuardSpy;
+  let router: RouterGuardSpy;
 
   beforeEach(() => {
-    const authServiceSpy = createSpyObj<AuthServiceStub>('AuthService', [
-      'hasApiKey',
-      'ready',
-    ]);
-    const routerSpy = createSpyObj<RouterStub>('Router', ['parseUrl']);
-
-    TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        { provide: AuthService, useValue: authServiceSpy },
-        { provide: Router, useValue: routerSpy },
-      ],
-    });
-
-    authService = authServiceSpy;
-    router = routerSpy;
-
-    authService.ready.mockResolvedValue();
+    guardContext = setupGuardTestContext();
+    authService = guardContext.authService;
+    router = guardContext.router;
   });
 
   it('should allow activation when user has API key', async () => {
     authService.hasApiKey.mockReturnValue(true);
 
-    const result = await TestBed.runInInjectionContext(
-      () =>
-        authGuard(
-          {} as ActivatedRouteSnapshot,
-          {} as RouterStateSnapshot
-        ) as Promise<boolean>
-    );
+    const result = await guardContext.runGuard<boolean>(authGuard);
 
     expect(result).toBe(true);
     expect(router.parseUrl).not.toHaveBeenCalled();
@@ -63,9 +32,8 @@ describe('authGuard', () => {
     const loginUrl = {} as ReturnType<Router['parseUrl']>;
     router.parseUrl.mockReturnValue(loginUrl);
 
-    const result = await TestBed.runInInjectionContext(() =>
-      authGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-    );
+    const result =
+      await guardContext.runGuard<ReturnType<Router['parseUrl']>>(authGuard);
 
     expect(result).toBe(loginUrl);
     expect(router.parseUrl).toHaveBeenCalledWith('/login');
