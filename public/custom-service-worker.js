@@ -7,7 +7,6 @@ const CONFIG_STORE = 'config';
 const STATE_STORE = 'state';
 const CONFIG_KEY = 'config';
 const STATE_KEY = 'state';
-const FALLBACK_CURRENCY = 'USD';
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 const API_CACHE_NAME = 'lunchbuddy-api-cache-v3';
 const SHELL_CACHE_NAME = 'lunchbuddy-shell-v2';
@@ -867,78 +866,31 @@ function buildSignature(alerts) {
 }
 
 function buildNotificationPayload(alerts, preferredCurrency, monthProgress) {
-  const fallbackCurrency =
-    preferredCurrency ??
-    alerts.find(alert => alert.budgetCurrency)?.budgetCurrency ??
-    FALLBACK_CURRENCY;
-
-  const normalizedProgress = Math.min(Math.max(monthProgress ?? 0, 0), 1);
   const overBudget = alerts.filter(alert => alert.status === 'over');
   const atRisk = alerts.filter(alert => alert.status === 'at-risk');
+  const parts = [];
+
+  if (overBudget.length > 0) {
+    parts.push(
+      `${String(overBudget.length)} ${overBudget.length === 1 ? 'category' : 'categories'} over budget`
+    );
+  }
+  if (atRisk.length > 0) {
+    parts.push(
+      `${String(atRisk.length)} ${atRisk.length === 1 ? 'category' : 'categories'} at risk`
+    );
+  }
+
+  const progressLabel = Math.round(
+    Math.min(Math.max(monthProgress ?? 0, 0), 1) * 100
+  );
+  const summary = parts.join(', ');
+  const fallbackText = 'Budget activity changed';
 
   return {
     title: 'Budget alerts',
-    body: [
-      formatAlertSection('Over budget', overBudget, {
-        kind: 'budget',
-        fallbackCurrency,
-      }),
-      formatAlertSection('At risk', atRisk, {
-        kind: 'expected',
-        fallbackCurrency,
-        progress: normalizedProgress,
-      }),
-    ]
-      .filter(Boolean)
-      .join('\n\n'),
+    body: `${summary || fallbackText} (${String(progressLabel)}% through month). Open Lunch Buddy for details.`,
   };
-}
-
-function formatAlertSection(title, alerts, options) {
-  if (!alerts.length) {
-    return '';
-  }
-
-  const lines = alerts.map(alert => {
-    const spent = formatCurrency(
-      Math.abs(alert.spent),
-      alert.budgetCurrency,
-      options.fallbackCurrency
-    );
-    const budgetAmount = Math.abs(alert.budgetAmount);
-    const budget = formatCurrency(
-      budgetAmount,
-      alert.budgetCurrency,
-      options.fallbackCurrency
-    );
-
-    if (options.kind === 'expected') {
-      const expected = formatCurrency(
-        budgetAmount * (options.progress ?? 0),
-        alert.budgetCurrency,
-        options.fallbackCurrency
-      );
-      return `• ${alert.categoryName}: ${spent} (Expected ${expected})`;
-    }
-
-    return `• ${alert.categoryName}: ${spent} (Budget ${budget})`;
-  });
-
-  return [title, ...lines].join('\n');
-}
-
-function formatCurrency(amount, currency, fallbackCurrency) {
-  const currencyCode = currency || fallbackCurrency || FALLBACK_CURRENCY;
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${currencyCode} ${amount.toFixed(2)}`;
-  }
 }
 
 function getCurrentMonthRange(today) {
@@ -1108,6 +1060,7 @@ globalThis.__LB_SW_API__ = {
   isApiRequest,
   handleAppShellRequest,
   isAppShellRequest,
+  buildNotificationPayload,
   apiCacheName: API_CACHE_NAME,
   shellCacheName: SHELL_CACHE_NAME,
   appShellUrl: APP_SHELL_URL,

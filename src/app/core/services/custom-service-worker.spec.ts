@@ -4,6 +4,11 @@ import { vi } from 'vitest';
 type Handler = (request: Request) => Promise<Response>;
 type ApiRequestMatcher = (url: URL) => boolean;
 type AppShellRequestMatcher = (request: Request, url: URL) => boolean;
+type NotificationPayloadBuilder = (
+  alerts: { status: 'over' | 'at-risk'; categoryName: string }[],
+  preferredCurrency: string | null,
+  monthProgress: number
+) => { title: string; body: string };
 
 const createDeferred = <T>() => {
   let resolveFn: (value: T | PromiseLike<T>) => void = () => {
@@ -50,6 +55,7 @@ describe('custom service worker API handler', () => {
   let offlineUrl: string | undefined;
   let isApiRequest: ApiRequestMatcher | undefined;
   let isAppShellRequest: AppShellRequestMatcher | undefined;
+  let buildNotificationPayload: NotificationPayloadBuilder | undefined;
   let clockInstalled: boolean;
 
   beforeAll(async () => {
@@ -69,6 +75,7 @@ describe('custom service worker API handler', () => {
           handleAppShellRequest: Handler;
           isApiRequest: ApiRequestMatcher;
           isAppShellRequest: AppShellRequestMatcher;
+          buildNotificationPayload: NotificationPayloadBuilder;
           apiCacheName: string;
           shellCacheName: string;
           appShellUrl: string;
@@ -85,6 +92,7 @@ describe('custom service worker API handler', () => {
     offlineUrl = api?.offlineUrl;
     isApiRequest = api?.isApiRequest;
     isAppShellRequest = api?.isAppShellRequest;
+    buildNotificationPayload = api?.buildNotificationPayload;
   });
 
   beforeEach(async () => {
@@ -544,5 +552,28 @@ describe('custom service worker API handler', () => {
 
     const result = await appShellHandler(request);
     expect(await result.text()).toBe('<html>offline-fallback</html>');
+  });
+
+  it('builds privacy-safe notification payload without category names or amounts', () => {
+    if (!buildNotificationPayload) {
+      return;
+    }
+
+    const payload = buildNotificationPayload(
+      [
+        { status: 'over', categoryName: 'Dining Out' },
+        { status: 'at-risk', categoryName: 'Groceries' },
+      ],
+      'USD',
+      0.55
+    );
+
+    expect(payload.title).toBe('Budget alerts');
+    expect(payload.body).toContain('1 category over budget');
+    expect(payload.body).toContain('1 category at risk');
+    expect(payload.body).toContain('55% through month');
+    expect(payload.body).not.toContain('Dining Out');
+    expect(payload.body).not.toContain('Groceries');
+    expect(payload.body).not.toMatch(/\$/);
   });
 });
