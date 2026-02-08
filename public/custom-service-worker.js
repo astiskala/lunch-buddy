@@ -42,18 +42,9 @@ const SHELL_ASSET_EXTENSIONS = new Set([
   '.gif',
 ]);
 // Use a higher timeout to avoid premature aborts on first-run authenticated
-// requests. Resolve timeout dynamically from connection quality (fallback 10s).
+// requests. All connection types now use 30s timeout.
 function getNetworkTimeout() {
-  const connection = globalThis.navigator?.connection;
-  if (connection?.effectiveType) {
-    if (connection.effectiveType.includes('2g')) {
-      return 20000;
-    }
-    if (connection.effectiveType === '3g') {
-      return 15000;
-    }
-  }
-  return 10000;
+  return 30000;
 }
 const CACHE_FALLBACK_DELAY_MS = 500;
 const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
