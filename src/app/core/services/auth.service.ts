@@ -4,8 +4,12 @@ import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { SiteDataService } from './site-data.service';
 import { resolveLunchMoneyApiKey } from '../../../environments/resolve-api-key';
+import { resolveLunchMoneyApiBase } from '../../../environments/resolve-api-base';
 
 const API_KEY_STORAGE_KEY = 'lunchbuddy_api_key';
+const MOCK_API_KEY_PREFIX = 'mock-api-key';
+const MOCK_API_HOST = 'alpha.lunchmoney.dev';
+const LOCAL_API_HOSTS = ['localhost', '127.0.0.1'];
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +18,7 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
   private readonly siteDataService = inject(SiteDataService);
+  private readonly apiBase = resolveLunchMoneyApiBase();
   private readonly apiKey = new BehaviorSubject<string | null>(null);
   private initialized = false;
 
@@ -68,15 +73,25 @@ export class AuthService {
     try {
       const stored = this.readStoredApiKey();
       if (stored) {
-        this.apiKey.next(stored);
-        return;
+        if (this.shouldIgnoreApiKey(stored)) {
+          this.removeApiKey();
+        } else {
+          this.apiKey.next(stored);
+          return;
+        }
       }
 
       const envKey = resolveLunchMoneyApiKey();
       if (envKey) {
-        this.storeApiKey(envKey);
-        this.apiKey.next(envKey);
-        return;
+        if (this.shouldIgnoreApiKey(envKey)) {
+          this.logger.warn(
+            'AuthService: ignoring mock API key because the API base points to a real Lunch Money host'
+          );
+        } else {
+          this.storeApiKey(envKey);
+          this.apiKey.next(envKey);
+          return;
+        }
       }
 
       this.apiKey.next(null);
@@ -84,6 +99,26 @@ export class AuthService {
       this.logger.error('AuthService: failed to load stored API key', error);
       this.apiKey.next(null);
     }
+  }
+
+  private shouldIgnoreApiKey(key: string): boolean {
+    return this.isMockApiKey(key) && !this.isMockApiBase();
+  }
+
+  private isMockApiKey(key: string): boolean {
+    return key.trim().startsWith(MOCK_API_KEY_PREFIX);
+  }
+
+  private isMockApiBase(): boolean {
+    if (this.apiBase.includes(MOCK_API_HOST)) {
+      return true;
+    }
+
+    if (this.apiBase.startsWith('/')) {
+      return true;
+    }
+
+    return LOCAL_API_HOSTS.some(host => this.apiBase.includes(host));
   }
 
   private storeApiKey(value: string): void {

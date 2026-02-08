@@ -29,6 +29,8 @@ describe('AuthService', () => {
     localStorage.clear();
     delete (globalThis as { NG_APP_LUNCHMONEY_API_KEY?: string })
       .NG_APP_LUNCHMONEY_API_KEY;
+    delete (globalThis as { NG_APP_LUNCHMONEY_API_BASE?: string })
+      .NG_APP_LUNCHMONEY_API_BASE;
   });
 
   it('should be created', () => {
@@ -86,6 +88,68 @@ describe('AuthService', () => {
     const newService = TestBed.inject(AuthService);
     await newService.ready();
     expect(newService.getApiKey()).toBe(TEST_API_KEY);
+  });
+
+  it('should ignore mock environment key when using real Lunch Money API base', async () => {
+    (
+      globalThis as { NG_APP_LUNCHMONEY_API_KEY?: string }
+    ).NG_APP_LUNCHMONEY_API_KEY = 'mock-api-key-12345';
+    (
+      globalThis as { NG_APP_LUNCHMONEY_API_BASE?: string }
+    ).NG_APP_LUNCHMONEY_API_BASE = 'https://api.lunchmoney.dev/v2';
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
+      ],
+    });
+
+    const newService = TestBed.inject(AuthService);
+    await newService.ready();
+    expect(newService.getApiKey()).toBeNull();
+  });
+
+  it('should retain mock environment key when using mock API base', async () => {
+    (
+      globalThis as { NG_APP_LUNCHMONEY_API_KEY?: string }
+    ).NG_APP_LUNCHMONEY_API_KEY = 'mock-api-key-12345';
+    (
+      globalThis as { NG_APP_LUNCHMONEY_API_BASE?: string }
+    ).NG_APP_LUNCHMONEY_API_BASE = '/v2';
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
+      ],
+    });
+
+    const newService = TestBed.inject(AuthService);
+    await newService.ready();
+    expect(newService.getApiKey()).toBe('mock-api-key-12345');
+  });
+
+  it('should clear stored mock key when using real Lunch Money API base', async () => {
+    localStorage.setItem('lunchbuddy_api_key', 'mock-api-key-12345');
+    (
+      globalThis as { NG_APP_LUNCHMONEY_API_BASE?: string }
+    ).NG_APP_LUNCHMONEY_API_BASE = 'https://api.lunchmoney.dev/v2';
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: BackgroundSyncService, useClass: MockBackgroundSyncService },
+      ],
+    });
+
+    const newService = TestBed.inject(AuthService);
+    await newService.ready();
+    expect(newService.getApiKey()).toBeNull();
+    expect(localStorage.getItem('lunchbuddy_api_key')).toBeNull();
   });
 
   it('should remove API key from localStorage when cleared', async () => {
