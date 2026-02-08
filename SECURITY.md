@@ -44,7 +44,7 @@ real user data.
 - Keep Angular, RxJS, and tooling aligned with the versions declared in
   `package.json`. Breaking security fixes may require major upgrades—plan
   accordingly.
-- Vercel deployments build under Node.js 22 per the `engines.node` setting;
+- Vercel deployments build under Node.js 24 per the `engines.node` setting;
   match this version locally to avoid mismatch-related vulnerabilities.
 
 ## Secure Development Practices

@@ -2,21 +2,97 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { SummaryHeroComponent } from './summary-hero.component';
 
+interface SummaryHeroInputs {
+  monthStart: string;
+  monthProgressRatio: number;
+  totalExpenseSpent: number;
+  totalExpenseBudget: number;
+  totalExpenseUpcoming: number;
+  totalIncomeSpent: number;
+  totalIncomeBudget: number;
+  totalIncomeUpcoming: number;
+  canGoToNextMonth: boolean;
+}
+
 describe('SummaryHeroComponent', () => {
-  it('should invert sign for income remaining in header', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 0);
-    fixture.componentRef.setInput('totalExpenseBudget', 0);
-    fixture.componentRef.setInput('totalIncomeBudget', 2000);
-    fixture.componentRef.setInput('totalIncomeSpent', 1200);
-    fixture.componentRef.setInput('totalIncomeUpcoming', 300);
-    fixture.detectChanges();
-    // Should invert the sign.
-    expect(component.incomeRemaining()).toBe(-500);
-  });
   let component: SummaryHeroComponent;
   let fixture: ComponentFixture<SummaryHeroComponent>;
+
+  const DEFAULT_INPUTS: SummaryHeroInputs = {
+    monthStart: '2025-10-01',
+    monthProgressRatio: 0.5,
+    totalExpenseSpent: 500,
+    totalExpenseBudget: 1000,
+    totalExpenseUpcoming: 0,
+    totalIncomeSpent: 0,
+    totalIncomeBudget: 0,
+    totalIncomeUpcoming: 0,
+    canGoToNextMonth: false,
+  };
+
+  const render = (overrides: Partial<SummaryHeroInputs> = {}): void => {
+    const nextInputs = { ...DEFAULT_INPUTS, ...overrides };
+
+    fixture.componentRef.setInput('monthStart', nextInputs.monthStart);
+    fixture.componentRef.setInput(
+      'monthProgressRatio',
+      nextInputs.monthProgressRatio
+    );
+    fixture.componentRef.setInput(
+      'totalExpenseSpent',
+      nextInputs.totalExpenseSpent
+    );
+    fixture.componentRef.setInput(
+      'totalExpenseBudget',
+      nextInputs.totalExpenseBudget
+    );
+    fixture.componentRef.setInput(
+      'totalExpenseUpcoming',
+      nextInputs.totalExpenseUpcoming
+    );
+    fixture.componentRef.setInput(
+      'totalIncomeSpent',
+      nextInputs.totalIncomeSpent
+    );
+    fixture.componentRef.setInput(
+      'totalIncomeBudget',
+      nextInputs.totalIncomeBudget
+    );
+    fixture.componentRef.setInput(
+      'totalIncomeUpcoming',
+      nextInputs.totalIncomeUpcoming
+    );
+    fixture.componentRef.setInput(
+      'canGoToNextMonth',
+      nextInputs.canGoToNextMonth
+    );
+
+    fixture.detectChanges();
+  };
+
+  const queryButton = (selector: string): HTMLButtonElement | null => {
+    const hostElement = fixture.nativeElement as HTMLElement;
+    return hostElement.querySelector<HTMLButtonElement>(selector);
+  };
+
+  const expectEventEmitted = (
+    subscribe: (listener: () => void) => void,
+    buttonSelector: string,
+    overrides: Partial<SummaryHeroInputs> = {}
+  ): void => {
+    let emitted = false;
+    subscribe(() => {
+      emitted = true;
+    });
+
+    render(overrides);
+
+    const button = queryButton(buttonSelector);
+    expect(button).not.toBeNull();
+    button?.click();
+
+    expect(emitted).toBe(true);
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -33,124 +109,63 @@ describe('SummaryHeroComponent', () => {
   });
 
   it('should calculate expense spent percent', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
-
+    render();
     expect(component.expenseSpentPercent()).toBe(50);
   });
 
   it('should calculate expense projected percent with upcoming', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.componentRef.setInput('totalExpenseUpcoming', 300);
-    fixture.detectChanges();
-
+    render({ totalExpenseUpcoming: 300 });
     expect(component.expenseProjectedPercent()).toBe(80);
   });
 
   it('should subtract upcoming from expense remaining', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.componentRef.setInput('totalExpenseSpent', 400);
-    fixture.componentRef.setInput('totalExpenseUpcoming', 250);
-    fixture.detectChanges();
-
+    render({ totalExpenseSpent: 400, totalExpenseUpcoming: 250 });
     expect(component.expenseRemaining()).toBe(350);
   });
 
   it('should handle zero budget', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 0);
-    fixture.detectChanges();
-
+    render({ totalExpenseBudget: 0 });
     expect(component.expenseSpentPercent()).toBe(0);
   });
 
-  it('should subtract upcoming from income remaining', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 0);
-    fixture.componentRef.setInput('totalExpenseBudget', 0);
-    fixture.componentRef.setInput('totalIncomeBudget', 2000);
-    fixture.componentRef.setInput('totalIncomeSpent', 1200);
-    fixture.componentRef.setInput('totalIncomeUpcoming', 300);
-    fixture.detectChanges();
+  it('should invert sign for income remaining in header', () => {
+    render({
+      totalExpenseSpent: 0,
+      totalExpenseBudget: 0,
+      totalIncomeBudget: 2000,
+      totalIncomeSpent: 1200,
+      totalIncomeUpcoming: 300,
+    });
 
     expect(component.incomeRemaining()).toBe(-500);
   });
 
   it('should calculate month progress percent', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.75);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
-
+    render({ monthProgressRatio: 0.75 });
     expect(component.monthProgressPercent()).toBe(75);
   });
 
   it('should emit customize event when button clicked', () => {
-    let emitted = false;
-    component.customize.subscribe(() => (emitted = true));
-
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
-
-    const hostElement = fixture.nativeElement as HTMLElement;
-    const button =
-      hostElement.querySelector<HTMLButtonElement>('.customize-btn');
-    expect(button).not.toBeNull();
-    button?.click();
-
-    expect(emitted).toBe(true);
+    expectEventEmitted(listener => {
+      component.customize.subscribe(listener);
+    }, '.customize-btn');
   });
 
   it('should emit previousMonth event when previous button clicked', () => {
-    let emitted = false;
-    component.previousMonth.subscribe(() => (emitted = true));
-
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
-
-    const hostElement = fixture.nativeElement as HTMLElement;
-    const button = hostElement.querySelector<HTMLButtonElement>(
-      'button[aria-label="View previous month"]'
-    );
-    expect(button).not.toBeNull();
-    button?.click();
-
-    expect(emitted).toBe(true);
+    expectEventEmitted(listener => {
+      component.previousMonth.subscribe(listener);
+    }, 'button[aria-label="View previous month"]');
   });
 
   it('should emit nextMonth event when enabled and clicked', () => {
     let emitted = false;
-    component.nextMonth.subscribe(() => (emitted = true));
+    component.nextMonth.subscribe(() => {
+      emitted = true;
+    });
 
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('canGoToNextMonth', true);
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
+    render({ canGoToNextMonth: true });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    const button = hostElement.querySelector<HTMLButtonElement>(
-      'button[aria-label="View next month"]'
-    );
+    const button = queryButton('button[aria-label="View next month"]');
     expect(button).not.toBeNull();
     expect(button?.disabled).toBe(false);
     button?.click();
@@ -159,43 +174,20 @@ describe('SummaryHeroComponent', () => {
   });
 
   it('should hide next month button when viewing current month', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
+    render({ canGoToNextMonth: false });
 
-    const hostElement = fixture.nativeElement as HTMLElement;
-    const button = hostElement.querySelector<HTMLButtonElement>(
-      'button[aria-label="View next month"]'
-    );
+    const button = queryButton('button[aria-label="View next month"]');
     expect(button).toBeNull();
   });
 
   it('should emit logout event when button clicked', () => {
-    let emitted = false;
-    component.logout.subscribe(() => (emitted = true));
-
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
-
-    const hostElement = fixture.nativeElement as HTMLElement;
-    const button = hostElement.querySelector<HTMLButtonElement>('.logout-btn');
-    expect(button).not.toBeNull();
-    button?.click();
-
-    expect(emitted).toBe(true);
+    expectEventEmitted(listener => {
+      component.logout.subscribe(listener);
+    }, '.logout-btn');
   });
 
   it('should display month name', () => {
-    fixture.componentRef.setInput('monthStart', '2025-10-01');
-    fixture.componentRef.setInput('monthProgressRatio', 0.5);
-    fixture.componentRef.setInput('totalExpenseSpent', 500);
-    fixture.componentRef.setInput('totalExpenseBudget', 1000);
-    fixture.detectChanges();
+    render();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h2')?.textContent).toContain('October');

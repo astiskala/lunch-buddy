@@ -2,73 +2,74 @@ import { decodeHtmlEntities } from './text.util';
 
 describe('Text Utils', () => {
   describe('decodeHtmlEntities', () => {
-    it('should return null for null input', () => {
-      expect(decodeHtmlEntities(null)).toBeNull();
-    });
+    const expectDecodings = (pairs: readonly [string, string][]): void => {
+      for (const [input, expected] of pairs) {
+        expect(decodeHtmlEntities(input)).toBe(expected);
+      }
+    };
 
-    it('should return null for undefined input', () => {
+    it('should return null for nullish input', () => {
+      expect(decodeHtmlEntities(null)).toBeNull();
       expect(decodeHtmlEntities(undefined)).toBeNull();
     });
 
-    it('should decode common HTML entities', () => {
-      expect(decodeHtmlEntities('&amp;')).toBe('&');
-      expect(decodeHtmlEntities('&lt;')).toBe('<');
-      expect(decodeHtmlEntities('&gt;')).toBe('>');
-      expect(decodeHtmlEntities('&quot;')).toBe('"');
-      expect(decodeHtmlEntities('&#39;')).toBe("'");
+    it('should decode common named entities', () => {
+      expectDecodings([
+        ['&amp;', '&'],
+        ['&lt;', '<'],
+        ['&gt;', '>'],
+        ['&quot;', '"'],
+        ['&#39;', "'"],
+      ]);
     });
 
-    it('should decode multiple entities in a string', () => {
-      expect(
-        decodeHtmlEntities('&lt;div&gt;Hello &amp; Goodbye&lt;/div&gt;')
-      ).toBe('<div>Hello & Goodbye</div>');
+    it('should decode decimal and hexadecimal numeric entities', () => {
+      expectDecodings([
+        ['&#65;', 'A'],
+        ['&#169;', '©'],
+        ['&#8364;', '€'],
+        ['&#x41;', 'A'],
+        ['&#xA9;', '©'],
+        ['&#x20AC;', '€'],
+      ]);
     });
 
-    it('should decode decimal numeric entities', () => {
-      expect(decodeHtmlEntities('&#65;')).toBe('A');
-      expect(decodeHtmlEntities('&#169;')).toBe('©');
-      expect(decodeHtmlEntities('&#8364;')).toBe('€');
+    it('should decode complex strings with mixed entities', () => {
+      expectDecodings([
+        [
+          '&lt;div&gt;Hello &amp; Goodbye&lt;/div&gt;',
+          '<div>Hello & Goodbye</div>',
+        ],
+        ['Caf&#233; &amp; Restaurant', 'Café & Restaurant'],
+      ]);
     });
 
-    it('should decode hexadecimal numeric entities', () => {
-      expect(decodeHtmlEntities('&#x41;')).toBe('A');
-      expect(decodeHtmlEntities('&#xA9;')).toBe('©');
-      expect(decodeHtmlEntities('&#x20AC;')).toBe('€');
-    });
-
-    it('should handle invalid numeric entities', () => {
-      expect(decodeHtmlEntities('&#invalid;')).toBe('&#invalid;');
-      expect(decodeHtmlEntities('&#xGGG;')).toBe('&#xGGG;');
+    it('should handle invalid and unknown entities', () => {
+      expectDecodings([
+        ['&#invalid;', '&#invalid;'],
+        ['&#xGGG;', '&#xGGG;'],
+        ['&unknown;', '&unknown;'],
+        ['&fake123;', '&fake123;'],
+      ]);
     });
 
     it('should handle invalid code points', () => {
-      // Test a code point that might throw (very large number).
       expect(decodeHtmlEntities('&#999999999;')).toBe('�');
     });
 
-    it('should handle unknown named entities', () => {
-      expect(decodeHtmlEntities('&unknown;')).toBe('&unknown;');
-      expect(decodeHtmlEntities('&fake123;')).toBe('&fake123;');
+    it('should preserve plain text and empty strings', () => {
+      expectDecodings([
+        ['Hello World', 'Hello World'],
+        ['Price: $10 & up', 'Price: $10 & up'],
+        ['', ''],
+      ]);
     });
 
-    it('should preserve non-entity text', () => {
-      expect(decodeHtmlEntities('Hello World')).toBe('Hello World');
-      expect(decodeHtmlEntities('Price: $10 & up')).toBe('Price: $10 & up');
-    });
-
-    it('should handle mixed entities and text', () => {
-      expect(decodeHtmlEntities('Caf&#233; &amp; Restaurant')).toBe(
-        'Café & Restaurant'
-      );
-    });
-
-    it('should handle empty string', () => {
-      expect(decodeHtmlEntities('')).toBe('');
-    });
-
-    it('should handle special characters from code points', () => {
-      expect(decodeHtmlEntities('&#128512;')).toBe('😀'); // Emoji
-      expect(decodeHtmlEntities('&#x1F600;')).toBe('😀'); // Emoji in hex
+    it('should handle Unicode code points', () => {
+      expectDecodings([
+        ['&#128512;', '😀'],
+        ['&#x1F600;', '😀'],
+      ]);
     });
   });
 });
