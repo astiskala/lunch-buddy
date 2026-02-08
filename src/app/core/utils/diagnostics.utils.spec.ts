@@ -56,6 +56,18 @@ describe('DiagnosticsUtils', () => {
   });
 
   describe('redact', () => {
+    it('should strip sensitive keys', () => {
+      const input = {
+        authorization: 'Bearer secret',
+        'X-Authorization': 'Secret',
+        safe: 'stay',
+      };
+      const result = redact(input) as Record<string, unknown>;
+      expect(result['authorization']).toBeUndefined();
+      expect(result['X-Authorization']).toBeUndefined();
+      expect(result['safe']).toBe('stay');
+    });
+
     it('should redact sensitive keys', () => {
       const input = {
         token: 'secret-token',

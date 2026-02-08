@@ -53,12 +53,13 @@ export function errorToString(error: unknown): string {
   return `${normalized.name}: ${normalized.message}${normalized.stack ? '\n' + normalized.stack : ''}`;
 }
 
+const STRIPPED_KEYS = ['authorization'];
+
 const REDACTED_KEYS = [
   // Authentication & Infrastructure
   'token',
   'key',
   'auth',
-  'authorization',
   'password',
   'secret',
   'cookie',
@@ -117,6 +118,10 @@ export function redact(obj: unknown, depth = 0): unknown {
     if (Object.prototype.hasOwnProperty.call(record, key)) {
       const lowerKey = key.toLowerCase();
       const value = record[key];
+
+      if (STRIPPED_KEYS.some(k => lowerKey.includes(k))) {
+        continue;
+      }
 
       if (REDACTED_KEYS.some(k => lowerKey.includes(k))) {
         redacted[key] = '[REDACTED]';

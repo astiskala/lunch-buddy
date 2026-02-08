@@ -131,7 +131,7 @@ export class MyService {
 
 - Use descriptive `area` names (e.g., `push`, `api`, `auth`, `budget`)
 - Include relevant context in `details` but avoid sensitive data
-- The service automatically redacts API keys and tokens
+- The service automatically strips Authorization headers and redacts other sensitive fields (API keys, tokens, etc.)
 - Use appropriate log levels: `info` for normal flow, `warn` for recoverable issues, `error` for failures
 
 ## Data Retention
