@@ -9,10 +9,11 @@ const CONFIG_KEY = 'config';
 const STATE_KEY = 'state';
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 const API_CACHE_NAME = 'lunchbuddy-api-cache-v3';
-const SHELL_CACHE_NAME = 'lunchbuddy-shell-v2';
+const SHELL_CACHE_NAME = 'lunchbuddy-shell-v3';
 const SHELL_CACHE_PREFIX = 'lunchbuddy-shell-';
 const APP_SHELL_URL = '/index.html';
 const OFFLINE_URL = '/offline.html';
+const JAVASCRIPT_MIME_TOKENS = ['javascript', 'ecmascript'];
 const SHELL_CACHEABLE_DESTINATIONS = new Set([
   'document',
   'script',
@@ -142,6 +143,7 @@ globalThis.addEventListener('activate', event => {
       );
       await Promise.all(cachesToDelete.map(name => caches.delete(name)));
       await pruneApiCache();
+      await pruneShellCache();
       await globalThis.clients.claim();
     })()
   );
@@ -178,12 +180,93 @@ function isAppShellRequest(request, url) {
 }
 
 function hasShellAssetExtension(pathname) {
+  return SHELL_ASSET_EXTENSIONS.has(getPathExtension(pathname));
+}
+
+function getPathExtension(pathname) {
   const lastDot = pathname.lastIndexOf('.');
   if (lastDot === -1) {
-    return false;
+    return '';
   }
-  const extension = pathname.slice(lastDot).toLowerCase();
-  return SHELL_ASSET_EXTENSIONS.has(extension);
+  return pathname.slice(lastDot).toLowerCase();
+}
+
+function getRequestUrl(request) {
+  if (typeof request === 'string') {
+    return new URL(request, globalThis.location.origin);
+  }
+  return new URL(request.url, globalThis.location.origin);
+}
+
+function getRequestMode(request) {
+  if (typeof request === 'string') {
+    return '';
+  }
+  return request.mode ?? '';
+}
+
+function getRequestDestination(request) {
+  if (typeof request === 'string') {
+    return '';
+  }
+  return request.destination ?? '';
+}
+
+function isJavaScriptContentType(contentType) {
+  return JAVASCRIPT_MIME_TOKENS.some(token => contentType.includes(token));
+}
+
+function isShellResponseCompatible(request, response) {
+  const contentType =
+    response.headers.get('Content-Type')?.toLowerCase().trim() ?? '';
+  if (!contentType) {
+    return true;
+  }
+
+  const requestUrl = getRequestUrl(request);
+  const extension = getPathExtension(requestUrl.pathname);
+  const mode = getRequestMode(request);
+  const destination = getRequestDestination(request);
+
+  if (destination === 'script' || extension === '.js' || extension === '.mjs') {
+    return isJavaScriptContentType(contentType);
+  }
+
+  if (destination === 'style' || extension === '.css') {
+    return contentType.includes('text/css');
+  }
+
+  if (destination === 'manifest' || extension === '.webmanifest') {
+    return (
+      contentType.includes('manifest+json') ||
+      contentType.includes('application/json')
+    );
+  }
+
+  if (
+    mode === 'navigate' ||
+    destination === 'document' ||
+    extension === '.html'
+  ) {
+    return contentType.includes('text/html');
+  }
+
+  return true;
+}
+
+async function getValidShellCacheResponse(request) {
+  const cache = await caches.open(SHELL_CACHE_NAME);
+  const cachedResponse = await cache.match(request, { ignoreSearch: true });
+  if (!cachedResponse) {
+    return null;
+  }
+
+  if (isShellResponseCompatible(request, cachedResponse)) {
+    return cachedResponse;
+  }
+
+  await cache.delete(request, { ignoreSearch: true });
+  return null;
 }
 
 async function handleNavigationRequest() {
@@ -193,14 +276,12 @@ async function handleNavigationRequest() {
       new Request(APP_SHELL_URL),
       getNetworkTimeout()
     );
-    if (shouldCacheShellResponse(response)) {
+    if (shouldCacheShellResponse(APP_SHELL_URL, response)) {
       await storeShellResponse(APP_SHELL_URL, response.clone());
       return response;
     }
 
-    const cachedIndex = await caches.match(APP_SHELL_URL, {
-      ignoreSearch: true,
-    });
+    const cachedIndex = await getValidShellCacheResponse(APP_SHELL_URL);
     return cachedIndex ?? response;
   } catch (error) {
     console.warn(
@@ -212,16 +293,12 @@ async function handleNavigationRequest() {
 }
 
 async function getNavigationFallback() {
-  const cachedIndex = await caches.match(APP_SHELL_URL, {
-    ignoreSearch: true,
-  });
+  const cachedIndex = await getValidShellCacheResponse(APP_SHELL_URL);
   if (cachedIndex) {
     return cachedIndex;
   }
 
-  const offlineResponse = await caches.match(OFFLINE_URL, {
-    ignoreSearch: true,
-  });
+  const offlineResponse = await getValidShellCacheResponse(OFFLINE_URL);
   if (offlineResponse) {
     return offlineResponse;
   }
@@ -237,15 +314,21 @@ async function handleAppShellRequest(request) {
     return handleNavigationRequest();
   }
 
-  const cachedResponse = await caches.match(request, { ignoreSearch: true });
+  const cachedResponse = await getValidShellCacheResponse(request);
   if (cachedResponse) {
     return cachedResponse;
   }
 
   try {
     const response = await fetch(request);
-    if (shouldCacheShellResponse(response)) {
+    if (shouldCacheShellResponse(request, response)) {
       await storeShellResponse(request, response.clone());
+    } else if (response?.ok && !isShellResponseCompatible(request, response)) {
+      console.warn(
+        '[WARN] custom-service-worker: skipping shell cache due to incompatible MIME type',
+        request.url,
+        response.headers.get('Content-Type')
+      );
     }
     return response;
   } catch (error) {
@@ -253,7 +336,7 @@ async function handleAppShellRequest(request) {
       '[WARN] custom-service-worker: asset fetch failed, attempting shell cache fallback',
       error
     );
-    const fallback = await caches.match(request, { ignoreSearch: true });
+    const fallback = await getValidShellCacheResponse(request);
     if (fallback) {
       return fallback;
     }
@@ -264,8 +347,8 @@ async function handleAppShellRequest(request) {
   }
 }
 
-function shouldCacheShellResponse(response) {
-  return !!response?.ok;
+function shouldCacheShellResponse(request, response) {
+  return !!response?.ok && isShellResponseCompatible(request, response);
 }
 
 async function storeShellResponse(request, response) {
@@ -287,6 +370,29 @@ async function warmShellCache() {
   } catch (error) {
     console.warn(
       '[WARN] custom-service-worker: failed to warm shell cache',
+      error
+    );
+  }
+}
+
+async function pruneShellCache() {
+  try {
+    const cache = await caches.open(SHELL_CACHE_NAME);
+    const requests = await cache.keys();
+
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (!response) {
+        continue;
+      }
+
+      if (!isShellResponseCompatible(request, response)) {
+        await cache.delete(request);
+      }
+    }
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: shell cache pruning failed',
       error
     );
   }

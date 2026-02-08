@@ -554,6 +554,63 @@ describe('custom service worker API handler', () => {
     expect(await result.text()).toBe('<html>offline-fallback</html>');
   });
 
+  it('replaces poisoned script cache entries with network JavaScript responses', async () => {
+    if (typeof caches === 'undefined' || !appShellHandler || !shellCacheName) {
+      return;
+    }
+
+    const request = new Request(`${globalThis.location.origin}/main-TEST.js`);
+    const cache = await caches.open(shellCacheName);
+    await cache.put(
+      request,
+      new Response('<html>poisoned</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      })
+    );
+
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(
+        new Response('console.log("healthy");', {
+          status: 200,
+          headers: { 'Content-Type': 'application/javascript' },
+        })
+      );
+
+    const result = await appShellHandler(request);
+    expect(await result.text()).toContain('console.log("healthy")');
+
+    const cached = await cache.match(request);
+    expect(cached).toBeTruthy();
+    expect(cached?.headers.get('Content-Type')).toContain(
+      'application/javascript'
+    );
+  });
+
+  it('does not cache incompatible HTML responses for script requests', async () => {
+    if (typeof caches === 'undefined' || !appShellHandler || !shellCacheName) {
+      return;
+    }
+
+    const request = new Request(`${globalThis.location.origin}/main-BAD.js`);
+    const cache = await caches.open(shellCacheName);
+
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(
+        new Response('<html>wrong-mime</html>', {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' },
+        })
+      );
+
+    const result = await appShellHandler(request);
+    expect(result.status).toBe(200);
+    expect(await result.text()).toBe('<html>wrong-mime</html>');
+
+    const cached = await cache.match(request);
+    expect(cached).toBeFalsy();
+  });
+
   it('builds privacy-safe notification payload without category names or amounts', () => {
     if (!buildNotificationPayload) {
       return;
