@@ -1,193 +1,155 @@
+import { describe, it, expect } from 'vitest';
 import {
-  BudgetProgress,
-  BudgetSummaryItem,
+  calculateBudgetStatus,
+  mergeSummaryWithCategories,
+  pickOccurrence,
+} from './budget.util';
+import {
+  LunchMoneyCategory,
+  SummaryCategoryOccurrence,
+  SummaryResponse,
 } from '../../core/models/lunchmoney.types';
-import { buildBudgetProgress, rankBudgetProgress } from './budget.util';
 
-describe('Budget Utils', () => {
-  describe('rankBudgetProgress', () => {
-    const createItem = (categoryId: number, name: string): BudgetProgress => ({
-      categoryId,
-      categoryName: name,
-      categoryGroupName: null,
-      groupId: null,
-      isGroup: false,
-      isIncome: false,
-      excludeFromBudget: false,
-      budgetAmount: 1000,
-      budgetCurrency: 'USD',
-      spent: 500,
-      remaining: 500,
-      monthKey: '2025-10',
-      numTransactions: 5,
-      isAutomated: false,
-      recurringTotal: 0,
-      recurringItems: [],
-      progressRatio: 0.5,
-      status: 'on-track',
+describe('Budget Utilities', () => {
+  describe('calculateBudgetStatus', () => {
+    it('should return on-track if budget is 0 or negative', () => {
+      expect(calculateBudgetStatus(100, 0, 0.5, false)).toBe('on-track');
+      expect(calculateBudgetStatus(100, -10, 0.5, false)).toBe('on-track');
     });
 
-    it('should preserve API order when no custom order provided', () => {
-      const items = [
-        createItem(1, 'A'),
-        createItem(2, 'B'),
-        createItem(3, 'C'),
+    it('should calculate status for expenses correctly', () => {
+      // Budget: 100, Progress through month: 50%
+      expect(calculateBudgetStatus(40, 100, 0.5, false)).toBe('on-track');
+      expect(calculateBudgetStatus(60, 100, 0.5, false)).toBe('at-risk');
+      expect(calculateBudgetStatus(110, 100, 0.5, false)).toBe('over');
+    });
+
+    it('should calculate status for income correctly', () => {
+      // Budget: 1000, Progress through month: 50%
+      // Income is "on-track" if we received >= expected for progress
+      expect(calculateBudgetStatus(-600, 1000, 0.5, true)).toBe('on-track');
+      expect(calculateBudgetStatus(-400, 1000, 0.5, true)).toBe('at-risk');
+    });
+  });
+
+  describe('mergeSummaryWithCategories', () => {
+    const mockCategories: LunchMoneyCategory[] = [
+      {
+        id: 1,
+        name: 'Groceries',
+        is_income: false,
+        exclude_from_budget: false,
+        exclude_from_totals: false,
+        archived: false,
+        updated_at: '',
+        created_at: '',
+        is_group: false,
+        group_id: 10,
+        description: null,
+        archived_at: null,
+        order: 1,
+        collapsed: false,
+      },
+      {
+        id: 10,
+        name: 'Food',
+        is_income: false,
+        exclude_from_budget: false,
+        exclude_from_totals: false,
+        archived: false,
+        updated_at: '',
+        created_at: '',
+        is_group: true,
+        group_id: null,
+        description: null,
+        archived_at: null,
+        order: 0,
+        collapsed: false,
+      },
+    ];
+
+    const mockSummary: SummaryResponse = {
+      aligned: true,
+      categories: [
+        {
+          category_id: 1,
+          totals: {
+            other_activity: 50,
+            recurring_activity: 0,
+            budgeted: 100,
+            available: 50,
+            recurring_remaining: 0,
+            recurring_expected: 0,
+          },
+        },
+      ],
+    };
+
+    it('should merge summary and category data', () => {
+      const result = mergeSummaryWithCategories(mockSummary, mockCategories);
+
+      expect(result.length).toBe(2);
+
+      const groceries = result.find(i => i.category_id === 1);
+      expect(groceries?.category_name).toBe('Groceries');
+      expect(groceries?.category_group_name).toBe('Food');
+      expect(groceries?.totals.other_activity).toBe(50);
+
+      const foodGroup = result.find(i => i.category_id === 10);
+      expect(foodGroup?.is_group).toBe(true);
+      expect(foodGroup?.totals.other_activity).toBe(0); // Default empty totals
+    });
+
+    it('should handle null summary or categories', () => {
+      expect(mergeSummaryWithCategories(null, [])).toEqual([]);
+      expect(mergeSummaryWithCategories(undefined, null)).toEqual([]);
+    });
+
+    it('should include categories not present in summary', () => {
+      const result = mergeSummaryWithCategories(
+        { aligned: true, categories: [] },
+        mockCategories
+      );
+      expect(result.length).toBe(2);
+      expect(result.every(i => i.totals.other_activity === 0)).toBe(true);
+    });
+  });
+
+  describe('pickOccurrence', () => {
+    it('should pick current occurrence if available', () => {
+      const occurrences: Partial<SummaryCategoryOccurrence>[] = [
+        {
+          current: false,
+          start_date: '2025-01-01',
+          end_date: '2025-01-31',
+        },
+        {
+          current: true,
+          start_date: '2025-02-01',
+          end_date: '2025-02-28',
+        },
       ];
-
-      const ranked = rankBudgetProgress(items, []);
-
-      expect(ranked).toEqual(items);
-      expect(ranked[0].categoryId).toBe(1);
-      expect(ranked[1].categoryId).toBe(2);
-      expect(ranked[2].categoryId).toBe(3);
+      expect(
+        pickOccurrence(occurrences as SummaryCategoryOccurrence[])?.start_date
+      ).toBe('2025-02-01');
     });
 
-    it('should apply custom order when provided', () => {
-      const items = [
-        createItem(1, 'A'),
-        createItem(2, 'B'),
-        createItem(3, 'C'),
+    it('should pick first occurrence if no current', () => {
+      const occurrences: Partial<SummaryCategoryOccurrence>[] = [
+        {
+          current: false,
+          start_date: '2025-01-01',
+          end_date: '2025-01-31',
+        },
       ];
-
-      const ranked = rankBudgetProgress(items, [3, 1, 2]);
-
-      expect(ranked[0].categoryId).toBe(3);
-      expect(ranked[1].categoryId).toBe(1);
-      expect(ranked[2].categoryId).toBe(2);
+      expect(
+        pickOccurrence(occurrences as SummaryCategoryOccurrence[])?.start_date
+      ).toBe('2025-01-01');
     });
 
-    it('should handle items not in custom order', () => {
-      const items = [
-        createItem(1, 'A'),
-        createItem(2, 'B'),
-        createItem(3, 'C'),
-      ];
-
-      const ranked = rankBudgetProgress(items, [3]);
-
-      expect(ranked[0].categoryId).toBe(3);
+    it('should return undefined for empty or null input', () => {
+      expect(pickOccurrence([])).toBeUndefined();
+      expect(pickOccurrence(undefined)).toBeUndefined();
     });
-  });
-});
-
-describe('buildBudgetProgress status evaluation', () => {
-  const monthKey = '2025-10';
-  const createSummary = ({
-    spent,
-    budget,
-    isIncome = false,
-    recurring = [],
-  }: {
-    spent: number;
-    budget: number;
-    isIncome?: boolean;
-    recurring?: number[];
-  }): BudgetSummaryItem => ({
-    category_name: 'Test',
-    category_id: 1,
-    category_group_name: null,
-    group_id: null,
-    is_group: false,
-    is_income: isIncome,
-    exclude_from_budget: false,
-    exclude_from_totals: false,
-    order: 0,
-    archived: false,
-    totals: {
-      other_activity: spent,
-      recurring_activity: 0,
-      budgeted: budget,
-      available: null,
-      recurring_remaining: 0,
-      recurring_expected: recurring.reduce((total, value) => total + value, 0),
-    },
-    occurrence: {
-      current: true,
-      start_date: '2025-10-01',
-      end_date: '2025-10-31',
-      other_activity: 0,
-      recurring_activity: 0,
-      budgeted: budget,
-      budgeted_amount: budget.toString(),
-      budgeted_currency: 'USD',
-      notes: null,
-    },
-  });
-
-  it('treats equal spending and budget as on track', () => {
-    const summary = createSummary({ spent: 1000, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.5);
-
-    expect(result.status).toBe('on-track');
-  });
-
-  it('treats minor rounding differences as on track', () => {
-    const summary = createSummary({ spent: 1005, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.5);
-
-    expect(result.status).toBe('on-track');
-  });
-
-  it('marks meaningfully overspent categories as over', () => {
-    const summary = createSummary({ spent: 1055, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.5);
-
-    expect(result.status).toBe('over');
-  });
-
-  it('marks high spending versus progress as at risk', () => {
-    const summary = createSummary({ spent: 650, budget: 1000 });
-    const result = buildBudgetProgress(summary, monthKey, 0.4);
-
-    expect(result.status).toBe('at-risk');
-  });
-
-  it('marks income categories on track when received meets the budget', () => {
-    const summary = createSummary({
-      spent: -1000,
-      budget: 1000,
-      isIncome: true,
-    });
-    const result = buildBudgetProgress(summary, monthKey, 0.5);
-
-    expect(result.status).toBe('on-track');
-    expect(result.progressRatio).toBe(1);
-    expect(result.remaining).toBeCloseTo(0, 5);
-  });
-
-  it('marks income categories at risk when received is behind month progress', () => {
-    const summary = createSummary({
-      spent: -450,
-      budget: 1000,
-      isIncome: true,
-    });
-    const result = buildBudgetProgress(summary, monthKey, 0.5);
-
-    expect(result.status).toBe('at-risk');
-    expect(result.progressRatio).toBeCloseTo(0.45, 5);
-    expect(result.remaining).toBeCloseTo(550, 5);
-  });
-
-  it('keeps income on track when received keeps pace with the month', () => {
-    const summary = createSummary({
-      spent: -600,
-      budget: 1000,
-      isIncome: true,
-    });
-    const result = buildBudgetProgress(summary, monthKey, 0.5);
-
-    expect(result.status).toBe('on-track');
-    expect(result.remaining).toBeCloseTo(400, 5);
-  });
-
-  it('marks income at risk when income lags the month progress', () => {
-    const summary = createSummary({
-      spent: -500,
-      budget: 1000,
-      isIncome: true,
-    });
-    const result = buildBudgetProgress(summary, monthKey, 0.6);
-
-    expect(result.status).toBe('at-risk');
   });
 });

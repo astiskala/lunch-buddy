@@ -8,12 +8,10 @@ import {
   TransactionsResponse,
   RecurringExpense,
   RecurringItemResponse,
-  SummaryCategory,
-  SummaryCategoryOccurrence,
-  SummaryCategoryTotals,
   SummaryResponse,
 } from '../models/lunchmoney.types';
 import { environment } from '../../../environments/environment';
+import { mergeSummaryWithCategories } from '../../shared/utils/budget.util';
 
 const normalizeBaseUrl = (baseUrl: string): string => {
   let url = baseUrl;
@@ -89,7 +87,7 @@ export class LunchMoneyService {
 
     return forkJoin({ summary: summary$, categories: categories$ }).pipe(
       map(({ summary, categories }) =>
-        this.mergeSummaryWithCategories(summary, categories)
+        mergeSummaryWithCategories(summary, categories)
       )
     );
   }
@@ -164,92 +162,6 @@ export class LunchMoneyService {
           return response;
         })
       );
-  }
-
-  private mergeSummaryWithCategories(
-    summary: SummaryResponse,
-    categories: LunchMoneyCategory[]
-  ): BudgetSummaryItem[] {
-    const categoryMap = new Map<number, LunchMoneyCategory>();
-    const groupNameMap = new Map<number, string>();
-
-    for (const category of categories) {
-      categoryMap.set(category.id, category);
-      if (category.is_group) {
-        groupNameMap.set(category.id, category.name);
-      }
-    }
-
-    const seen = new Set<number>();
-    const items: BudgetSummaryItem[] = summary.categories.map(category => {
-      const metadata = categoryMap.get(category.category_id);
-      seen.add(category.category_id);
-      return this.toBudgetSummaryItem(category, metadata, groupNameMap);
-    });
-
-    for (const category of categories) {
-      if (seen.has(category.id)) {
-        continue;
-      }
-      items.push(
-        this.toBudgetSummaryItem(
-          {
-            category_id: category.id,
-            totals: this.emptyTotals(),
-          },
-          category,
-          groupNameMap
-        )
-      );
-    }
-
-    return items;
-  }
-
-  private toBudgetSummaryItem(
-    summary: SummaryCategory,
-    metadata: LunchMoneyCategory | undefined,
-    groupNameMap: Map<number, string>
-  ): BudgetSummaryItem {
-    const occurrence = this.pickOccurrence(summary.occurrences);
-    const groupId = metadata?.group_id ?? null;
-    const categoryGroupName =
-      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
-
-    return {
-      category_id: summary.category_id,
-      category_name: metadata?.name ?? 'Uncategorized',
-      category_group_name: categoryGroupName,
-      group_id: groupId,
-      is_group: metadata?.is_group ?? false,
-      is_income: metadata?.is_income ?? false,
-      exclude_from_budget: metadata?.exclude_from_budget ?? false,
-      exclude_from_totals: metadata?.exclude_from_totals ?? false,
-      totals: summary.totals,
-      occurrence,
-      order: metadata?.order ?? null,
-      archived: metadata?.archived ?? false,
-    };
-  }
-
-  private pickOccurrence(
-    occurrences?: SummaryCategoryOccurrence[]
-  ): SummaryCategoryOccurrence | undefined {
-    if (!occurrences || occurrences.length === 0) {
-      return undefined;
-    }
-    return occurrences.find(item => item.current) ?? occurrences[0];
-  }
-
-  private emptyTotals(): SummaryCategoryTotals {
-    return {
-      other_activity: 0,
-      recurring_activity: 0,
-      budgeted: null,
-      available: null,
-      recurring_remaining: 0,
-      recurring_expected: 0,
-    };
   }
 
   private toRecurringExpense(item: RecurringItemResponse): RecurringExpense {

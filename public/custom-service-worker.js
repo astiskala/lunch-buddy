@@ -691,42 +691,56 @@ function mergeSummaryWithCategories(summaryResponse, categories) {
     }
   }
 
-  const items = [];
+  const seen = new Set();
   const summaries = summaryResponse?.categories ?? [];
-  for (const entry of summaries) {
+  const items = summaries.map(entry => {
     const metadata = categoryMap.get(entry.category_id);
+    if (entry.category_id !== null) {
+      seen.add(entry.category_id);
+    }
+
+    const occurrence = pickOccurrence(entry.occurrences);
     const groupId = metadata?.group_id ?? null;
-    items.push({
-      category_id: entry.category_id ?? null,
+    const categoryGroupName =
+      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+
+    return {
+      category_id: entry.category_id,
       category_name: metadata?.name ?? 'Uncategorized',
-      category_group_name:
-        groupId === null ? null : (groupNameMap.get(groupId) ?? null),
+      category_group_name: categoryGroupName,
       group_id: groupId,
       is_group: metadata?.is_group ?? false,
       is_income: metadata?.is_income ?? false,
       exclude_from_budget: metadata?.exclude_from_budget ?? false,
+      exclude_from_totals: metadata?.exclude_from_totals ?? false,
       totals: entry.totals ?? emptyTotals(),
-      occurrence: pickOccurrence(entry.occurrences),
-    });
-  }
+      occurrence,
+      order: metadata?.order ?? null,
+      archived: metadata?.archived ?? false,
+    };
+  });
 
   for (const category of categories ?? []) {
-    if (items.some(item => item.category_id === category.id)) {
+    if (seen.has(category.id)) {
       continue;
     }
+    const groupId = category.group_id;
+    const categoryGroupName =
+      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+
     items.push({
       category_id: category.id,
       category_name: category.name,
-      category_group_name:
-        category.group_id === null
-          ? null
-          : (groupNameMap.get(category.group_id) ?? null),
-      group_id: category.group_id,
+      category_group_name: categoryGroupName,
+      group_id: groupId,
       is_group: category.is_group,
       is_income: category.is_income,
       exclude_from_budget: category.exclude_from_budget,
+      exclude_from_totals: category.exclude_from_totals,
       totals: emptyTotals(),
       occurrence: undefined,
+      order: category.order ?? null,
+      archived: category.archived,
     });
   }
 

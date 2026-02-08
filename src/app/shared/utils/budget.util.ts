@@ -1,8 +1,98 @@
 import {
   BudgetProgress,
   BudgetSummaryItem,
+  LunchMoneyCategory,
+  SummaryCategoryOccurrence,
+  SummaryCategoryTotals,
+  SummaryResponse,
 } from '../../core/models/lunchmoney.types';
 import { decodeHtmlEntities } from './text.util';
+
+export const emptyTotals = (): SummaryCategoryTotals => ({
+  other_activity: 0,
+  recurring_activity: 0,
+  budgeted: null,
+  available: null,
+  recurring_remaining: 0,
+  recurring_expected: 0,
+});
+
+export const pickOccurrence = (
+  occurrences?: SummaryCategoryOccurrence[]
+): SummaryCategoryOccurrence | undefined => {
+  if (!occurrences || occurrences.length === 0) {
+    return undefined;
+  }
+  return occurrences.find(item => item.current) ?? occurrences[0];
+};
+
+export const mergeSummaryWithCategories = (
+  summary: SummaryResponse | null | undefined,
+  categories: LunchMoneyCategory[] | null | undefined
+): BudgetSummaryItem[] => {
+  const categoryMap = new Map<number, LunchMoneyCategory>();
+  const groupNameMap = new Map<number, string>();
+
+  for (const category of categories ?? []) {
+    categoryMap.set(category.id, category);
+    if (category.is_group) {
+      groupNameMap.set(category.id, category.name);
+    }
+  }
+
+  const seen = new Set<number>();
+  const summaries = summary?.categories ?? [];
+  const items: BudgetSummaryItem[] = summaries.map(entry => {
+    const metadata = categoryMap.get(entry.category_id);
+    seen.add(entry.category_id);
+
+    const occurrence = pickOccurrence(entry.occurrences);
+    const groupId = metadata?.group_id ?? null;
+    const categoryGroupName =
+      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+
+    return {
+      category_id: entry.category_id,
+      category_name: metadata?.name ?? 'Uncategorized',
+      category_group_name: categoryGroupName,
+      group_id: groupId,
+      is_group: metadata?.is_group ?? false,
+      is_income: metadata?.is_income ?? false,
+      exclude_from_budget: metadata?.exclude_from_budget ?? false,
+      exclude_from_totals: metadata?.exclude_from_totals ?? false,
+      totals: entry.totals,
+      occurrence,
+      order: metadata?.order ?? null,
+      archived: metadata?.archived ?? false,
+    };
+  });
+
+  for (const category of categories ?? []) {
+    if (seen.has(category.id)) {
+      continue;
+    }
+    const groupId = category.group_id;
+    const categoryGroupName =
+      groupId === null ? null : (groupNameMap.get(groupId) ?? null);
+
+    items.push({
+      category_id: category.id,
+      category_name: category.name,
+      category_group_name: categoryGroupName,
+      group_id: groupId,
+      is_group: category.is_group,
+      is_income: category.is_income,
+      exclude_from_budget: category.exclude_from_budget,
+      exclude_from_totals: category.exclude_from_totals,
+      totals: emptyTotals(),
+      occurrence: undefined,
+      order: category.order ?? null,
+      archived: category.archived,
+    });
+  }
+
+  return items;
+};
 
 export const calculateBudgetStatus = (
   spent: number,
