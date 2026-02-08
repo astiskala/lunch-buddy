@@ -171,9 +171,9 @@ describe('CategoryPreferencesDialogComponent', () => {
   afterEach(() => {
     document.body.style.overflow = '';
     document.body.style.touchAction = '';
-    document.body.removeAttribute('data-dialog-scroll-lock-count');
-    document.body.removeAttribute('data-dialog-original-overflow');
-    document.body.removeAttribute('data-dialog-original-touch-action');
+    delete document.body.dataset['dialogScrollLockCount'];
+    delete document.body.dataset['dialogOriginalOverflow'];
+    delete document.body.dataset['dialogOriginalTouchAction'];
   });
 
   it('initializes local state from preferences on init', () => {
@@ -256,16 +256,14 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     expect(document.body.style.overflow).toBe('hidden');
     expect(document.body.style.touchAction).toBe('none');
-    expect(document.body.getAttribute('data-dialog-scroll-lock-count')).toBe(
-      '1'
-    );
+    expect(document.body.dataset['dialogScrollLockCount']).toBe('1');
 
     fixture.componentRef.setInput('open', false);
     fixture.detectChanges();
 
     expect(document.body.style.overflow).toBe('auto');
     expect(document.body.style.touchAction).toBe('pan-y');
-    expect(document.body.hasAttribute('data-dialog-scroll-lock-count')).toBe(
+    expect(Object.hasOwn(document.body.dataset, 'dialogScrollLockCount')).toBe(
       false
     );
   });
@@ -283,7 +281,7 @@ describe('CategoryPreferencesDialogComponent', () => {
 
     expect(document.body.style.overflow).toBe('visible');
     expect(document.body.style.touchAction).toBe('auto');
-    expect(document.body.hasAttribute('data-dialog-scroll-lock-count')).toBe(
+    expect(Object.hasOwn(document.body.dataset, 'dialogScrollLockCount')).toBe(
       false
     );
   });

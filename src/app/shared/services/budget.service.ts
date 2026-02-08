@@ -766,45 +766,59 @@ export class BudgetService {
     items: BudgetProgress[],
     typeItems: BudgetProgress[]
   ): BudgetProgress[] {
+    const groupById = this.buildGroupMap(typeItems);
+    const emittedGroups = new Set<number>();
+    const collapsed: BudgetProgress[] = [];
+
+    for (const item of items) {
+      const resolved = this.resolveCollapsedItem(
+        item,
+        groupById,
+        emittedGroups
+      );
+      if (resolved) {
+        collapsed.push(resolved);
+      }
+    }
+
+    return collapsed;
+  }
+
+  private buildGroupMap(
+    typeItems: BudgetProgress[]
+  ): Map<number, BudgetProgress> {
     const groupById = new Map<number, BudgetProgress>();
     for (const candidate of typeItems) {
       if (candidate.isGroup && candidate.categoryId !== null) {
         groupById.set(candidate.categoryId, candidate);
       }
     }
+    return groupById;
+  }
 
-    const emittedGroups = new Set<number>();
-    const collapsed: BudgetProgress[] = [];
-
-    for (const item of items) {
-      if (item.isGroup) {
-        collapsed.push(item);
-        if (item.categoryId !== null) {
-          emittedGroups.add(item.categoryId);
-        }
-        continue;
+  private resolveCollapsedItem(
+    item: BudgetProgress,
+    groupById: Map<number, BudgetProgress>,
+    emittedGroups: Set<number>
+  ): BudgetProgress | null {
+    if (item.isGroup) {
+      if (item.categoryId !== null) {
+        emittedGroups.add(item.categoryId);
       }
-
-      const groupId = item.groupId;
-      if (groupId === null) {
-        collapsed.push(item);
-        continue;
-      }
-
-      if (emittedGroups.has(groupId)) {
-        continue;
-      }
-
-      const groupItem = groupById.get(groupId);
-      if (groupItem) {
-        collapsed.push(groupItem);
-        emittedGroups.add(groupId);
-      } else {
-        collapsed.push(item);
-      }
+      return item;
     }
 
-    return collapsed;
+    const groupId = item.groupId;
+    if (groupId === null || emittedGroups.has(groupId)) {
+      return groupId === null ? item : null;
+    }
+
+    const groupItem = groupById.get(groupId);
+    if (groupItem) {
+      emittedGroups.add(groupId);
+      return groupItem;
+    }
+    return item;
   }
 
   private toDisplayError(

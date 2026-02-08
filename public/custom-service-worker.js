@@ -173,47 +173,55 @@ function hasShellAssetExtension(pathname) {
   return SHELL_ASSET_EXTENSIONS.has(extension);
 }
 
+async function handleNavigationRequest() {
+  try {
+    // Prefer fresh HTML so hashed bundle references stay in sync across deploys.
+    const response = await fetchWithTimeout(
+      new Request(APP_SHELL_URL),
+      NETWORK_TIMEOUT_MS
+    );
+    if (shouldCacheShellResponse(response)) {
+      await storeShellResponse(APP_SHELL_URL, response.clone());
+      return response;
+    }
+
+    const cachedIndex = await caches.match(APP_SHELL_URL, {
+      ignoreSearch: true,
+    });
+    return cachedIndex ?? response;
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: navigation fetch failed, serving cached shell fallback',
+      error
+    );
+    return await getNavigationFallback();
+  }
+}
+
+async function getNavigationFallback() {
+  const cachedIndex = await caches.match(APP_SHELL_URL, {
+    ignoreSearch: true,
+  });
+  if (cachedIndex) {
+    return cachedIndex;
+  }
+
+  const offlineResponse = await caches.match(OFFLINE_URL, {
+    ignoreSearch: true,
+  });
+  if (offlineResponse) {
+    return offlineResponse;
+  }
+  return new Response('Offline', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
 async function handleAppShellRequest(request) {
   if (request.mode === 'navigate') {
-    try {
-      // Prefer fresh HTML so hashed bundle references stay in sync across deploys.
-      const response = await fetchWithTimeout(
-        request.clone(),
-        NETWORK_TIMEOUT_MS
-      );
-      if (shouldCacheShellResponse(response)) {
-        await storeShellResponse(APP_SHELL_URL, response.clone());
-        return response;
-      }
-
-      const cachedIndex = await caches.match(APP_SHELL_URL, {
-        ignoreSearch: true,
-      });
-      return cachedIndex ?? response;
-    } catch (error) {
-      console.warn(
-        '[WARN] custom-service-worker: navigation fetch failed, serving cached shell fallback',
-        error
-      );
-      const cachedIndex = await caches.match(APP_SHELL_URL, {
-        ignoreSearch: true,
-      });
-      if (cachedIndex) {
-        return cachedIndex;
-      }
-
-      const offlineResponse = await caches.match(OFFLINE_URL, {
-        ignoreSearch: true,
-      });
-      if (offlineResponse) {
-        return offlineResponse;
-      }
-      return new Response('Offline', {
-        status: 503,
-        statusText: 'Service Unavailable',
-        headers: { 'Content-Type': 'text/plain' },
-      });
-    }
+    return handleNavigationRequest();
   }
 
   const cachedResponse = await caches.match(request, { ignoreSearch: true });
