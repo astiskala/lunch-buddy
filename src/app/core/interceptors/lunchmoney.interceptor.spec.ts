@@ -72,6 +72,32 @@ describe('lunchmoneyInterceptor', () => {
     req.flush({});
   });
 
+  it('should not add Authorization header for lookalike hostnames', async () => {
+    httpClient.get('https://api.lunchmoney.dev.evil.com/v2/me').subscribe();
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const req = httpMock.expectOne('https://api.lunchmoney.dev.evil.com/v2/me');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  it('should not add Authorization header when lunchmoney appears in query only', async () => {
+    httpClient
+      .get(
+        'https://example.com/api/data?redirect=https://api.lunchmoney.dev/v2'
+      )
+      .subscribe();
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const req = httpMock.expectOne(
+      'https://example.com/api/data?redirect=https://api.lunchmoney.dev/v2'
+    );
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
   it('should handle missing API key gracefully', async () => {
     authServiceSpy.getApiKey.mockReturnValue(null);
 

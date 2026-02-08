@@ -5,6 +5,12 @@ import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 
 export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
+  const LUNCH_MONEY_HOSTS = new Set([
+    'api.lunchmoney.dev',
+    'api.lunchmoney.app',
+    'dev.lunchmoney.app',
+  ]);
+
   const normalizeBaseUrl = (baseUrl: string): string => {
     let url = baseUrl;
     while (url.endsWith('/')) {
@@ -14,9 +20,17 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
   };
 
   const isLunchMoneyRequest = (): boolean => {
+    let requestUrl: URL | null = null;
+    try {
+      requestUrl = new URL(req.url, globalThis.location.origin);
+    } catch {
+      requestUrl = null;
+    }
+
     if (
-      req.url.includes('lunchmoney.dev') ||
-      req.url.includes('lunchmoney.app')
+      requestUrl &&
+      LUNCH_MONEY_HOSTS.has(requestUrl.hostname) &&
+      requestUrl.pathname.startsWith('/v2/')
     ) {
       return true;
     }
@@ -27,13 +41,29 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
     }
 
     if (apiBase.startsWith('/')) {
-      return req.url.startsWith(apiBase);
+      const normalizedPath = apiBase.endsWith('/') ? apiBase : `${apiBase}/`;
+      if (req.url === apiBase || req.url.startsWith(normalizedPath)) {
+        return true;
+      }
+
+      return (
+        requestUrl !== null &&
+        (requestUrl.pathname === apiBase ||
+          requestUrl.pathname.startsWith(normalizedPath))
+      );
     }
 
     try {
       const parsedBase = new URL(apiBase);
+      const normalizedPath = parsedBase.pathname.endsWith('/')
+        ? parsedBase.pathname
+        : `${parsedBase.pathname}/`;
+
       return (
-        req.url.startsWith(apiBase) || req.url.startsWith(parsedBase.pathname)
+        requestUrl !== null &&
+        requestUrl.origin === parsedBase.origin &&
+        (requestUrl.pathname === parsedBase.pathname ||
+          requestUrl.pathname.startsWith(normalizedPath))
       );
     } catch {
       return req.url.startsWith(apiBase);
