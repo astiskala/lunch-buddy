@@ -15,6 +15,7 @@ import {
   redact,
   NormalizedError,
 } from '../utils/diagnostics.utils';
+import { VersionService } from './version.service';
 
 export interface DiagnosticEvent {
   timestamp: number;
@@ -40,6 +41,7 @@ interface DiagnosticSession {
 export class DiagnosticsService {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly versionService = inject(VersionService);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   readonly isEnabled = signal<boolean>(false);
@@ -98,7 +100,7 @@ export class DiagnosticsService {
     try {
       const resp = await firstValueFrom(
         this.http.post<DiagnosticSession>('/api/diagnostics/session', {
-          buildInfo: { version: '1.11.8' },
+          buildInfo: { version: this.versionService.getVersion() },
         })
       );
 
