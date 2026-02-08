@@ -109,7 +109,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
-    // Handle dialog open/close based on input signal
+    // Keep dialog visibility synchronized with the open input signal.
     effect(() => {
       const dialog = this.dialogElement().nativeElement;
       const shouldOpen = this.open();
@@ -142,7 +142,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Initialize local state from preferences
+    // Initialize local state from persisted preferences.
     const prefs = this.preferences();
     this.orderedIds.set([...prefs.customOrder]);
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));

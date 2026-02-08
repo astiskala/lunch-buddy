@@ -72,7 +72,7 @@ export class BudgetService {
   readonly logger = inject(LoggerService);
   private readonly diagnostics = inject(DiagnosticsService);
 
-  // Month information
+  // Month state.
   private readonly currentMonthRange = getCurrentMonthRange();
   private readonly currentMonthStartKey = toIsoDate(
     this.currentMonthRange.start
@@ -84,7 +84,7 @@ export class BudgetService {
     () => this.startDate() < this.currentMonthStartKey
   );
 
-  // Data state
+  // Data state.
   protected readonly budgetData = signal<BudgetProgress[]>([]);
   protected readonly recurringExpenses = signal<RecurringExpense[]>([]);
   protected readonly isLoading = signal(true);
@@ -92,12 +92,12 @@ export class BudgetService {
   protected readonly lastRefresh = signal<Date | null>(this.loadLastRefresh());
   protected readonly errors = signal<Error[]>([]);
 
-  // Preferences
+  // User preferences.
   protected readonly preferences = signal<CategoryPreferences>(
     this.loadPreferences()
   );
 
-  // Computed values
+  // Derived values.
   protected readonly expenses = computed(() => {
     const prefs = this.preferences();
     return this.getVisibleItemsByType(false, prefs);
@@ -135,7 +135,7 @@ export class BudgetService {
     deriveReferenceDate(this.startDate(), this.endDate())
   );
 
-  // Recurring expenses by category
+  // Recurring expenses grouped by category.
   protected readonly recurringByCategory = computed(() => {
     const assigned = new Map<number | null, RecurringInstance[]>();
     const unassigned: RecurringInstance[] = [];
@@ -169,7 +169,7 @@ export class BudgetService {
       }
     }
 
-    // Sort each list by occurrence date
+    // Sort each list by occurrence date.
     for (const list of assigned.values()) {
       list.sort(
         (a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime()
@@ -349,7 +349,7 @@ export class BudgetService {
     this.shiftDisplayedMonth(1);
   }
 
-  // Public getters for components
+  // Expose readonly signals for component consumers.
   getExpenses = this.expenses;
   getHiddenExpenses = this.hiddenExpenses;
   getIncomes = this.incomes;
@@ -375,7 +375,7 @@ export class BudgetService {
     const filterBudgetableItems = (items: BudgetProgress[]): BudgetProgress[] =>
       items.filter(item => !item.excludeFromBudget);
 
-    // Separate uncategorised from regular summaries
+    // Separate uncategorized summaries from regular category summaries.
     const uncategorisedSummaries: BudgetSummaryItem[] = [];
     const regularItems: BudgetProgress[] = [];
 
@@ -418,7 +418,7 @@ export class BudgetService {
       fallback?: BudgetProgress;
     }
 
-    // Only one API call for all uncategorized transactions
+    // Use one API call for all uncategorized transactions.
     const uncategorisedSummary = uncategorisedSummaries[0];
     const uncategorisedRequest: Observable<SplitResult> = this.lunchMoneyService
       .getCategoryTransactions(
@@ -451,7 +451,7 @@ export class BudgetService {
               expenseCount += 1;
               expenseTransactions.push(transaction);
             }
-            // Zero amounts are ignored
+            // Ignore zero amounts.
           }
 
           const result: SplitResult = { summary: uncategorisedSummary };

@@ -333,7 +333,7 @@ describe('CategoryCardComponent', () => {
 
     setupComponent(fixture, { item: incomeItem });
 
-    // Should invert sign for income
+    // Should invert the sign for income.
     expect(component.remainingAfterUpcoming()).toBeCloseTo(-600, 5);
   });
 

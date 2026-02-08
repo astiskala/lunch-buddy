@@ -53,7 +53,7 @@ describe('lunchmoneyInterceptor', () => {
   it('should add Authorization header for Lunch Money API requests', async () => {
     httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
-    // Wait for the interceptor to process
+    // Wait for the interceptor to process.
     await new Promise(resolve => setTimeout(resolve, 0));
 
     const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
@@ -103,7 +103,7 @@ describe('lunchmoneyInterceptor', () => {
 
     httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
-    // Wait for the interceptor to process
+    // Wait for the interceptor to process.
     await new Promise(resolve => setTimeout(resolve, 0));
 
     const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
@@ -124,7 +124,7 @@ describe('lunchmoneyInterceptor', () => {
 
     httpClient.get('https://api.lunchmoney.dev/v2/me').subscribe();
 
-    // Wait for the auth service and interceptor to process
+    // Wait for the auth service and interceptor to process.
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');

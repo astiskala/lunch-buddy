@@ -53,13 +53,13 @@ export class DashboardPageComponent {
   readonly router = inject(Router);
   private readonly locale = inject(LOCALE_ID);
 
-  // Local state
+  // Local UI state.
   protected readonly activeTab = signal<TabType>('expenses');
   protected readonly statusFilter = signal<StatusFilter>('all');
   protected readonly showHidden = signal(false);
   protected readonly showPreferencesDialog = signal(false);
 
-  // Signals from service
+  // Signals provided by the budget service.
   protected readonly isLoading = this.budgetService.getIsLoading;
   protected readonly expenses = this.budgetService.getExpenses;
   protected readonly hiddenExpenses = this.budgetService.getHiddenExpenses;
@@ -79,7 +79,7 @@ export class DashboardPageComponent {
   protected readonly lastRefresh = this.budgetService.getLastRefresh;
   protected readonly referenceDate = this.budgetService.getReferenceDate;
 
-  // Computed values
+  // Derived view values.
   protected readonly activeItems = computed(() =>
     this.activeTab() === 'expenses' ? this.expenses() : this.incomes()
   );
@@ -196,8 +196,8 @@ export class DashboardPageComponent {
     const expensesLength = this.expenses().length;
     const incomesLength = this.incomes().length;
     const isLoading = this.isLoading();
-    // Consider it loaded if: we're not currently loading AND (we have a refresh timestamp OR we have data)
-    // This handles both: cached data with timestamp, and successful load with empty results
+    // Consider the view loaded when fetching is complete and we have either:
+    // a refresh timestamp or any loaded category data.
     return (
       !isLoading &&
       (lastRefresh !== null || expensesLength > 0 || incomesLength > 0)

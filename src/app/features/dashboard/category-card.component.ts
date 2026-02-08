@@ -223,7 +223,7 @@ export class CategoryCardComponent {
     let remaining = item.budgetAmount
       ? item.budgetAmount - actualSpent - upcoming
       : item.remaining - upcoming;
-    // For income categories, invert sign
+    // Invert the sign for income categories.
     if (item.isIncome) {
       remaining = -remaining;
     }

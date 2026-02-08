@@ -82,15 +82,23 @@ export class PushNotificationService {
   private readonly diagnostics = inject(DiagnosticsService);
 
   async isPrivateMode(): Promise<boolean> {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (typeof navigator === 'undefined' || !navigator.storage?.estimate) {
+    const browserNavigator = (globalThis as { navigator?: Navigator })
+      .navigator;
+    if (!browserNavigator) {
+      return false;
+    }
+
+    const storageManager = browserNavigator.storage as
+      | StorageManager
+      | undefined;
+    if (!storageManager || typeof storageManager.estimate !== 'function') {
       return false;
     }
 
     try {
-      const { quota } = await navigator.storage.estimate();
-      // Heuristic: Chrome incognito quota is usually very low (< 128MB)
-      // while regular mode is typically several GBs.
+      const { quota } = await storageManager.estimate();
+      // Chrome incognito quota is usually very low (<128MB), while regular
+      // mode is typically several GBs.
       return !!quota && quota < 128 * 1024 * 1024;
     } catch {
       return false;
@@ -158,13 +166,13 @@ export class PushNotificationService {
         return { granted: true };
       }
 
-      // If the permission was denied almost immediately (< 150ms), it's likely
-      // blocked by the browser (e.g. Incognito mode or "always block").
-      // Real user interaction usually takes at least 300ms-500ms.
+      // Treat near-immediate denial (<150ms) as browser-level blocking
+      // (for example, incognito mode or an always-block rule).
+      // Real user interaction usually takes at least 300ms to 500ms.
       let isAutoDenied = requestResult === 'denied' && duration < 150;
 
-      // If it wasn't instantly denied but still denied, check if we're in a
-      // private/incognito mode which often blocks these requests by default.
+      // If denial was not instant, check private/incognito mode because that
+      // mode often blocks notification requests by default.
       if (requestResult === 'denied' && !isAutoDenied) {
         if (await this.isPrivateMode()) {
           isAutoDenied = true;

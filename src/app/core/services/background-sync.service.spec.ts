@@ -3,6 +3,7 @@ import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { vi, type Mock } from 'vitest';
 import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import { createDeferred } from '../../../test/deferred';
 import { BackgroundSyncService } from './background-sync.service';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
@@ -163,21 +164,6 @@ describe('BackgroundSyncService', () => {
     }
 
     return fixture.sync;
-  };
-
-  const createDeferred = <T>() => {
-    let resolveFn: (value: T | PromiseLike<T>) => void = () => {
-      throw new Error('Deferred resolver not initialized');
-    };
-    const promise = new Promise<T>(res => {
-      resolveFn = res;
-    });
-    return {
-      promise,
-      resolve(value: T | PromiseLike<T>) {
-        resolveFn(value);
-      },
-    };
   };
 
   const baseBudgetPreferences: BudgetPreferencesPayload = {

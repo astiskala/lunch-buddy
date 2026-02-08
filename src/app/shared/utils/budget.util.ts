@@ -8,7 +8,7 @@ import {
 } from '../../core/models/lunchmoney.types';
 import { decodeHtmlEntities } from './text.util';
 
-export const emptyTotals = (): SummaryCategoryTotals => ({
+const emptyTotals = (): SummaryCategoryTotals => ({
   other_activity: 0,
   recurring_activity: 0,
   budgeted: null,
@@ -215,7 +215,7 @@ export const rankBudgetProgress = (
   items: BudgetProgress[],
   customOrder: (number | null)[] = []
 ): BudgetProgress[] => {
-  // If no custom order is specified, preserve the original API order
+  // Preserve the original API order when no custom order is configured.
   if (customOrder.length === 0) {
     return [...items];
   }
@@ -240,8 +240,7 @@ export const rankBudgetProgress = (
       return 1;
     }
 
-    // For items not in custom order, maintain their relative position
-    // (this shouldn't happen if customOrder is complete, but provides a fallback)
+    // Keep relative order for items missing from customOrder as a safe fallback.
     return 0;
   });
 };

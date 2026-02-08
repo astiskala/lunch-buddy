@@ -61,7 +61,7 @@ export class LoginPageComponent {
       return;
     }
 
-    // Basic validation - API keys are typically alphanumeric
+    // Apply basic validation because API keys are typically alphanumeric.
     if (!this.isApiKeyValid()) {
       this.errorMessage.set('API key appears to be invalid');
       return;
@@ -71,10 +71,10 @@ export class LoginPageComponent {
     this.isSubmitting.set(true);
 
     try {
-      // Store the API key (trimmed)
+      // Store the trimmed API key.
       this.authService.setApiKey(trimmedApiKey);
 
-      // Navigate to dashboard
+      // Navigate to the dashboard.
       await this.router.navigate(['/']);
     } catch (error: unknown) {
       this.logger.error('LoginPageComponent: failed to persist API key', error);

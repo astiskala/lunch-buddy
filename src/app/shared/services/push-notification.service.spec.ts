@@ -41,7 +41,7 @@ class MockNotificationChannel implements NotificationChannel {
     return this.requestPermissionSpy();
   }
 
-  // Not used in the simplified service but required by interface
+  // Not used in the simplified service but required by the interface.
   showNotification(): Promise<void> | void {
     return undefined;
   }
@@ -107,7 +107,7 @@ describe('PushNotificationService', () => {
   it('returns denied-by-user when permission request is denied by user', async () => {
     channel.permission = 'default';
     channel.requestPermissionSpy.mockImplementation(async () => {
-      // Simulate user taking time to decide
+      // Simulate user decision latency.
       await new Promise(resolve => setTimeout(resolve, 200));
       return 'denied';
     });
@@ -132,7 +132,7 @@ describe('PushNotificationService', () => {
   it('returns denied-by-browser when permission is denied and private mode is detected', async () => {
     channel.permission = 'default';
     channel.requestPermissionSpy.mockImplementation(async () => {
-      // Simulate user taking time to decide, so timing doesn't trigger it
+      // Simulate user decision latency so timing logic does not trigger.
       await new Promise(resolve => setTimeout(resolve, 200));
       return 'denied';
     });

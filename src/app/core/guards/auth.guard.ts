@@ -12,6 +12,6 @@ export const authGuard: CanActivateFn = async () => {
     return true;
   }
 
-  // Redirect to login if no API key
+  // Redirect to login when no API key is present.
   return router.parseUrl('/login');
 };

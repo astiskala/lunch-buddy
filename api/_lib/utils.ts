@@ -12,7 +12,7 @@ const SUPPORT_CODE_PATTERN = new RegExp(
 );
 
 /**
- * Hash a write key for storage
+ * Hashes a write key for storage.
  */
 export async function hashWriteKey(writeKey: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -23,7 +23,7 @@ export async function hashWriteKey(writeKey: string): Promise<string> {
 }
 
 /**
- * Timing-safe string comparison
+ * Performs a timing-safe string comparison.
  */
 export function safeCompare(a: string, b: string): boolean {
   const hashA = createHash('sha256').update(a).digest();
@@ -32,7 +32,7 @@ export function safeCompare(a: string, b: string): boolean {
 }
 
 /**
- * Generate a random support code (e.g. 8-10 chars)
+ * Generates a random support code.
  */
 export function generateSupportCode(): string {
   const randomBytes = new Uint8Array(SUPPORT_CODE_LENGTH);
@@ -54,7 +54,7 @@ export function isValidSupportCode(value: string): boolean {
 }
 
 /**
- * Generate a random UUID-like sessionId or writeKey
+ * Generates an opaque UUID-style identifier.
  */
 export function generateOpaqueId(): string {
   return randomUUID();

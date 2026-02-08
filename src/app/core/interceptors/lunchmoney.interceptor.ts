@@ -70,17 +70,17 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
     }
   };
 
-  // Only add auth header for Lunch Money API requests
+  // Add the auth header only for Lunch Money API requests.
   if (!isLunchMoneyRequest()) {
     return next(req);
   }
 
   const authService = inject(AuthService);
 
-  // Wait for secure storage to be ready before attempting to read the API key
+  // Wait for secure storage before reading the API key.
   return from(authService.ready()).pipe(
     switchMap(() => {
-      // Try secure storage first, then fall back to environment (for development)
+      // Prefer secure storage, then fall back to environment values for development.
       const apiKey = authService.getApiKey() ?? environment.lunchmoneyApiKey;
 
       if (!apiKey) {

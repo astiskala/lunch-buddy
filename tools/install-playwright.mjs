@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Ensures Playwright browsers are installed, while avoiding unsupported
- * system dependency installs inside certain CI environments (e.g. Vercel).
+ * @fileoverview Installs Playwright browsers while avoiding unsupported system
+ * dependency installs in CI environments such as Vercel.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -21,16 +21,16 @@ const isVercel = Boolean(process.env.VERCEL);
 const isLinux = process.platform === 'linux';
 const shouldInstallDeps = isLinux && !isVercel;
 
-// Vercel’s build images do not expose a stable npx path and do not need the
+// Vercel build images do not expose a stable npx path and do not need the
 // Playwright runtime, so skip installation entirely.
 if (isVercel) {
   console.log('Skipping Playwright browser download on Vercel builds.');
   process.exit(0);
 }
 
-// Resolve the absolute path to npx to avoid PATH security issues
-// Checks common fixed installation paths without relying on PATH
-// Prioritizes standard Linux paths for CI/CD environments like Vercel
+// Resolve the absolute npx path to avoid PATH-related security issues.
+// Check common fixed installation paths without relying on PATH.
+// Prioritize standard Linux paths used by CI environments such as Vercel.
 const getNpxPath = () => {
   const commonPaths = [
     '/usr/bin/npx', // Standard Linux path (Vercel, most CI)

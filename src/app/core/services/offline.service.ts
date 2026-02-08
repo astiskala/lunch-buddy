@@ -1,7 +1,7 @@
 import { Injectable, signal, OnDestroy } from '@angular/core';
 
 /**
- * Service to track online/offline status and provide offline indicators.
+ * Tracks online/offline status and provides offline indicators.
  * Uses both navigator.onLine and a real connectivity heartbeat check.
  */
 @Injectable({
@@ -31,7 +31,7 @@ export class OfflineService implements OnDestroy {
   }
 
   private readonly handleOnlineEvent = () => {
-    // navigator.onLine might be true but we might not have real connectivity
+    // navigator.onLine might be true while real connectivity is unavailable.
     void this.checkConnectivity();
     this.startHeartbeat();
   };
@@ -48,7 +48,7 @@ export class OfflineService implements OnDestroy {
     }
 
     try {
-      // Use a cache-busting fetch to ensure we're reaching the server
+      // Use a cache-busting fetch to ensure the request reaches the server.
       const response = await fetch(
         `${this.HEARTBEAT_URL}?t=${Date.now().toString()}`,
         {

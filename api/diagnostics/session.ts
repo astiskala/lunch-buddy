@@ -1,13 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { redis, getSessionKeys, TTL } from '../_lib/redis';
 import { checkIpRateLimit } from '../_lib/rate-limit';
+import { normalizeValidSupportCode } from '../_lib/support-code';
 import {
   hashWriteKey,
   generateSupportCode,
   generateOpaqueId,
   safeCompare,
-  normalizeSupportCode,
-  isValidSupportCode,
 } from '../_lib/utils';
 
 const CREATE_LIMIT_PER_MIN = 10;
@@ -56,7 +55,7 @@ async function createSession(req: VercelRequest, res: VercelResponse) {
       lastSeenAt: Date.now(),
     };
 
-    // Store in Redis
+    // Store session metadata and credentials in Redis.
     const pipeline = redis.pipeline();
     pipeline.set(keys.meta, meta, { ex: TTL });
     pipeline.set(keys.writeKeyHash, hashedKey, { ex: TTL });
@@ -82,8 +81,8 @@ async function getSession(req: VercelRequest, res: VercelResponse) {
   if (!rawSupportCode || typeof rawSupportCode !== 'string') {
     return res.status(400).json({ error: 'Missing supportCode' });
   }
-  const supportCode = normalizeSupportCode(rawSupportCode);
-  if (!isValidSupportCode(supportCode)) {
+  const supportCode = normalizeValidSupportCode(rawSupportCode);
+  if (!supportCode) {
     return res.status(400).json({ error: 'Invalid supportCode format' });
   }
 
@@ -131,8 +130,8 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
   if (!rawSupportCode) {
     return res.status(400).json({ error: 'Missing supportCode' });
   }
-  const supportCode = normalizeSupportCode(rawSupportCode);
-  if (!isValidSupportCode(supportCode)) {
+  const supportCode = normalizeValidSupportCode(rawSupportCode);
+  if (!supportCode) {
     return res.status(400).json({ error: 'Invalid supportCode format' });
   }
 
@@ -143,7 +142,7 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
       return res.status(429).json({ error: 'Rate limit exceeded' });
     }
 
-    // Auth: either admin token or writeKey
+    // Authorize with either an admin token or write key.
     const isAdmin =
       expectedToken &&
       typeof adminToken === 'string' &&
@@ -163,12 +162,12 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Delete all keys
+    // Delete all session keys.
     const pipeline = redis.pipeline();
     pipeline.del(keys.meta);
     pipeline.del(keys.events);
     pipeline.del(keys.writeKeyHash);
-    // Note: rate limit keys have different pattern, but they expire quickly anyway
+    // Rate limit keys use a different pattern but expire quickly.
     await pipeline.exec();
 
     return res.status(200).json({ message: 'Session deleted' });

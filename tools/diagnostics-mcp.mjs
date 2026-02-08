@@ -18,8 +18,8 @@ const runVercelCli = (args, options = {}) =>
   });
 
 /**
- * Project-specific MCP Server for Lunch Buddy.
- * This server provides tools to manage the diagnostics infrastructure on Vercel.
+ * Defines the project-specific MCP server for Lunch Buddy.
+ * The server provides tools to manage diagnostics infrastructure on Vercel.
  */
 
 const server = new Server(
@@ -160,7 +160,9 @@ const handleTestUpstashConnection = async args => {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await resp.json();
-  return textResult(`Status: ${resp.status}\nResponse: ${JSON.stringify(data)}`);
+  return textResult(
+    `Status: ${resp.status}\nResponse: ${JSON.stringify(data)}`
+  );
 };
 
 const toolHandlers = {

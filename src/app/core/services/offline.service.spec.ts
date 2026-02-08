@@ -50,16 +50,16 @@ describe('OfflineService', () => {
   });
 
   it('updates signals when offline/online events are fired', async () => {
-    // Offline event should be immediate
+    // The offline event should update state immediately.
     globalThis.window.dispatchEvent(new Event('offline'));
     expect(service.getOnlineStatus()()).toBe(false);
     expect(service.getOfflineStatus()()).toBe(true);
 
-    // Online event triggers a fetch
+    // The online event triggers a connectivity fetch.
     setNavigatorOnline(true);
     globalThis.window.dispatchEvent(new Event('online'));
 
-    // Wait for the fetch in checkConnectivity
+    // Wait for the fetch in checkConnectivity.
     await Promise.resolve();
 
     expect(fetchSpy).toHaveBeenCalled();
@@ -68,13 +68,13 @@ describe('OfflineService', () => {
   });
 
   it('updates status based on periodic heartbeat', async () => {
-    // Initial state is online
+    // Initial state is online.
     expect(service.getOnlineStatus()()).toBe(true);
 
-    // Mock fetch to fail for the next heartbeat
+    // Mock fetch to fail for the next heartbeat.
     fetchSpy.mockResolvedValueOnce({ ok: false } as Response);
 
-    // Fast-forward 30 seconds
+    // Fast-forward 30 seconds.
     vi.advanceTimersByTime(30000);
     await Promise.resolve();
 
@@ -82,10 +82,10 @@ describe('OfflineService', () => {
     expect(service.getOnlineStatus()()).toBe(false);
     expect(service.getOfflineStatus()()).toBe(true);
 
-    // Mock fetch to succeed again
+    // Mock fetch to succeed again.
     fetchSpy.mockResolvedValueOnce({ ok: true } as Response);
 
-    // Fast-forward another 30 seconds
+    // Fast-forward another 30 seconds.
     vi.advanceTimersByTime(30000);
     await Promise.resolve();
 
@@ -95,7 +95,7 @@ describe('OfflineService', () => {
   it('immediately marks as offline if navigator.onLine is false during heartbeat', async () => {
     setNavigatorOnline(false);
 
-    // Trigger heartbeat
+    // Trigger the heartbeat.
     vi.advanceTimersByTime(30000);
     await Promise.resolve();
 

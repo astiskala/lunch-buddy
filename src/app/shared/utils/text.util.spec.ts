@@ -42,7 +42,7 @@ describe('Text Utils', () => {
     });
 
     it('should handle invalid code points', () => {
-      // Test code point that might throw (very large number)
+      // Test a code point that might throw (very large number).
       expect(decodeHtmlEntities('&#999999999;')).toBe('�');
     });
 

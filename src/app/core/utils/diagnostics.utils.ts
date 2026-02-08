@@ -56,8 +56,9 @@ export function errorToString(error: unknown): string {
 const STRIPPED_KEYS = ['authorization'];
 
 /**
- * Keys that should be redacted if they are INCLUDED in the key name (case-insensitive).
- * Use this for high-entropy secrets and raw PII that might appear in various field names.
+ * Redacts keys when the key name includes these tokens (case-insensitive).
+ * Use this list for high-entropy secrets and raw PII that can appear in
+ * multiple field-name variants.
  */
 const REDACTED_PATTERNS = [
   'token',
@@ -81,9 +82,9 @@ const REDACTED_PATTERNS = [
 ];
 
 /**
- * Keys that should be redacted ONLY if they match exactly (case-insensitive).
- * Use this for common words that are sensitive on their own but safe as part of other keys.
- * e.g. "name" is redacted, but "categoryName" is allowed.
+ * Redacts keys only when the key matches exactly (case-insensitive).
+ * Use this list for common words that are sensitive by themselves but safe as
+ * part of larger keys (for example, "name" versus "categoryName").
  */
 const REDACTED_KEYS = new Set([
   'key',
@@ -104,8 +105,7 @@ const REDACTED_KEYS = new Set([
 ]);
 
 /**
- * Redacts sensitive information from an object.
- * Recursively traverses objects and arrays.
+ * Redacts sensitive information from objects and arrays recursively.
  */
 export function redact(obj: unknown, depth = 0): unknown {
   if (!obj || typeof obj !== 'object' || depth > 10) {

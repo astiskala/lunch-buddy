@@ -345,7 +345,7 @@ describe('BudgetService background sync', () => {
       }),
     ]);
 
-    // Find the uncategorised expense entry by checking for null/undefined categoryId and correct name
+    // Find the uncategorized expense entry using categoryId and label checks.
     const incomes = service.getIncomes();
     const uncategorisedIncome = incomes.find(
       item =>

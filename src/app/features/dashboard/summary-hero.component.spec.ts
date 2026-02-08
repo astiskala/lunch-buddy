@@ -12,7 +12,7 @@ describe('SummaryHeroComponent', () => {
     fixture.componentRef.setInput('totalIncomeSpent', 1200);
     fixture.componentRef.setInput('totalIncomeUpcoming', 300);
     fixture.detectChanges();
-    // Should invert sign
+    // Should invert the sign.
     expect(component.incomeRemaining()).toBe(-500);
   });
   let component: SummaryHeroComponent;

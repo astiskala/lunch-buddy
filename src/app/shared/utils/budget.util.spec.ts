@@ -18,15 +18,15 @@ describe('Budget Utilities', () => {
     });
 
     it('should calculate status for expenses correctly', () => {
-      // Budget: 100, Progress through month: 50%
+      // Budget: 100. Progress through month: 50%.
       expect(calculateBudgetStatus(40, 100, 0.5, false)).toBe('on-track');
       expect(calculateBudgetStatus(60, 100, 0.5, false)).toBe('at-risk');
       expect(calculateBudgetStatus(110, 100, 0.5, false)).toBe('over');
     });
 
     it('should calculate status for income correctly', () => {
-      // Budget: 1000, Progress through month: 50%
-      // Income is "on-track" if we received >= expected for progress
+      // Budget: 1000. Progress through month: 50%.
+      // Income is on-track when received amount meets expected progress.
       expect(calculateBudgetStatus(-600, 1000, 0.5, true)).toBe('on-track');
       expect(calculateBudgetStatus(-400, 1000, 0.5, true)).toBe('at-risk');
     });

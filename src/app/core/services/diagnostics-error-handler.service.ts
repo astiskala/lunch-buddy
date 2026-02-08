@@ -6,19 +6,19 @@ export class DiagnosticsErrorHandler implements ErrorHandler {
   private readonly diagnostics = inject(DiagnosticsService);
 
   handleError(error: unknown): void {
-    // Log to diagnostics if enabled
+    // Log to diagnostics when diagnostics are enabled.
     this.diagnostics.log('error', 'app', 'Unhandled exception', {}, error);
 
-    // Continue to standard handling (console) in dev mode
+    // Continue standard console handling in development mode.
     if (isDevMode()) {
       console.error(error);
     }
   }
 
   /**
-   * Initialize global listeners for non-Angular errors
+   * Initializes global listeners for non-Angular errors.
    */
-  initGlobalListeners() {
+  initGlobalListeners(): void {
     globalThis.addEventListener('error', event => {
       this.diagnostics.log(
         'error',

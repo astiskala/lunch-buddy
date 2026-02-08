@@ -42,9 +42,6 @@ export class LunchMoneyService {
     };
   }
 
-  /**
-   * Get user information
-   */
   getUser(): Observable<LunchMoneyUser> {
     return this.http.get<LunchMoneyUser>(
       `${LUNCH_MONEY_API_BASE}/me`,
@@ -52,9 +49,6 @@ export class LunchMoneyService {
     );
   }
 
-  /**
-   * Get all categories
-   */
   getCategories(): Observable<LunchMoneyCategory[]> {
     return this.http
       .get<{
@@ -66,9 +60,6 @@ export class LunchMoneyService {
       .pipe(map(response => response.categories));
   }
 
-  /**
-   * Get budget summary for a specific date range
-   */
   getBudgetSummary(
     startDate: string,
     endDate: string
@@ -92,9 +83,6 @@ export class LunchMoneyService {
     );
   }
 
-  /**
-   * Get recurring expenses
-   */
   getRecurringExpenses(
     startDate: string,
     endDate: string
@@ -117,9 +105,6 @@ export class LunchMoneyService {
       );
   }
 
-  /**
-   * Get transactions for a category
-   */
   getCategoryTransactions(
     categoryId: number | null,
     startDate: string,
@@ -131,15 +116,15 @@ export class LunchMoneyService {
       .set('end_date', endDate)
       .set('include_pending', 'true');
 
-    // For specific categories, set the category_id filter
-    // For uncategorized (null), we'll filter client-side after fetching
+    // Set category_id for specific categories.
+    // For uncategorized (null), filter client-side after fetching.
     if (categoryId !== null) {
       params = params.set('category_id', categoryId.toString());
     }
 
     const includeAll = options?.includeAllTransactions ?? true;
     if (!includeAll) {
-      // Filter to 'cleared' status (API query parameter) to exclude pending/unreviewed transactions
+      // Filter to cleared status to exclude pending and unreviewed transactions.
       params = params.set('status', 'cleared');
     }
 
@@ -150,7 +135,7 @@ export class LunchMoneyService {
       )
       .pipe(
         map(response => {
-          // If querying for uncategorized transactions, filter client-side
+          // Filter uncategorized transactions client-side.
           if (categoryId === null) {
             return {
               ...response,

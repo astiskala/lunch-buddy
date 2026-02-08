@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Fetch and format diagnostics logs for a given supportCode.
+ * @fileoverview Fetches and formats diagnostics logs for a support code.
  *
  * Usage:
  *   node tools/fetch-logs.mjs <supportCode>

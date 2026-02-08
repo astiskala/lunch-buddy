@@ -87,7 +87,7 @@ export class SummaryHeroComponent {
     toPercent(this.monthProgressRatio())
   );
 
-  // Expense metrics (for backwards compatibility with tests)
+  // Keep expense metric signals for backward compatibility with existing tests.
   private readonly expenseMetrics = computed(() =>
     calculateBudgetMetrics(
       this.totalExpenseSpent(),
@@ -104,7 +104,7 @@ export class SummaryHeroComponent {
   );
   readonly expenseRemaining = computed(() => this.expenseMetrics().remaining);
 
-  // Income metrics (for backwards compatibility with tests)
+  // Keep income metric signals for backward compatibility with existing tests.
   private readonly incomeMetrics = computed(() =>
     calculateBudgetMetrics(
       this.totalIncomeSpent(),

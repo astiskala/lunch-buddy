@@ -41,8 +41,8 @@ const SHELL_ASSET_EXTENSIONS = new Set([
   '.avif',
   '.gif',
 ]);
-// Increase timeout to avoid premature aborts on first-run authenticated requests.
-// Dynamic timeout based on connection quality (fallback to 10s).
+// Use a higher timeout to avoid premature aborts on first-run authenticated
+// requests. Resolve timeout dynamically from connection quality (fallback 10s).
 function getNetworkTimeout() {
   const connection = globalThis.navigator?.connection;
   if (connection?.effectiveType) {
@@ -73,7 +73,8 @@ const defaultState = () => ({
   lastAlertSignature: null,
 });
 
-// Handle Lunch Money API requests before delegating other traffic to the Angular worker.
+// Handle Lunch Money API requests before delegating other traffic to the
+// Angular worker.
 globalThis.addEventListener('fetch', event => {
   const { request } = event;
 
@@ -109,7 +110,7 @@ globalThis.addEventListener('fetch', event => {
   try {
     event.respondWith(handleApiRequest(request));
   } catch (error) {
-    // Fallback to the default handling if respondWith throws for any reason.
+    // Fall back to default handling if respondWith throws for any reason.
     console.warn(
       '[WARN] custom-service-worker: failed to respond with cached API data',
       error
@@ -117,10 +118,10 @@ globalThis.addEventListener('fetch', event => {
   }
 });
 
-// Import Angular service worker after registering the custom handler.
+// Import Angular's service worker after registering the custom handler.
 importScripts('./ngsw-worker.js');
 
-// Install event - prepare cache
+// Warm the shell cache during install.
 globalThis.addEventListener('install', event => {
   event.waitUntil(
     (async () => {
@@ -130,7 +131,7 @@ globalThis.addEventListener('install', event => {
   );
 });
 
-// Activate event - cleanup old caches
+// Clean up old caches during activation.
 globalThis.addEventListener('activate', event => {
   event.waitUntil(
     (async () => {
@@ -466,8 +467,8 @@ async function pruneApiCache() {
 }
 
 async function handleApiRequest(request) {
-  // For authenticated requests, prefer network-first to avoid offline stubs
-  // on first login when caches are empty.
+  // For authenticated requests, prefer network-first to avoid serving offline
+  // stubs during first login when caches are empty.
   const hasAuth = !!request.headers.get('Authorization');
   if (hasAuth) {
     return networkFirstAuthenticated(request);
@@ -537,7 +538,7 @@ async function networkFirstAuthenticated(request) {
       return response;
     }
 
-    // Non-OK response: try cached data if any; otherwise return the server's response.
+    // For non-OK responses, return cached data when available.
     const cached = await findCachedResponse(request);
     return (
       cached ??
@@ -548,7 +549,7 @@ async function networkFirstAuthenticated(request) {
       )
     );
   } catch (err) {
-    // Handle aborted/failed fetches explicitly for Sonar/lint.
+    // Handle aborted and failed fetches explicitly.
     const name = getErrorName(err);
     const message =
       err && typeof err === 'object' && 'message' in err
@@ -619,7 +620,7 @@ async function getCachedResponse(request) {
     return cachedResponse;
   }
 
-  // No cache available - return error response
+  // Return an explicit offline error when no cache entry is available.
   return new Response(
     JSON.stringify({
       error: 'offline',
@@ -1178,7 +1179,7 @@ globalThis.addEventListener('notificationclick', event => {
   );
 });
 
-// Expose selected APIs for test harnesses without impacting production behaviour.
+// Expose selected APIs for test harnesses without changing production behavior.
 globalThis.__LB_SW_API__ = {
   handleApiRequest,
   isApiRequest,

@@ -1,5 +1,6 @@
 // No need to declare `importScripts`; use global assignment/mocking below.
 import { vi } from 'vitest';
+import { createDeferred } from '../../../test/deferred';
 
 type Handler = (request: Request) => Promise<Response>;
 type ApiRequestMatcher = (url: URL) => boolean;
@@ -9,21 +10,19 @@ type NotificationPayloadBuilder = (
   preferredCurrency: string | null,
   monthProgress: number
 ) => { title: string; body: string };
+interface ApiTestContext {
+  handler: Handler;
+  cacheName: string;
+}
 
-const createDeferred = <T>() => {
-  let resolveFn: (value: T | PromiseLike<T>) => void = () => {
-    throw new Error('Deferred resolver not initialized');
-  };
-  const promise = new Promise<T>(res => {
-    resolveFn = res;
-  });
-  return {
-    promise,
-    resolve(value: T | PromiseLike<T>) {
-      resolveFn(value);
-    },
-  };
-};
+interface ShellTestContext {
+  handler: Handler;
+  cacheName: string;
+}
+
+const API_SUMMARY_URL = 'https://api.lunchmoney.dev/v2/summary';
+const API_CATEGORIES_URL = 'https://api.lunchmoney.dev/v2/categories';
+const AUTH_HEADERS = { Authorization: 'Bearer test-key' } as const;
 
 const createNavigationRequest = (url: URL): Request => {
   const request = new Request(url.toString());
@@ -43,6 +42,19 @@ const createNavigationRequest = (url: URL): Request => {
   }
 };
 
+const createAuthenticatedRequest = (
+  url: string,
+  includeAcceptHeader = false
+): Request =>
+  new Request(url, {
+    headers: includeAcceptHeader
+      ? { ...AUTH_HEADERS, Accept: 'application/json' }
+      : AUTH_HEADERS,
+  });
+
+const createRootNavigationRequest = (): Request =>
+  createNavigationRequest(new URL('/', globalThis.location.origin));
+
 describe('custom service worker API handler', () => {
   let originalImportScripts: unknown;
   let originalFetch: unknown;
@@ -56,7 +68,52 @@ describe('custom service worker API handler', () => {
   let isApiRequest: ApiRequestMatcher | undefined;
   let isAppShellRequest: AppShellRequestMatcher | undefined;
   let buildNotificationPayload: NotificationPayloadBuilder | undefined;
-  let clockInstalled: boolean;
+
+  const resolveApiTestContext = (): ApiTestContext | undefined => {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+      return undefined;
+    }
+
+    return { handler: apiHandler, cacheName: apiCacheName };
+  };
+
+  const resolveShellTestContext = (): ShellTestContext | undefined => {
+    if (typeof caches === 'undefined' || !appShellHandler || !shellCacheName) {
+      return undefined;
+    }
+
+    return { handler: appShellHandler, cacheName: shellCacheName };
+  };
+
+  const setFetchResponse = (response: Response): void => {
+    (globalThis as { fetch?: unknown }).fetch = () => Promise.resolve(response);
+  };
+
+  const setFailingFetch = (message = 'network down'): void => {
+    const failingFetch: typeof fetch = (
+      _input: RequestInfo | URL,
+      _init?: RequestInit
+    ) => Promise.reject(new Error(message));
+
+    Object.defineProperty(globalThis, 'fetch', {
+      value: failingFetch,
+      writable: true,
+      configurable: true,
+    });
+  };
+
+  const clearTestCaches = async (): Promise<void> => {
+    if (typeof caches === 'undefined') {
+      return;
+    }
+
+    if (apiCacheName) {
+      await caches.delete(apiCacheName);
+    }
+    if (shellCacheName) {
+      await caches.delete(shellCacheName);
+    }
+  };
 
   beforeAll(async () => {
     originalImportScripts = (
@@ -65,8 +122,9 @@ describe('custom service worker API handler', () => {
     (globalThis as unknown as { importScripts: () => void }).importScripts =
       () => undefined;
 
-    // @ts-expect-error Importing the built service worker for test coverage.
-    await import('../../../../public/custom-service-worker.js');
+    const serviceWorkerScriptPath =
+      '../../../../public/custom-service-worker.js';
+    await import(serviceWorkerScriptPath);
 
     const api = (
       globalThis as unknown as {
@@ -102,32 +160,13 @@ describe('custom service worker API handler', () => {
       matchAll: () => Promise.resolve([]),
       openWindow: vi.fn(),
     };
-    clockInstalled = false;
-
-    if (typeof caches !== 'undefined') {
-      if (apiCacheName) {
-        await caches.delete(apiCacheName);
-      }
-      if (shellCacheName) {
-        await caches.delete(shellCacheName);
-      }
-    }
+    await clearTestCaches();
   });
 
   afterEach(async () => {
     (globalThis as { fetch?: unknown }).fetch = originalFetch;
     (globalThis as { clients?: unknown }).clients = originalClients;
-    if (clockInstalled) {
-      vi.useRealTimers();
-    }
-    if (typeof caches !== 'undefined') {
-      if (apiCacheName) {
-        await caches.delete(apiCacheName);
-      }
-      if (shellCacheName) {
-        await caches.delete(shellCacheName);
-      }
-    }
+    await clearTestCaches();
   });
 
   afterAll(() => {
@@ -146,20 +185,21 @@ describe('custom service worker API handler', () => {
   });
 
   it('returns cached API data when the network is slow', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary');
+    const request = new Request(API_SUMMARY_URL);
     const cachedResponse = new Response('cached', { status: 200 });
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(request, cachedResponse.clone());
 
     const fetchDeferred = createDeferred<Response>();
     (globalThis as { fetch?: unknown }).fetch = () =>
       fetchDeferred.promise as unknown as Response;
 
-    const resultPromise = apiHandler(request);
+    const resultPromise = context.handler(request);
 
     await new Promise(resolve => setTimeout(resolve, 550));
     const result = await resultPromise;
@@ -172,42 +212,34 @@ describe('custom service worker API handler', () => {
   });
 
   it('uses fresh network data when available and caches it', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/categories');
+    const request = new Request(API_CATEGORIES_URL);
     const networkResponse = new Response('network', { status: 200 });
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(networkResponse);
+    setFetchResponse(networkResponse);
 
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(await result.text()).toBe('network');
 
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     const cached = await cache.match(request);
     expect(cached).toBeTruthy();
     expect(await cached?.text()).toBe('network');
   });
 
   it('returns an offline response when both network and cache are unavailable', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary');
-    const failingFetch: typeof fetch = (
-      _input: RequestInfo | URL,
-      _init?: RequestInit
-    ) => Promise.reject(new Error('network down'));
+    const request = new Request(API_SUMMARY_URL);
+    setFailingFetch();
 
-    Object.defineProperty(globalThis, 'fetch', {
-      value: failingFetch,
-      writable: true,
-      configurable: true,
-    });
-
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(503);
     const body: unknown = await result.json();
     expect(body).toEqual({
@@ -215,83 +247,62 @@ describe('custom service worker API handler', () => {
       message: 'No cached data available',
     });
 
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     const cached = await cache.match(request);
     expect(cached).toBeFalsy();
   });
 
   it('uses network-first for authenticated requests and populates cache on success', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
-      headers: { Authorization: 'Bearer test-key', Accept: 'application/json' },
-    });
+    const request = createAuthenticatedRequest(API_SUMMARY_URL, true);
 
     const networkPayload = JSON.stringify({ ok: true });
     const networkResponse = new Response(networkPayload, { status: 200 });
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(networkResponse);
+    setFetchResponse(networkResponse);
 
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(200);
     expect(await result.text()).toBe(networkPayload);
 
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     const cached = await cache.match(request);
     expect(cached).toBeTruthy();
     expect(await cached?.text()).toBe(networkPayload);
   });
 
   it('falls back to cache for authenticated requests when network fails', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
-      headers: { Authorization: 'Bearer test-key', Accept: 'application/json' },
-    });
+    const request = createAuthenticatedRequest(API_SUMMARY_URL, true);
 
     const cachedResponse = new Response('cached-auth', { status: 200 });
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(request, cachedResponse.clone());
 
-    const failingFetch: typeof fetch = (
-      _input: RequestInfo | URL,
-      _init?: RequestInit
-    ) => Promise.reject(new Error('network down'));
+    setFailingFetch();
 
-    Object.defineProperty(globalThis, 'fetch', {
-      value: failingFetch,
-      writable: true,
-      configurable: true,
-    });
-
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(200);
     expect(await result.text()).toBe('cached-auth');
   });
 
   it('returns offline stub for unauthenticated requests when network and cache are unavailable', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary');
+    const request = new Request(API_SUMMARY_URL);
+    setFailingFetch();
 
-    const failingFetch: typeof fetch = (
-      _input: RequestInfo | URL,
-      _init?: RequestInit
-    ) => Promise.reject(new Error('network down'));
-
-    Object.defineProperty(globalThis, 'fetch', {
-      value: failingFetch,
-      writable: true,
-      configurable: true,
-    });
-
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(503);
     const body = (await result.json()) as Record<string, unknown>;
     expect(body).toEqual({
@@ -301,19 +312,20 @@ describe('custom service worker API handler', () => {
   });
 
   it('uses cached data when network times out for unauthenticated requests', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/categories');
-    const cache = await caches.open(apiCacheName);
+    const request = new Request(API_CATEGORIES_URL);
+    const cache = await caches.open(context.cacheName);
     await cache.put(request, new Response('cached-unauth', { status: 200 }));
 
     const deferred = createDeferred<Response>();
     (globalThis as { fetch?: unknown }).fetch = () =>
       deferred.promise as unknown as Response;
 
-    const resultPromise = apiHandler(request);
+    const resultPromise = context.handler(request);
     await new Promise(res => setTimeout(res, 520));
     const result = await resultPromise;
     expect(await result.text()).toBe('cached-unauth');
@@ -323,78 +335,71 @@ describe('custom service worker API handler', () => {
   });
 
   it('falls back to cache when server returns non-OK for authenticated requests', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
-      headers: { Authorization: 'Bearer test-key' },
-    });
+    const request = createAuthenticatedRequest(API_SUMMARY_URL);
 
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(
       request,
       new Response('cached-auth-non-ok', { status: 200 })
     );
 
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(new Response('server-error', { status: 500 }));
+    setFetchResponse(new Response('server-error', { status: 500 }));
 
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(await result.text()).toBe('cached-auth-non-ok');
   });
 
   it('does not fall back to cache when server returns 401 for authenticated requests', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
-      headers: { Authorization: 'Bearer test-key' },
-    });
+    const request = createAuthenticatedRequest(API_SUMMARY_URL);
 
-    const cache = await caches.open(apiCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(request, new Response('stale-auth-cache', { status: 200 }));
 
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(new Response('Unauthorized', { status: 401 }));
+    setFetchResponse(new Response('Unauthorized', { status: 401 }));
 
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(401);
     expect(await result.text()).toBe('Unauthorized');
   });
 
   it('returns server error response for authenticated requests when cache is empty', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
-      headers: { Authorization: 'Bearer test-key' },
-    });
+    const request = createAuthenticatedRequest(API_SUMMARY_URL);
 
-    // Return a non-OK response with no cache available
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(new Response('Unauthorized', { status: 401 }));
+    // Return a non-OK response with no cache available.
+    setFetchResponse(new Response('Unauthorized', { status: 401 }));
 
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(401);
     expect(await result.text()).toBe('Unauthorized');
 
-    // Verify the error response was not cached
-    const cache = await caches.open(apiCacheName);
+    // Verify that the error response was not cached.
+    const cache = await caches.open(context.cacheName);
     const cached = await cache.match(request);
     expect(cached).toBeFalsy();
   });
 
   it('returns timeout error for authenticated requests when AbortError occurs', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
-      headers: { Authorization: 'Bearer test-key' },
-    });
+    const request = createAuthenticatedRequest(API_SUMMARY_URL);
 
     const abortError = new Error('AbortError');
     Object.defineProperty(abortError, 'name', {
@@ -406,7 +411,7 @@ describe('custom service worker API handler', () => {
     (globalThis as { fetch?: unknown }).fetch = () =>
       Promise.reject(abortError);
 
-    const result = await apiHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(503);
     const body = (await result.json()) as Record<string, unknown>;
     expect(body['error']).toBe('timeout');
@@ -414,39 +419,35 @@ describe('custom service worker API handler', () => {
   });
 
   it('does not cache non-OK responses for unauthenticated requests', async () => {
-    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+    const context = resolveApiTestContext();
+    if (!context) {
       return;
     }
 
-    const request = new Request('https://api.lunchmoney.dev/v2/summary');
-    const cache = await caches.open(apiCacheName);
+    const request = new Request(API_SUMMARY_URL);
+    const cache = await caches.open(context.cacheName);
 
-    // Ensure request is not cached initially
+    // Ensure the request is not cached initially.
     const initialCached = await cache.match(request);
     expect(initialCached).toBeFalsy();
 
-    // Return a non-OK response
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(new Response('error', { status: 401 }));
-    const result = await apiHandler(request);
+    // Return a non-OK response.
+    setFetchResponse(new Response('error', { status: 401 }));
+    const result = await context.handler(request);
     expect(result.status).toBe(401);
 
-    // Verify the failed response was not cached
+    // Verify that the failed response was not cached.
     const newCached = await cache.match(request);
     expect(newCached).toBeFalsy();
   });
 
   it('prefers fresh app shell content over cached content when navigation succeeds', async () => {
-    if (
-      typeof caches === 'undefined' ||
-      !appShellHandler ||
-      !shellCacheName ||
-      !appShellUrl
-    ) {
+    const context = resolveShellTestContext();
+    if (!context || !appShellUrl) {
       return;
     }
 
-    const cache = await caches.open(shellCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(
       appShellUrl,
       new Response('<html>cached-shell</html>', {
@@ -455,23 +456,20 @@ describe('custom service worker API handler', () => {
       })
     );
 
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(
-        new Response('<html>network-shell</html>', {
-          status: 200,
-          headers: { 'Content-Type': 'text/html' },
-        })
-      );
-
-    const request = createNavigationRequest(
-      new URL('/', globalThis.location.origin)
+    setFetchResponse(
+      new Response('<html>network-shell</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      })
     );
+
+    const request = createRootNavigationRequest();
 
     if (isAppShellRequest) {
       expect(isAppShellRequest(request, new URL(request.url))).toBe(true);
     }
 
-    const result = await appShellHandler(request);
+    const result = await context.handler(request);
     expect(await result.text()).toBe('<html>network-shell</html>');
 
     const persisted = await cache.match(appShellUrl);
@@ -479,16 +477,12 @@ describe('custom service worker API handler', () => {
   });
 
   it('falls back to cached app shell content when navigation fetch fails', async () => {
-    if (
-      typeof caches === 'undefined' ||
-      !appShellHandler ||
-      !shellCacheName ||
-      !appShellUrl
-    ) {
+    const context = resolveShellTestContext();
+    if (!context || !appShellUrl) {
       return;
     }
 
-    const cache = await caches.open(shellCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(
       appShellUrl,
       new Response('<html>cached-shell</html>', {
@@ -497,36 +491,21 @@ describe('custom service worker API handler', () => {
       })
     );
 
-    const failingFetch: typeof fetch = (
-      _input: RequestInfo | URL,
-      _init?: RequestInit
-    ) => Promise.reject(new Error('network down'));
+    setFailingFetch();
 
-    Object.defineProperty(globalThis, 'fetch', {
-      value: failingFetch,
-      writable: true,
-      configurable: true,
-    });
+    const request = createRootNavigationRequest();
 
-    const request = createNavigationRequest(
-      new URL('/', globalThis.location.origin)
-    );
-
-    const result = await appShellHandler(request);
+    const result = await context.handler(request);
     expect(await result.text()).toBe('<html>cached-shell</html>');
   });
 
   it('falls back to offline page when navigation fails and shell cache is empty', async () => {
-    if (
-      typeof caches === 'undefined' ||
-      !appShellHandler ||
-      !shellCacheName ||
-      !offlineUrl
-    ) {
+    const context = resolveShellTestContext();
+    if (!context || !offlineUrl) {
       return;
     }
 
-    const cache = await caches.open(shellCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(
       offlineUrl,
       new Response('<html>offline-fallback</html>', {
@@ -535,32 +514,22 @@ describe('custom service worker API handler', () => {
       })
     );
 
-    const failingFetch: typeof fetch = (
-      _input: RequestInfo | URL,
-      _init?: RequestInit
-    ) => Promise.reject(new Error('network down'));
+    setFailingFetch();
 
-    Object.defineProperty(globalThis, 'fetch', {
-      value: failingFetch,
-      writable: true,
-      configurable: true,
-    });
+    const request = createRootNavigationRequest();
 
-    const request = createNavigationRequest(
-      new URL('/', globalThis.location.origin)
-    );
-
-    const result = await appShellHandler(request);
+    const result = await context.handler(request);
     expect(await result.text()).toBe('<html>offline-fallback</html>');
   });
 
   it('replaces poisoned script cache entries with network JavaScript responses', async () => {
-    if (typeof caches === 'undefined' || !appShellHandler || !shellCacheName) {
+    const context = resolveShellTestContext();
+    if (!context) {
       return;
     }
 
     const request = new Request(`${globalThis.location.origin}/main-TEST.js`);
-    const cache = await caches.open(shellCacheName);
+    const cache = await caches.open(context.cacheName);
     await cache.put(
       request,
       new Response('<html>poisoned</html>', {
@@ -569,15 +538,14 @@ describe('custom service worker API handler', () => {
       })
     );
 
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(
-        new Response('console.log("healthy");', {
-          status: 200,
-          headers: { 'Content-Type': 'application/javascript' },
-        })
-      );
+    setFetchResponse(
+      new Response('console.log("healthy");', {
+        status: 200,
+        headers: { 'Content-Type': 'application/javascript' },
+      })
+    );
 
-    const result = await appShellHandler(request);
+    const result = await context.handler(request);
     expect(await result.text()).toContain('console.log("healthy")');
 
     const cached = await cache.match(request);
@@ -588,22 +556,22 @@ describe('custom service worker API handler', () => {
   });
 
   it('does not cache incompatible HTML responses for script requests', async () => {
-    if (typeof caches === 'undefined' || !appShellHandler || !shellCacheName) {
+    const context = resolveShellTestContext();
+    if (!context) {
       return;
     }
 
     const request = new Request(`${globalThis.location.origin}/main-BAD.js`);
-    const cache = await caches.open(shellCacheName);
+    const cache = await caches.open(context.cacheName);
 
-    (globalThis as { fetch?: unknown }).fetch = () =>
-      Promise.resolve(
-        new Response('<html>wrong-mime</html>', {
-          status: 200,
-          headers: { 'Content-Type': 'text/html' },
-        })
-      );
+    setFetchResponse(
+      new Response('<html>wrong-mime</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      })
+    );
 
-    const result = await appShellHandler(request);
+    const result = await context.handler(request);
     expect(result.status).toBe(200);
     expect(await result.text()).toBe('<html>wrong-mime</html>');
 

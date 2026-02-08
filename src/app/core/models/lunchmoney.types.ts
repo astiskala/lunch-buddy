@@ -1,6 +1,6 @@
 /**
- * Lunch Money API Types
- * Based on the official Lunch Money API documentation
+ * @fileoverview Type definitions for Lunch Money API payloads.
+ * Definitions are based on the official Lunch Money API documentation.
  */
 
 export interface LunchMoneyUser {

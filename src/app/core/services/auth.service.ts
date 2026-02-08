@@ -28,40 +28,25 @@ export class AuthService {
     this.initialize();
   }
 
-  /**
-   * Get the current API key
-   */
   getApiKey(): string | null {
     return this.apiKey.getValue();
   }
 
-  /**
-   * Set and persist the API key
-   */
   setApiKey(key: string): void {
     this.storeApiKey(key);
     this.apiKey.next(key);
   }
 
-  /**
-   * Clear the API key (logout) and purge cached site data.
-   */
   async clearApiKey(): Promise<void> {
     this.removeApiKey();
     this.apiKey.next(null);
     await this.siteDataService.clearSiteData();
   }
 
-  /**
-   * Check if user has an API key
-   */
   hasApiKey(): boolean {
     return this.apiKey.getValue() !== null;
   }
 
-  /**
-   * Wait for the storage to initialize (needed before reading the API key)
-   */
   ready(): Promise<void> {
     if (!this.initialized) {
       this.initialized = true;

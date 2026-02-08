@@ -11,7 +11,7 @@ describe('LoggerService', () => {
   let consoleErrorSpy: Mock;
 
   beforeEach(() => {
-    // Setup console spies
+    // Set up console spies.
     consoleDebugSpy = vi.spyOn(console, 'debug');
     consoleInfoSpy = vi.spyOn(console, 'info');
     consoleWarnSpy = vi.spyOn(console, 'warn');
