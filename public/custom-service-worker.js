@@ -427,6 +427,11 @@ async function networkFirstAuthenticated(request) {
       return response;
     }
 
+    // Never serve cached personalized data when credentials are invalid.
+    if (response && (response.status === 401 || response.status === 403)) {
+      return response;
+    }
+
     // Non-OK response: try cached data if any; otherwise return the server's response.
     const cached = await findCachedResponse(request);
     return (
@@ -991,13 +996,22 @@ async function openDb() {
 }
 
 async function storeConfig(config) {
+  const nextConfig = config ?? defaultConfig();
   const db = await openDb();
   if (!db) {
+    if (didApiKeyChange(defaultConfig().apiKey, nextConfig.apiKey)) {
+      await clearApiCache();
+    }
     return;
   }
 
-  await putValue(db, CONFIG_STORE, CONFIG_KEY, config ?? defaultConfig());
+  const previousConfig = await getValue(db, CONFIG_STORE, CONFIG_KEY);
+  await putValue(db, CONFIG_STORE, CONFIG_KEY, nextConfig);
   db.close();
+
+  if (didApiKeyChange(previousConfig?.apiKey ?? null, nextConfig.apiKey)) {
+    await clearApiCache();
+  }
 }
 
 async function storeState(state) {
@@ -1048,6 +1062,21 @@ function getValue(db, storeName, key) {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => resolve(undefined);
   });
+}
+
+function didApiKeyChange(previousApiKey, nextApiKey) {
+  return (previousApiKey ?? null) !== (nextApiKey ?? null);
+}
+
+async function clearApiCache() {
+  try {
+    await caches.delete(API_CACHE_NAME);
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: failed to clear API cache',
+      error
+    );
+  }
 }
 
 globalThis.addEventListener('notificationclick', event => {

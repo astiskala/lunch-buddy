@@ -336,6 +336,26 @@ describe('custom service worker API handler', () => {
     expect(await result.text()).toBe('cached-auth-non-ok');
   });
 
+  it('does not fall back to cache when server returns 401 for authenticated requests', async () => {
+    if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
+      return;
+    }
+
+    const request = new Request('https://api.lunchmoney.dev/v2/summary', {
+      headers: { Authorization: 'Bearer test-key' },
+    });
+
+    const cache = await caches.open(apiCacheName);
+    await cache.put(request, new Response('stale-auth-cache', { status: 200 }));
+
+    (globalThis as { fetch?: unknown }).fetch = () =>
+      Promise.resolve(new Response('Unauthorized', { status: 401 }));
+
+    const result = await apiHandler(request);
+    expect(result.status).toBe(401);
+    expect(await result.text()).toBe('Unauthorized');
+  });
+
   it('returns server error response for authenticated requests when cache is empty', async () => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
       return;
