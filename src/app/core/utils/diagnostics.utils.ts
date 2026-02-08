@@ -85,7 +85,7 @@ const REDACTED_PATTERNS = [
  * Use this for common words that are sensitive on their own but safe as part of other keys.
  * e.g. "name" is redacted, but "categoryName" is allowed.
  */
-const REDACTED_KEYS = [
+const REDACTED_KEYS = new Set([
   'key',
   'auth',
   'first_name',
@@ -101,7 +101,7 @@ const REDACTED_KEYS = [
   'memo',
   'description',
   'desc',
-];
+]);
 
 /**
  * Redacts sensitive information from an object.
@@ -120,7 +120,7 @@ export function redact(obj: unknown, depth = 0): unknown {
   const record = obj as Record<string, unknown>;
 
   for (const key in record) {
-    if (Object.prototype.hasOwnProperty.call(record, key)) {
+    if (Object.hasOwn(record, key)) {
       const lowerKey = key.toLowerCase();
       const value = record[key];
 
@@ -131,7 +131,7 @@ export function redact(obj: unknown, depth = 0): unknown {
       const isRedactedPattern = REDACTED_PATTERNS.some(k =>
         lowerKey.includes(k)
       );
-      const isRedactedKey = REDACTED_KEYS.includes(lowerKey);
+      const isRedactedKey = REDACTED_KEYS.has(lowerKey);
 
       if (isRedactedPattern || isRedactedKey) {
         redacted[key] = '[REDACTED]';

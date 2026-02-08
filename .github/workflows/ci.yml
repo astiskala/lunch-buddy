@@ -1,6 +1,4 @@
 name: CI
-permissions:
-  contents: read
 
 on:
   push:
@@ -42,6 +40,8 @@ jobs:
   build-and-test:
     name: Lint, Test, and Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       CI: true
     steps:

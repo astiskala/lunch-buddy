@@ -11,7 +11,7 @@ describe('StatusBadgeComponent', () => {
   ): HTMLElement => {
     const element = host.querySelector(selector);
     if (!(element instanceof HTMLElement)) {
-      throw new Error(`Missing element: ${selector}`);
+      throw new TypeError(`Missing element: ${selector}`);
     }
     return element;
   };
@@ -35,7 +35,7 @@ describe('StatusBadgeComponent', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     const badge = getRequiredElement(host, '.status-badge');
-    expect(badge.getAttribute('data-status')).toBe('over');
+    expect(badge.dataset['status']).toBe('over');
     expect(badge.textContent.trim()).toBe('Over');
   });
 
@@ -44,7 +44,7 @@ describe('StatusBadgeComponent', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     const badge = getRequiredElement(host, '.status-badge');
-    expect(badge.getAttribute('data-status')).toBe('at-risk');
+    expect(badge.dataset['status']).toBe('at-risk');
     expect(badge.textContent.trim()).toBe('At risk');
   });
 
@@ -53,7 +53,7 @@ describe('StatusBadgeComponent', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     const badge = getRequiredElement(host, '.status-badge');
-    expect(badge.getAttribute('data-status')).toBe('on-track');
+    expect(badge.dataset['status']).toBe('on-track');
     expect(badge.textContent.trim()).toBe('On track');
   });
 });

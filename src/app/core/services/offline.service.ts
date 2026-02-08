@@ -30,13 +30,13 @@ export class OfflineService implements OnDestroy {
     globalThis.window.removeEventListener('offline', this.handleOfflineEvent);
   }
 
-  private handleOnlineEvent = () => {
+  private readonly handleOnlineEvent = () => {
     // navigator.onLine might be true but we might not have real connectivity
     void this.checkConnectivity();
     this.startHeartbeat();
   };
 
-  private handleOfflineEvent = () => {
+  private readonly handleOfflineEvent = () => {
     this.updateOnlineStatus(false);
     this.stopHeartbeat();
   };

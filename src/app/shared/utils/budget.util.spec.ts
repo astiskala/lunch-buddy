@@ -149,7 +149,7 @@ describe('Budget Utilities', () => {
 
     it('should return undefined for empty or null input', () => {
       expect(pickOccurrence([])).toBeUndefined();
-      expect(pickOccurrence(undefined)).toBeUndefined();
+      expect(pickOccurrence()).toBeUndefined();
     });
   });
 });

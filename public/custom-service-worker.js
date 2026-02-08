@@ -427,7 +427,7 @@ async function networkFirstAuthenticated(request) {
     }
 
     // Never serve cached personalized data when credentials are invalid.
-    if (response && (response.status === 401 || response.status === 403)) {
+    if (isUnauthorizedResponse(response)) {
       return response;
     }
 
@@ -436,22 +436,14 @@ async function networkFirstAuthenticated(request) {
     return (
       cached ??
       response ??
-      new Response(
-        JSON.stringify({
-          error: 'unavailable',
-          message: 'No cached data available and network returned no response',
-        }),
-        {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: { 'Content-Type': 'application/json' },
-        }
+      createServiceUnavailableResponse(
+        'unavailable',
+        'No cached data available and network returned no response'
       )
     );
   } catch (err) {
     // Handle aborted/failed fetches explicitly for Sonar/lint.
-    const name =
-      err && typeof err === 'object' && 'name' in err ? err.name : 'Error';
+    const name = getErrorName(err);
     const message =
       err && typeof err === 'object' && 'message' in err
         ? err.message
@@ -466,21 +458,47 @@ async function networkFirstAuthenticated(request) {
     if (cached) {
       return cached;
     }
-    return new Response(
-      JSON.stringify({
-        error: name === 'AbortError' ? 'timeout' : 'unavailable',
-        message:
-          name === 'AbortError'
-            ? 'Request timed out and no cache available'
-            : 'Network request failed and no cache available',
-      }),
-      {
-        status: 503,
-        statusText: 'Service Unavailable',
-        headers: { 'Content-Type': 'application/json' },
-      }
+    return buildUnavailableResponseFromError(name);
+  }
+}
+
+function isUnauthorizedResponse(response) {
+  return !!response && (response.status === 401 || response.status === 403);
+}
+
+function createServiceUnavailableResponse(error, message) {
+  return new Response(
+    JSON.stringify({
+      error,
+      message,
+    }),
+    {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+}
+
+function getErrorName(error) {
+  if (error && typeof error === 'object' && 'name' in error) {
+    return error.name;
+  }
+  return 'Error';
+}
+
+function buildUnavailableResponseFromError(errorName) {
+  if (errorName === 'AbortError') {
+    return createServiceUnavailableResponse(
+      'timeout',
+      'Request timed out and no cache available'
     );
   }
+
+  return createServiceUnavailableResponse(
+    'unavailable',
+    'Network request failed and no cache available'
+  );
 }
 
 async function findCachedResponse(request) {

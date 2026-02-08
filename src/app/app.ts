@@ -34,7 +34,9 @@ export class App implements OnInit {
   protected readonly _swUpdate = inject(SwUpdate);
 
   public ngOnInit(): void {
-    void this._appUpdateService.init();
+    this._appUpdateService.init().catch((error: unknown) => {
+      console.error('Failed to initialize app updates:', error);
+    });
 
     this._swUpdate.versionUpdates
       .pipe(
