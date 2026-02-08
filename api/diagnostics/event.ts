@@ -14,6 +14,20 @@ interface DiagnosticSessionMeta {
   userAgent?: string;
   createdAt: number;
   lastSeenAt: number;
+  expiresAt?: number;
+}
+
+function resolveRemainingTtlSeconds(expiresAt: number | undefined): number {
+  if (!expiresAt || !Number.isFinite(expiresAt)) {
+    return TTL;
+  }
+
+  const remainingMs = expiresAt - Date.now();
+  if (remainingMs <= 0) {
+    return 0;
+  }
+
+  return Math.max(1, Math.ceil(remainingMs / 1000));
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -37,14 +51,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // 1. Validate writeKey
-    const storedHash = await redis.get<string>(keys.writeKeyHash);
-    if (!storedHash) {
+    const [storedHash, meta] = await Promise.all([
+      redis.get<string>(keys.writeKeyHash),
+      redis.get<DiagnosticSessionMeta>(keys.meta),
+    ]);
+
+    if (!storedHash || !meta) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
     const providedHash = await hashWriteKey(writeKey);
     if (!safeCompare(providedHash, storedHash)) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const ttlSeconds = resolveRemainingTtlSeconds(meta.expiresAt);
+    if (ttlSeconds <= 0) {
+      await redis.del(keys.meta, keys.events, keys.writeKeyHash);
+      return res.status(410).json({ error: 'Session expired' });
     }
 
     // 2. Rate limiting
@@ -72,13 +96,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pipeline = redis.pipeline();
     pipeline.rpush(keys.events, ...validEvents);
     pipeline.ltrim(keys.events, -MAX_STORED_EVENTS, -1);
+    pipeline.expire(keys.events, ttlSeconds);
 
     // Update lastSeenAt in meta
-    const meta = await redis.get<DiagnosticSessionMeta>(keys.meta);
-    if (meta) {
-      meta.lastSeenAt = Date.now();
-      pipeline.set(keys.meta, meta, { ex: TTL });
-    }
+    meta.lastSeenAt = Date.now();
+    pipeline.set(keys.meta, meta, { ex: ttlSeconds });
+    pipeline.expire(keys.writeKeyHash, ttlSeconds);
 
     await pipeline.exec();
 
