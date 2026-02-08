@@ -1,4 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, switchMap, catchError, map } from 'rxjs';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import {
@@ -861,6 +862,26 @@ export class BudgetService {
     error: unknown,
     normalizedError: NormalizedError
   ): Error {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 401 || error.status === 403) {
+        return new Error(
+          'Authentication failed. Your Lunch Money API key may be missing, expired, or invalid. Use "Use different API key" to sign in again.'
+        );
+      }
+
+      if (error.status === 429) {
+        return new Error(
+          'Lunch Money is rate-limiting requests right now. Please wait a moment and retry.'
+        );
+      }
+
+      if (error.status >= 500) {
+        return new Error(
+          'Lunch Money is currently unavailable. Please retry in a moment.'
+        );
+      }
+    }
+
     if (
       error instanceof Error &&
       error.message.trim().length > 0 &&

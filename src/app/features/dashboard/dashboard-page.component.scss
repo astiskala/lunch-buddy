@@ -372,8 +372,15 @@
     margin: 8px 0;
   }
 
-  button {
+  .error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
     margin-top: 16px;
+  }
+
+  button {
     padding: 10px 24px;
     background: var(--color-error);
     color: white;
@@ -384,6 +391,12 @@
 
     &:hover {
       opacity: 0.9;
+    }
+
+    &.secondary {
+      background: transparent;
+      border: 1px solid var(--color-error-border, var(--color-error));
+      color: var(--color-error-text, var(--color-error));
     }
   }
 }

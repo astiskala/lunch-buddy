@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { vi, type Mock } from 'vitest';
 import {
@@ -236,6 +237,23 @@ describe('BudgetService background sync', () => {
         notificationsEnabled: true,
       })
     );
+  });
+
+  it('returns a friendly message for unauthorized API responses', () => {
+    initService();
+
+    lunchMoney.budgetSummary$.error(
+      new HttpErrorResponse({
+        status: 401,
+        statusText: 'Unauthorized',
+        url: 'https://api.lunchmoney.dev/v2/summary',
+      })
+    );
+
+    const errors = service.getErrors();
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toContain('Authentication failed');
+    expect(errors[0]?.message).toContain('Use "Use different API key"');
   });
 
   it('loads schema-versioned preferences on initialization', () => {

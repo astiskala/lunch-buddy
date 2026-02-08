@@ -69,9 +69,14 @@
     <div class="error-state">
       <h3>Error Loading Budget</h3>
       @for (error of errors(); track error) {
-        <p class="error-message">{{ errorToString(error) }}</p>
+        <p class="error-message">{{ error.message }}</p>
       }
-      <button (click)="refresh()">Retry</button>
+      <div class="error-actions">
+        <button type="button" (click)="refresh()">Retry</button>
+        <button type="button" class="secondary" (click)="logout()">
+          Use different API key
+        </button>
+      </div>
     </div>
   } @else {
     <div class="dashboard-header">
