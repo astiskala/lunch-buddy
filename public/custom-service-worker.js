@@ -56,6 +56,7 @@ function getNetworkTimeout() {
   return 10000;
 }
 const CACHE_FALLBACK_DELAY_MS = 500;
+const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const defaultConfig = () => ({
   apiKey: null,
@@ -141,6 +142,7 @@ globalThis.addEventListener('activate', event => {
           (name.startsWith(SHELL_CACHE_PREFIX) && name !== SHELL_CACHE_NAME)
       );
       await Promise.all(cachesToDelete.map(name => caches.delete(name)));
+      await pruneApiCache();
       await globalThis.clients.claim();
     })()
   );
@@ -291,6 +293,73 @@ async function warmShellCache() {
   }
 }
 
+/**
+ * Stores a response in the API cache with a custom timestamp header.
+ */
+async function putInApiCache(request, response) {
+  try {
+    const cache = await caches.open(API_CACHE_NAME);
+    const headers = new Headers(response.headers);
+    headers.set('x-lunchbuddy-cached-at', Date.now().toString());
+
+    const blob = await response.blob();
+    const timestampedResponse = new Response(blob, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: headers,
+    });
+
+    await cache.put(request, timestampedResponse);
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: failed to cache API response with timestamp',
+      error
+    );
+  }
+}
+
+/**
+ * Checks if a cached response has expired based on its timestamp or Date header.
+ */
+function isResponseExpired(response, now) {
+  const cachedAt = response.headers.get('x-lunchbuddy-cached-at');
+  if (cachedAt) {
+    const date = Number.parseInt(cachedAt, 10);
+    return !Number.isNaN(date) && now - date > MAX_CACHE_AGE_MS;
+  }
+
+  const dateHeader = response.headers.get('Date');
+  if (dateHeader) {
+    const date = Date.parse(dateHeader);
+    return !Number.isNaN(date) && now - date > MAX_CACHE_AGE_MS;
+  }
+
+  return false;
+}
+
+/**
+ * Prunes the API cache by removing entries older than MAX_CACHE_AGE_MS.
+ */
+async function pruneApiCache() {
+  try {
+    const cache = await caches.open(API_CACHE_NAME);
+    const requests = await cache.keys();
+    const now = Date.now();
+
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (response && isResponseExpired(response, now)) {
+        await cache.delete(request);
+      }
+    }
+  } catch (error) {
+    console.warn(
+      '[WARN] custom-service-worker: API cache pruning failed',
+      error
+    );
+  }
+}
+
 async function handleApiRequest(request) {
   // For authenticated requests, prefer network-first to avoid offline stubs
   // on first login when caches are empty.
@@ -308,8 +377,7 @@ async function handleApiRequest(request) {
         getNetworkTimeout()
       );
       if (response?.ok) {
-        const cache = await caches.open(API_CACHE_NAME);
-        await cache.put(request, response.clone());
+        await putInApiCache(request, response.clone());
       }
       return response ?? null;
     } catch (error) {
@@ -355,8 +423,7 @@ async function networkFirstAuthenticated(request) {
       getNetworkTimeout()
     );
     if (response?.ok) {
-      const cache = await caches.open(API_CACHE_NAME);
-      await cache.put(request, response.clone());
+      await putInApiCache(request, response.clone());
       return response;
     }
 

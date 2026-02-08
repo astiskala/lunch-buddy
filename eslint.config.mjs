@@ -126,6 +126,7 @@ export default tseslint.config(
         fetch: 'readonly',
         Request: 'readonly',
         Response: 'readonly',
+        Headers: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
         AbortController: 'readonly',
