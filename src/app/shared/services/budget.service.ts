@@ -53,8 +53,14 @@ const defaultCategoryPreferences: CategoryPreferences = {
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
+const PREFERENCES_SCHEMA_VERSION = 1;
 const UNCATEGORISED_EXPENSES_LABEL = 'Uncategorised Expenses';
 const UNCATEGORISED_INCOME_LABEL = 'Uncategorised Income';
+
+interface PersistedCategoryPreferences {
+  version: number;
+  preferences: CategoryPreferences;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -185,9 +191,14 @@ export class BudgetService {
     try {
       const stored = localStorage.getItem(PREFERENCES_KEY);
       if (stored) {
+        const parsed = JSON.parse(stored) as
+          | Partial<CategoryPreferences>
+          | Partial<PersistedCategoryPreferences>;
+
+        const preferences = this.extractStoredPreferences(parsed);
         return {
           ...defaultCategoryPreferences,
-          ...(JSON.parse(stored) as Partial<CategoryPreferences>),
+          ...preferences,
         };
       }
     } catch (error: unknown) {
@@ -198,10 +209,35 @@ export class BudgetService {
 
   private savePreferences(prefs: CategoryPreferences): void {
     try {
-      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
+      const payload: PersistedCategoryPreferences = {
+        version: PREFERENCES_SCHEMA_VERSION,
+        preferences: prefs,
+      };
+      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(payload));
     } catch (error: unknown) {
       this.logger.error('Failed to save preferences', error);
     }
+  }
+
+  private extractStoredPreferences(
+    parsed: Partial<CategoryPreferences> | Partial<PersistedCategoryPreferences>
+  ): Partial<CategoryPreferences> {
+    if (this.isPersistedPreferences(parsed)) {
+      return parsed.preferences;
+    }
+
+    return parsed as Partial<CategoryPreferences>;
+  }
+
+  private isPersistedPreferences(
+    value: Partial<CategoryPreferences> | Partial<PersistedCategoryPreferences>
+  ): value is PersistedCategoryPreferences {
+    const maybePersisted = value as Partial<PersistedCategoryPreferences>;
+    return (
+      typeof maybePersisted.version === 'number' &&
+      !!maybePersisted.preferences &&
+      typeof maybePersisted.preferences === 'object'
+    );
   }
 
   updatePreferences(

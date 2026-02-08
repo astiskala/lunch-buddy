@@ -124,6 +124,19 @@ const storePreferences = (prefs: Partial<CategoryPreferences>) => {
   localStorage.setItem(
     PREFERENCES_KEY,
     JSON.stringify({
+      version: 1,
+      preferences: {
+        ...defaultPreferences,
+        ...prefs,
+      },
+    })
+  );
+};
+
+const storeLegacyPreferences = (prefs: Partial<CategoryPreferences>) => {
+  localStorage.setItem(
+    PREFERENCES_KEY,
+    JSON.stringify({
       ...defaultPreferences,
       ...prefs,
     })
@@ -202,7 +215,7 @@ describe('BudgetService background sync', () => {
   };
 
   it('syncs stored preferences on initialization', () => {
-    storePreferences({
+    storeLegacyPreferences({
       notificationsEnabled: true,
       hiddenCategoryIds: [5],
     });
@@ -223,6 +236,19 @@ describe('BudgetService background sync', () => {
         notificationsEnabled: true,
       })
     );
+  });
+
+  it('loads schema-versioned preferences on initialization', () => {
+    storePreferences({
+      notificationsEnabled: true,
+      hiddenCategoryIds: [7],
+    });
+
+    initService();
+
+    const prefs = service.getPreferences();
+    expect(prefs.hiddenCategoryIds).toEqual([7]);
+    expect(prefs.notificationsEnabled).toBe(true);
   });
 
   it('updates background sync when preferences change', () => {
