@@ -42,7 +42,19 @@ const SHELL_ASSET_EXTENSIONS = new Set([
   '.gif',
 ]);
 // Increase timeout to avoid premature aborts on first-run authenticated requests.
-const NETWORK_TIMEOUT_MS = 5000;
+// Dynamic timeout based on connection quality (fallback to 10s).
+function getNetworkTimeout() {
+  const connection = globalThis.navigator?.connection;
+  if (connection?.effectiveType) {
+    if (connection.effectiveType.includes('2g')) {
+      return 20000;
+    }
+    if (connection.effectiveType === '3g') {
+      return 15000;
+    }
+  }
+  return 10000;
+}
 const CACHE_FALLBACK_DELAY_MS = 500;
 
 const defaultConfig = () => ({
@@ -178,7 +190,7 @@ async function handleNavigationRequest() {
     // Prefer fresh HTML so hashed bundle references stay in sync across deploys.
     const response = await fetchWithTimeout(
       new Request(APP_SHELL_URL),
-      NETWORK_TIMEOUT_MS
+      getNetworkTimeout()
     );
     if (shouldCacheShellResponse(response)) {
       await storeShellResponse(APP_SHELL_URL, response.clone());
@@ -293,7 +305,7 @@ async function handleApiRequest(request) {
     try {
       const response = await fetchWithTimeout(
         request.clone(),
-        NETWORK_TIMEOUT_MS
+        getNetworkTimeout()
       );
       if (response?.ok) {
         const cache = await caches.open(API_CACHE_NAME);
@@ -340,7 +352,7 @@ async function networkFirstAuthenticated(request) {
   try {
     const response = await fetchWithTimeout(
       request.clone(),
-      NETWORK_TIMEOUT_MS
+      getNetworkTimeout()
     );
     if (response?.ok) {
       const cache = await caches.open(API_CACHE_NAME);
