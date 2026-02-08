@@ -1,3 +1,3 @@
-# GitHub Copilot Instructions
+# Gemini Instructions
 
 Refer to [AGENTS.md](../AGENTS.md) for project-specific instructions, local commands, and testing guidelines.
