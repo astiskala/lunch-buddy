@@ -1,5 +1,5 @@
 import { RecurringInstance } from '../../core/models/lunchmoney.types';
-import { getWindowRange, startOfDay } from './date.util';
+import { getWindowRange, parseDateString, startOfDay } from './date.util';
 
 export interface RecurringDateOptions {
   windowStart?: string;
@@ -8,12 +8,7 @@ export interface RecurringDateOptions {
 }
 
 const parseDate = (value: string | null | undefined): Date | null => {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return parseDateString(value);
 };
 
 const lastDayOfMonth = (date: Date): Date => {

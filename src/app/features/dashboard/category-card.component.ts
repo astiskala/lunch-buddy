@@ -31,6 +31,7 @@ import {
   formatMonthDay,
   getWindowRange,
   isPastDate,
+  parseDateString,
   startOfDay,
 } from '../../shared/utils/date.util';
 import { toPercent } from '../../shared/utils/number.util';
@@ -294,7 +295,7 @@ export class CategoryCardComponent {
         transaction.to_base ?? null
       );
       const amount = isIncomeCategory ? Math.abs(rawAmount) : rawAmount;
-      const date = new Date(transaction.date);
+      const date = parseDateString(transaction.date);
       const rawLabel = transaction.payee;
       const label = decodeHtmlEntities(rawLabel) || 'Unknown payee';
       const notes = transaction.notes
@@ -309,7 +310,7 @@ export class CategoryCardComponent {
       return {
         id: `txn-${transaction.id.toString()}`,
         kind: 'transaction',
-        date: Number.isNaN(date.getTime()) ? null : date,
+        date,
         label,
         notes,
         amount,
@@ -583,8 +584,8 @@ export class CategoryCardComponent {
     dateValue: string,
     windowRange: { start: Date; end: Date } | null
   ): Date | null {
-    const entryDate = new Date(dateValue);
-    if (Number.isNaN(entryDate.getTime())) {
+    const entryDate = parseDateString(dateValue);
+    if (!entryDate) {
       return null;
     }
     if (!this.isWithinWindowRange(entryDate, windowRange)) {
@@ -610,20 +611,18 @@ export class CategoryCardComponent {
     );
   }
 
-  private isDateUsable(date: Date): boolean {
-    return !Number.isNaN(date.getTime());
-  }
-
   private isTransactionDateRelevant(
     txn: Transaction,
     occurrence: Date,
     toleranceMs: number
   ): boolean {
-    const txnDate = startOfDay(new Date(txn.date));
-    return (
-      this.isDateUsable(txnDate) &&
-      this.isWithinDateTolerance(txnDate, occurrence, toleranceMs)
-    );
+    const parsed = parseDateString(txn.date);
+    if (!parsed) {
+      return false;
+    }
+
+    const txnDate = startOfDay(parsed);
+    return this.isWithinDateTolerance(txnDate, occurrence, toleranceMs);
   }
 
   private isWithinDateTolerance(

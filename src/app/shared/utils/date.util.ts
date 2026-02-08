@@ -5,6 +5,8 @@ export interface MonthRange {
   end: Date;
 }
 
+const ISO_DAY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
 export const getCurrentMonthRange = (today = new Date()): MonthRange => ({
   start: startOfMonth(today),
   end: endOfMonth(today),
@@ -22,6 +24,48 @@ export const getMonthProgress = (today = new Date()): number => {
   const elapsedDays = differenceInCalendarDays(today, start) + 1;
   const totalDays = differenceInCalendarDays(end, start) + 1;
   return Math.min(1, Math.max(0, elapsedDays / totalDays));
+};
+
+export const parseDateString = (
+  value: string | null | undefined
+): Date | null => {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const dayMatch = ISO_DAY_PATTERN.exec(trimmed);
+  if (dayMatch) {
+    const year = Number.parseInt(dayMatch[1], 10);
+    const month = Number.parseInt(dayMatch[2], 10);
+    const day = Number.parseInt(dayMatch[3], 10);
+
+    if (
+      !Number.isFinite(year) ||
+      !Number.isFinite(month) ||
+      !Number.isFinite(day)
+    ) {
+      return null;
+    }
+
+    const parsed = new Date(year, month - 1, day);
+    if (
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return parsed;
+  }
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
 export const startOfToday = (): Date => {
@@ -114,12 +158,8 @@ function differenceInCalendarDays(dateLeft: Date, dateRight: Date): number {
 }
 
 function parseIsoDay(value: string): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
+  const parsed = parseDateString(value);
+  if (!parsed) {
     return null;
   }
 

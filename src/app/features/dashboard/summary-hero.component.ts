@@ -15,6 +15,7 @@ import {
   formatCurrency,
   FormatCurrencyOptions,
 } from '../../shared/utils/currency.util';
+import { parseDateString } from '../../shared/utils/date.util';
 import { toPercent } from '../../shared/utils/number.util';
 
 /**
@@ -148,8 +149,8 @@ export class SummaryHeroComponent {
   ]);
 
   readonly monthName = computed(() => {
-    const date = new Date(this.monthStart());
-    if (Number.isNaN(date.getTime())) {
+    const date = parseDateString(this.monthStart());
+    if (!date) {
       return '';
     }
     return formatDate(date, 'MMMM y', this.locale);

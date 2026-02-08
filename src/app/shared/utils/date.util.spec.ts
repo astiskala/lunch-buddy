@@ -7,6 +7,7 @@ import {
   formatMonthDay,
   getWindowRange,
   isPastDate,
+  parseDateString,
 } from './date.util';
 
 describe('Date Utils', () => {
@@ -19,6 +20,26 @@ describe('Date Utils', () => {
     it('should pad single digit months and days', () => {
       const date = new Date('2025-01-05');
       expect(toIsoDate(date)).toBe('2025-01-05');
+    });
+  });
+
+  describe('parseDateString', () => {
+    it('should parse day-only strings in local time without shifting the day', () => {
+      const parsed = parseDateString('2025-10-01');
+      expect(parsed).not.toBeNull();
+      expect(parsed?.getFullYear()).toBe(2025);
+      expect(parsed?.getMonth()).toBe(9);
+      expect(parsed?.getDate()).toBe(1);
+    });
+
+    it('should parse full ISO timestamps', () => {
+      const parsed = parseDateString('2025-10-01T00:00:00.000Z');
+      expect(parsed).not.toBeNull();
+      expect(parsed?.toISOString()).toBe('2025-10-01T00:00:00.000Z');
+    });
+
+    it('should reject invalid day-only values', () => {
+      expect(parseDateString('2025-02-30')).toBeNull();
     });
   });
 
