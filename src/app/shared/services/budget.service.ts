@@ -99,6 +99,8 @@ export class BudgetService {
       return this.startDate() < this.currentMonthStartKey;
     }
 
+    const todayKey = toIsoDate(new Date());
+
     if (mode === 'sub-monthly') {
       const periods = this.detectedPeriods();
       if (periods.length === 0) {
@@ -112,11 +114,11 @@ export class BudgetService {
 
       const anchor = periods[periods.length - 1];
       const shifted = shiftPeriod(anchor.startDate, anchor.endDate, 1);
-      return shifted !== null && shifted.start <= this.currentMonthStartKey;
+      return shifted !== null && shifted.start <= todayKey;
     }
 
     const shifted = shiftPeriod(this.startDate(), this.endDate(), 1);
-    return shifted !== null && shifted.start <= this.currentMonthStartKey;
+    return shifted !== null && shifted.start <= todayKey;
   });
 
   // Data state.
@@ -1005,8 +1007,10 @@ export class BudgetService {
       return;
     }
 
+    const todayKey = toIsoDate(new Date());
+
     // Prevent navigating into future periods when moving forward.
-    if (direction === 1 && shifted.start > this.currentMonthStartKey) {
+    if (direction === 1 && shifted.start > todayKey) {
       return;
     }
 

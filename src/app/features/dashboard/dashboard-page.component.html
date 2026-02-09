@@ -245,6 +245,7 @@
       [items]="filteredVisibleItems()"
       [hiddenItems]="filteredHiddenItems()"
       [preferences]="preferences()"
+      [showCustomPeriodSetting]="showCustomPeriodSetting()"
       (dialogClose)="closePreferencesDialog()"
       (preferencesChange)="handlePreferencesChange($event)"
       (customPeriodRequested)="openCustomPeriodDialogFromSettings()" />

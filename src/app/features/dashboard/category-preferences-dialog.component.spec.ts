@@ -230,6 +230,28 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(customPeriodSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('hides custom period setting when not applicable', () => {
+    setRequiredInputs();
+    fixture.componentRef.setInput('showCustomPeriodSetting', false);
+
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).not.toContain('Custom budget period');
+    expect(host.querySelector('.custom-period-button')).toBeNull();
+  });
+
+  it('shows custom period setting when applicable', () => {
+    setRequiredInputs();
+    fixture.componentRef.setInput('showCustomPeriodSetting', true);
+
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Custom budget period');
+    expect(host.querySelector('.custom-period-button')).not.toBeNull();
+  });
+
   it('resets preferences to defaults', () => {
     component.orderedIds.set([1]);
     component.hiddenIds.set(new Set([2]));

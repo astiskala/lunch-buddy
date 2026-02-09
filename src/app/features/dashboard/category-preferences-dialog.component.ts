@@ -76,6 +76,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   readonly items = input.required<BudgetProgress[]>();
   readonly hiddenItems = input.required<BudgetProgress[]>();
   readonly preferences = input.required<CategoryPreferences>();
+  readonly showCustomPeriodSetting = input(false);
 
   readonly dialogClose = output();
   readonly preferencesChange = output<CategoryPreferences>();

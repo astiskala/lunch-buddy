@@ -156,7 +156,7 @@ describe('SummaryHeroComponent', () => {
   it('should emit previousMonth event when previous button clicked', () => {
     expectEventEmitted(listener => {
       component.previousMonth.subscribe(listener);
-    }, 'button[aria-label="View previous month"]');
+    }, 'button[aria-label="View previous period"]');
   });
 
   it('should emit nextMonth event when enabled and clicked', () => {
@@ -167,7 +167,7 @@ describe('SummaryHeroComponent', () => {
 
     render({ canGoToNextMonth: true });
 
-    const button = queryButton('button[aria-label="View next month"]');
+    const button = queryButton('button[aria-label="View next period"]');
     expect(button).not.toBeNull();
     expect(button?.disabled).toBe(false);
     button?.click();
@@ -178,7 +178,7 @@ describe('SummaryHeroComponent', () => {
   it('should hide next month button when viewing current month', () => {
     render({ canGoToNextMonth: false });
 
-    const button = queryButton('button[aria-label="View next month"]');
+    const button = queryButton('button[aria-label="View next period"]');
     expect(button).toBeNull();
   });
 

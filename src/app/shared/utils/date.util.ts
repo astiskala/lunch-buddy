@@ -168,7 +168,14 @@ export const formatDateRange = (
     return '';
   }
 
-  return `${formatMonthDay(start, locale)} – ${formatMonthDay(end, locale)}, ${end.getFullYear().toString()}`;
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+
+  if (startYear === endYear) {
+    return `${formatMonthDay(start, locale)} – ${formatMonthDay(end, locale)}, ${endYear.toString()}`;
+  }
+
+  return `${formatMonthDay(start, locale)} ${startYear.toString()} – ${formatMonthDay(end, locale)} ${endYear.toString()}`;
 };
 
 export const shiftPeriod = (

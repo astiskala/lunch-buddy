@@ -221,6 +221,9 @@ export class DashboardPageComponent {
   protected readonly customPeriodDialogOpen = computed(
     () => this.nonAlignedPeriodRequired() || this.showCustomPeriodDialog()
   );
+  protected readonly showCustomPeriodSetting = computed(
+    () => this.periodMode() === 'non-aligned'
+  );
 
   private getFilterDescription(): string | null {
     switch (this.statusFilter()) {

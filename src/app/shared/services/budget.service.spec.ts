@@ -705,6 +705,57 @@ describe('BudgetService background sync', () => {
     expect(refreshSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('allows moving to the next non-aligned period when it starts before today', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 1, 20, 12));
+      initService();
+
+      const refreshSpy = vi.spyOn(service, 'refresh');
+      service.setCustomPeriod('2026-02-01', '2026-02-13');
+      refreshSpy.mockClear();
+
+      expect(service.getCanNavigateToNextMonth()).toBe(true);
+
+      service.goToNextPeriod();
+
+      expect(service.getStartDate()).toBe('2026-02-14');
+      expect(service.getEndDate()).toBe('2026-02-26');
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('allows moving forward from the last sub-monthly period when the shifted period starts before today', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 0, 25, 12));
+      initService();
+
+      lunchMoney.budgetSummary$.next({
+        aligned: true,
+        items: [createSummary(service.getStartDate(), {})],
+        periods: [
+          { startDate: '2026-01-01', endDate: '2026-01-10' },
+          { startDate: '2026-01-11', endDate: '2026-01-20' },
+        ],
+      });
+
+      expect(service.getPeriodMode()).toBe('sub-monthly');
+      expect(service.getStartDate()).toBe('2026-01-01');
+      expect(service.getEndDate()).toBe('2026-01-10');
+
+      service.goToNextPeriod();
+
+      expect(service.getStartDate()).toBe('2026-01-11');
+      expect(service.getEndDate()).toBe('2026-01-20');
+      expect(service.getCanNavigateToNextMonth()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps period-step direction when crossing sub-monthly month boundaries', () => {
     lunchMoney.budgetSummaryQueue = [
       {
