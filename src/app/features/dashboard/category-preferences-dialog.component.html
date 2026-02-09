@@ -50,25 +50,27 @@
         </div>
       </div>
 
-      <div class="setting-section">
-        <div class="setting-header">
-          <div class="setting-info">
-            <h3>Custom budget period</h3>
-            <p>
-              Change the date range if your budget uses non-monthly periods or
-              if you entered the wrong dates.
-            </p>
+      @if (showCustomPeriodSetting()) {
+        <div class="setting-section">
+          <div class="setting-header">
+            <div class="setting-info">
+              <h3>Custom budget period</h3>
+              <p>
+                Change the date range if your budget uses non-monthly periods or
+                if you entered the wrong dates.
+              </p>
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              class="custom-period-button"
+              (click)="handleCustomPeriodRequest()">
+              <mat-icon fontIcon="calendar_month"></mat-icon>
+              Change period
+            </button>
           </div>
-          <button
-            mat-stroked-button
-            type="button"
-            class="custom-period-button"
-            (click)="handleCustomPeriodRequest()">
-            <mat-icon fontIcon="calendar_month"></mat-icon>
-            Change period
-          </button>
         </div>
-      </div>
+      }
 
       <!-- Notifications -->
       <div class="setting-section">

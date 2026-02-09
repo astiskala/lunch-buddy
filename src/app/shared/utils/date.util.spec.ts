@@ -204,6 +204,14 @@ describe('Date Utils', () => {
       expect(result).toContain('2025');
     });
 
+    it('should include both years for cross-year ranges', () => {
+      const result = formatDateRange('2025-12-29', '2026-01-11', 'en-US');
+      expect(result).toContain('Dec');
+      expect(result).toContain('Jan');
+      expect(result).toContain('2025');
+      expect(result).toContain('2026');
+    });
+
     it('should return empty string for invalid dates', () => {
       expect(formatDateRange('', '2025-10-14', 'en-US')).toBe('');
       expect(formatDateRange('2025-10-01', '', 'en-US')).toBe('');

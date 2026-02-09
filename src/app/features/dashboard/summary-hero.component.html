@@ -5,7 +5,7 @@
         type="button"
         class="month-nav-btn"
         (click)="previousMonth.emit()"
-        aria-label="View previous month">
+        aria-label="View previous period">
         <mat-icon>chevron_left</mat-icon>
       </button>
       <h2>{{ periodLabel() }}</h2>
@@ -14,7 +14,7 @@
           type="button"
           class="month-nav-btn"
           (click)="nextMonth.emit()"
-          aria-label="View next month">
+          aria-label="View next period">
           <mat-icon>chevron_right</mat-icon>
         </button>
       } @else {
