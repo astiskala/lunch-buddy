@@ -4,14 +4,17 @@ import { Observable, forkJoin, map } from 'rxjs';
 import {
   LunchMoneyUser,
   LunchMoneyCategory,
-  BudgetSummaryItem,
+  BudgetSummaryResult,
   TransactionsResponse,
   RecurringExpense,
   RecurringItemResponse,
   SummaryResponse,
 } from '../models/lunchmoney.types';
 import { environment } from '../../../environments/environment';
-import { mergeSummaryWithCategories } from '../../shared/utils/budget.util';
+import {
+  mergeSummaryWithCategories,
+  extractPeriods,
+} from '../../shared/utils/budget.util';
 
 const normalizeBaseUrl = (baseUrl: string): string => {
   let url = baseUrl;
@@ -63,7 +66,7 @@ export class LunchMoneyService {
   getBudgetSummary(
     startDate: string,
     endDate: string
-  ): Observable<BudgetSummaryItem[]> {
+  ): Observable<BudgetSummaryResult> {
     const summaryParams = new HttpParams()
       .set('start_date', startDate)
       .set('end_date', endDate)
@@ -77,9 +80,11 @@ export class LunchMoneyService {
     const categories$ = this.getCategories();
 
     return forkJoin({ summary: summary$, categories: categories$ }).pipe(
-      map(({ summary, categories }) =>
-        mergeSummaryWithCategories(summary, categories)
-      )
+      map(({ summary, categories }) => ({
+        aligned: summary.aligned,
+        items: mergeSummaryWithCategories(summary, categories),
+        periods: extractPeriods(summary),
+      }))
     );
   }
 

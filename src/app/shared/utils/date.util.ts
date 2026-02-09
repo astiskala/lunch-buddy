@@ -135,6 +135,64 @@ export const deriveReferenceDate = (
   return today;
 };
 
+export const getPeriodProgress = (
+  periodStart: string,
+  periodEnd: string,
+  today = new Date()
+): number => {
+  const start = parseIsoDay(periodStart);
+  const end = parseIsoDay(periodEnd);
+
+  if (!start || !end) {
+    return 0;
+  }
+
+  const totalDays = differenceInCalendarDays(end, start) + 1;
+  if (totalDays <= 0) {
+    return 0;
+  }
+
+  const elapsedDays = differenceInCalendarDays(today, start) + 1;
+  return Math.min(1, Math.max(0, elapsedDays / totalDays));
+};
+
+export const formatDateRange = (
+  startDateStr: string,
+  endDateStr: string,
+  locale: string
+): string => {
+  const start = parseIsoDay(startDateStr);
+  const end = parseIsoDay(endDateStr);
+
+  if (!start || !end) {
+    return '';
+  }
+
+  return `${formatMonthDay(start, locale)} – ${formatMonthDay(end, locale)}, ${end.getFullYear().toString()}`;
+};
+
+export const shiftPeriod = (
+  startDateStr: string,
+  endDateStr: string,
+  direction: 1 | -1
+): { start: string; end: string } | null => {
+  const start = parseIsoDay(startDateStr);
+  const end = parseIsoDay(endDateStr);
+
+  if (!start || !end) {
+    return null;
+  }
+
+  const periodDays = differenceInCalendarDays(end, start) + 1;
+  const shiftDays = direction * periodDays;
+  const newStart = new Date(start);
+  const newEnd = new Date(end);
+  newStart.setDate(newStart.getDate() + shiftDays);
+  newEnd.setDate(newEnd.getDate() + shiftDays);
+
+  return { start: toIsoDate(newStart), end: toIsoDate(newEnd) };
+};
+
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }

@@ -1,0 +1,58 @@
+<dialog
+  #dialogElement
+  class="dialog-container"
+  (cancel)="handleClose()"
+  aria-labelledby="custom-period-dialog-title">
+  <div class="dialog-content-wrapper">
+    <div class="dialog-header">
+      <h2 id="custom-period-dialog-title">Custom Budget Period</h2>
+      <button mat-icon-button (click)="handleClose()" aria-label="Close dialog">
+        <mat-icon fontIcon="close"></mat-icon>
+      </button>
+    </div>
+
+    <div class="dialog-content">
+      <p class="description">
+        Your budget uses custom periods that don't align with calendar months.
+        Enter the start and end dates for the budget period you'd like to view.
+      </p>
+
+      <div class="date-fields">
+        <div class="field">
+          <label for="period-start">Start date</label>
+          <input
+            id="period-start"
+            type="date"
+            [value]="startDate()"
+            (change)="handleStartDateChange($event)" />
+        </div>
+
+        <div class="field">
+          <label for="period-end">End date</label>
+          <input
+            id="period-end"
+            type="date"
+            [value]="endDate()"
+            (change)="handleEndDateChange($event)" />
+        </div>
+      </div>
+
+      @if (validationError()) {
+        <p class="validation-error">{{ validationError() }}</p>
+      }
+    </div>
+
+    <div class="dialog-footer">
+      <button mat-stroked-button type="button" (click)="handleClose()">
+        Cancel
+      </button>
+      <button
+        mat-flat-button
+        type="button"
+        color="primary"
+        (click)="handleSubmit()">
+        View Period
+      </button>
+    </div>
+  </div>
+</dialog>

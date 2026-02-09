@@ -50,6 +50,26 @@
         </div>
       </div>
 
+      <div class="setting-section">
+        <div class="setting-header">
+          <div class="setting-info">
+            <h3>Custom budget period</h3>
+            <p>
+              Change the date range if your budget uses non-monthly periods or
+              if you entered the wrong dates.
+            </p>
+          </div>
+          <button
+            mat-stroked-button
+            type="button"
+            class="custom-period-button"
+            (click)="handleCustomPeriodRequest()">
+            <mat-icon fontIcon="calendar_month"></mat-icon>
+            Change period
+          </button>
+        </div>
+      </div>
+
       <!-- Notifications -->
       <div class="setting-section">
         <div class="setting-header">
@@ -256,30 +276,28 @@
           support.
         </p>
       </div>
+    </div>
 
-      <div class="dialog-actions">
-        <div class="actions-left">
-          <span class="version">Version {{ version }}</span>
-          <a
-            class="github-link"
-            href="https://github.com/astiskala/lunch-buddy"
-            target="_blank"
-            rel="noopener noreferrer">
-            About &amp; support
-          </a>
-        </div>
-        <div class="actions-right">
-          <button mat-button type="button" (click)="handleClose()">
-            Cancel
-          </button>
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            (click)="handleSave()">
-            Save
-          </button>
-        </div>
+    <div class="dialog-actions">
+      <div class="actions-left">
+        <span class="version">Version {{ version }}</span>
+        <a
+          class="github-link"
+          href="https://github.com/astiskala/lunch-buddy"
+          target="_blank"
+          rel="noopener noreferrer">
+          About &amp; support
+        </a>
+      </div>
+      <div class="actions-right">
+        <button mat-button type="button" (click)="handleClose()">Cancel</button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="handleSave()">
+          Save
+        </button>
       </div>
     </div>
   </div>

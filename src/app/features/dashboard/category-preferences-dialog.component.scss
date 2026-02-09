@@ -1,60 +1,20 @@
+@use 'styles/mixins' as *;
+
 :host {
   display: block;
 }
 
-dialog.dialog-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  border: none;
-  border-radius: 12px;
-  padding: 0;
-  width: min(600px, calc(100vw - 32px));
-  max-height: min(90vh, calc(100vh - 32px));
-  box-shadow: var(--shadow-lg);
-  background: var(--color-surface);
-  z-index: 1000;
+@include dialog(600px);
 
-  &::backdrop {
-    background: rgb(0 0 0 / 50%);
-  }
-}
-
-.dialog-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  max-height: inherit;
-}
-
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 24px 16px;
-  border-bottom: 1px solid var(--color-border);
-
-  h2 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-  }
-
-  button[mat-icon-button] {
-    color: var(--color-text-tertiary);
-
-    &:hover {
-      color: var(--color-text-primary);
-    }
-  }
+.dialog-header h2 {
+  font-size: 24px;
 }
 
 .dialog-content {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  min-height: 0;
 }
 
 .setting-section {
@@ -97,6 +57,11 @@ dialog.dialog-container {
       line-height: 1.4;
     }
   }
+}
+
+.custom-period-button {
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .toggle-container {
@@ -225,9 +190,7 @@ dialog.dialog-container {
   background: var(--color-bg-secondary);
   text-align: left;
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+  @include transition-interactive;
 
   &:hover {
     background: var(--color-bg-tertiary);
@@ -318,12 +281,22 @@ dialog.dialog-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: nowrap;
   padding: 16px 24px;
   border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
 
   .actions-right {
     display: flex;
     gap: 12px;
+    flex-wrap: nowrap;
+
+    button {
+      min-width: 96px;
+    }
   }
 
   button[mat-stroked-button] {
@@ -338,6 +311,7 @@ dialog.dialog-container {
   display: flex;
   align-items: center;
   gap: 16px;
+  row-gap: 0;
   flex-wrap: wrap;
 }
 
@@ -360,25 +334,6 @@ dialog.dialog-container {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
     text-decoration: underline;
-  }
-}
-
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-
-  input {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-
-  .checkbox-label {
-    font-weight: 500;
-    font-size: 14px;
-    color: var(--color-text-primary);
   }
 }
 
@@ -421,14 +376,6 @@ dialog.dialog-container {
     }
   }
 
-  .detail-option {
-    .detail-note {
-      margin: 4px 0 0 26px;
-      font-size: 12px;
-      color: var(--color-text-tertiary);
-    }
-  }
-
   .action-buttons {
     display: flex;
     gap: 12px;
@@ -467,19 +414,17 @@ dialog.dialog-container {
   }
 
   .dialog-actions {
-    flex-direction: column;
     gap: 12px;
-    align-items: stretch;
 
     .actions-left {
-      justify-content: center;
+      justify-content: flex-start;
     }
 
     .actions-right {
-      flex-direction: column;
+      margin-left: auto;
 
       button {
-        width: 100%;
+        width: auto;
       }
     }
   }

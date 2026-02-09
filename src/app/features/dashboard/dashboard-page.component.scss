@@ -44,9 +44,9 @@
 
 .header-status {
   display: flex;
-  flex-direction: column;
+  flex-shrink: 0;
+  margin-left: auto;
   align-items: flex-end;
-  gap: 6px;
   color: var(--color-text-secondary);
 }
 
@@ -54,6 +54,37 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.header-action-btn {
+  &.mat-mdc-outlined-button {
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 20px;
+    border-color: var(--color-border-dark);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+
+    &:hover {
+      background: var(--color-bg-secondary);
+      border-color: var(--color-primary);
+    }
+
+    // Use > .mat-icon to match Material's own selector specificity.
+    > .mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+  }
 }
 
 .segmented-control {
@@ -181,7 +212,6 @@
 .skeleton-dashboard {
   display: flex;
   flex-direction: column;
-  gap: 0;
 
   .skeleton-block {
     position: relative;
@@ -204,9 +234,10 @@
     }
   }
 
-  .skeleton-refresh-text {
-    width: 180px;
-    height: 16px;
+  .skeleton-header-action {
+    width: 96px;
+    height: 40px;
+    border-radius: 22px;
   }
 
   .skeleton-refresh-icon {
@@ -215,83 +246,87 @@
     border-radius: 50%;
   }
 
+  // Hero — mirrors .summary-hero layout
   .skeleton-hero {
     background: var(--gradient-primary);
     border-radius: 16px;
     padding: 32px;
     box-shadow: var(--shadow-md);
+    border: 1px solid rgb(var(--color-primary-rgb) / 25%);
     display: flex;
     flex-direction: column;
-    gap: 24px;
   }
 
   .skeleton-hero-header {
     display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    margin-left: -8px;
   }
 
-  .skeleton-month {
+  .skeleton-month-nav {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
+  .skeleton-month-label {
     width: 200px;
     height: 32px;
     border-radius: 12px;
-  }
-
-  .skeleton-hero-actions {
-    display: flex;
-    gap: 12px;
-  }
-
-  .skeleton-hero-action {
-    width: 96px;
-    height: 40px;
-    border-radius: 22px;
+    margin-bottom: 10px;
   }
 
   .skeleton-hero-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 32px;
   }
 
   .skeleton-hero-section {
     display: flex;
     flex-direction: column;
-    gap: 12px;
   }
 
   .skeleton-section-title {
     width: 110px;
     height: 20px;
     border-radius: 8px;
+    margin-bottom: 12px;
   }
 
   .skeleton-progress-bar {
     width: 100%;
-    height: 16px;
+    height: 24px;
     border-radius: 999px;
+    margin-bottom: 16px;
   }
 
-  .skeleton-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .skeleton-hero-metrics {
+    display: flex;
     gap: 16px;
+    justify-content: space-between;
+    margin: 0 16px;
   }
 
-  .skeleton-metric {
-    width: 100%;
-    height: 42px;
-    border-radius: 8px;
+  .skeleton-hero-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 4px;
   }
 
+  // Segmented control
   .skeleton-segmented {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     padding: 4px;
     border-radius: 999px;
-    margin-top: 32px;
+    margin-top: 24px;
     border: 1px solid rgb(var(--color-primary-rgb) / 25%);
     background: rgb(var(--color-primary-rgb) / 8%);
   }
@@ -301,6 +336,7 @@
     border-radius: 999px;
   }
 
+  // Filter chips
   .skeleton-filters {
     display: flex;
     gap: 10px;
@@ -310,47 +346,87 @@
   }
 
   .skeleton-filter {
-    width: 140px;
     height: 36px;
     border-radius: 20px;
+
+    &:nth-child(1) {
+      width: 120px;
+    }
+
+    &:nth-child(2) {
+      width: 100px;
+    }
+
+    &:nth-child(3) {
+      width: 110px;
+    }
   }
 
-  .skeleton-list {
+  // Category cards — mirrors .category-card layout
+  .skeleton-cards {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
 
-  .skeleton-list-card {
-    padding: 16px;
-    border-radius: 14px;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-secondary);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  .skeleton-card {
+    @include card;
+
+    padding: 20px;
   }
 
-  .skeleton-list-title {
+  .skeleton-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .skeleton-card-title {
     width: 50%;
     height: 20px;
     border-radius: 8px;
   }
 
-  .skeleton-list-bar {
-    width: 100%;
-    height: 10px;
+  .skeleton-card-badge {
+    width: 72px;
+    height: 28px;
     border-radius: 999px;
+    margin-left: auto;
   }
 
-  .skeleton-list-line {
+  .skeleton-card-bar {
     width: 100%;
-    height: 14px;
-    border-radius: 6px;
+    height: 12px;
+    border-radius: 999px;
+    margin: 16px 0;
+  }
 
-    &.short {
-      width: 65%;
-    }
+  .skeleton-card-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .skeleton-card-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    width: 100%;
+  }
+
+  // Shared metric skeleton sizes (used in hero and cards)
+  .skeleton-metric-label {
+    width: 48px;
+    height: 14px;
+    border-radius: 4px;
+  }
+
+  .skeleton-metric-value {
+    width: 64px;
+    height: 16px;
+    border-radius: 4px;
   }
 }
 
@@ -416,10 +492,7 @@
     font-size: 14px;
     color: var(--color-text-tertiary);
     cursor: pointer;
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
-      color 0.2s ease;
+    @include transition-interactive;
 
     &:hover {
       background: var(--color-bg-tertiary);
@@ -455,10 +528,7 @@
     cursor: pointer;
     font-size: 14px;
     color: var(--color-text-secondary);
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
-      color 0.2s ease;
+    @include transition-interactive;
 
     &:hover {
       background: var(--color-bg-tertiary);
@@ -494,19 +564,45 @@
   }
 
   .dashboard-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 12px;
   }
 
-  .header-status {
-    align-items: flex-start;
+  .status-row {
+    gap: 8px;
   }
 
-  .status-row {
-    width: 100%;
-    justify-content: space-between;
+  .header-action-btn {
+    &.mat-mdc-outlined-button {
+      min-width: 40px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      gap: 0;
+      justify-content: center;
+
+      > .mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .action-label {
+        display: none;
+      }
+    }
+  }
+
+  .refresh-button {
+    &.mat-mdc-icon-button {
+      --mdc-icon-button-state-layer-size: 40px;
+      --mdc-icon-button-icon-size: 20px;
+
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+    }
   }
 
   .skeleton-dashboard {
@@ -514,20 +610,32 @@
       padding: 24px;
     }
 
+    .skeleton-hero-header {
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
     .skeleton-hero-grid {
       grid-template-columns: 1fr;
       gap: 24px;
     }
 
-    .skeleton-month {
+    .skeleton-month-label {
       width: 170px;
       height: 28px;
     }
 
-    .skeleton-hero-actions {
-      .skeleton-hero-action {
-        width: 44px;
-      }
+    .skeleton-header-action {
+      width: 40px;
+    }
+
+    .skeleton-refresh-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .skeleton-card-metrics {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 }

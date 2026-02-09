@@ -100,14 +100,12 @@
         color: var(--color-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.3px;
-        align-self: flex-end;
       }
 
       .value {
         font-size: 14px;
         font-weight: 600;
         color: var(--color-text-primary);
-        align-self: flex-end;
       }
 
       &.negative .value {
@@ -298,8 +296,4 @@
   .category-card .metrics {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-
-@media (prefers-color-scheme: dark) {
-  // Dark mode overrides if needed
 }

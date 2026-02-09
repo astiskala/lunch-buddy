@@ -45,6 +45,7 @@ export interface SummaryCategoryTotals {
 
 export interface SummaryCategoryOccurrence {
   current: boolean;
+  in_range?: boolean;
   start_date: string;
   end_date: string;
   other_activity: number;
@@ -67,6 +68,19 @@ export interface SummaryResponse {
   aligned: boolean;
   categories: SummaryCategory[];
 }
+
+export interface BudgetPeriod {
+  startDate: string;
+  endDate: string;
+}
+
+export interface BudgetSummaryResult {
+  aligned: boolean;
+  items: BudgetSummaryItem[];
+  periods: BudgetPeriod[];
+}
+
+export type PeriodMode = 'monthly' | 'sub-monthly' | 'non-aligned';
 
 export interface BudgetSummaryItem {
   category_id: number | null;

@@ -16,7 +16,7 @@ test.describe('SiteDataService', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ categories: [] }),
+        body: JSON.stringify({ aligned: true, categories: [] }),
       })
     );
     await page.route('**/v2/recurring_items**', route =>

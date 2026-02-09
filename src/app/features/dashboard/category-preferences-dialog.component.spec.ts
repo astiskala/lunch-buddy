@@ -220,6 +220,16 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(closeSpy).toHaveBeenCalled();
   });
 
+  it('emits custom period request and closes dialog', () => {
+    const closeSpy = vi.spyOn(component.dialogClose, 'emit');
+    const customPeriodSpy = vi.spyOn(component.customPeriodRequested, 'emit');
+
+    component.handleCustomPeriodRequest();
+
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(customPeriodSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('resets preferences to defaults', () => {
     component.orderedIds.set([1]);
     component.hiddenIds.set(new Set([2]));

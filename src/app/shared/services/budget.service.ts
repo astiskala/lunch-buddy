@@ -4,8 +4,11 @@ import { Observable, of, switchMap, catchError, map } from 'rxjs';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import {
   Transaction,
+  BudgetPeriod,
   BudgetProgress,
   BudgetSummaryItem,
+  BudgetSummaryResult,
+  PeriodMode,
   RecurringExpense,
   RecurringInstance,
   TransactionsResponse,
@@ -20,7 +23,9 @@ import {
   deriveReferenceDate,
   getCurrentMonthRange,
   getMonthProgress,
+  getPeriodProgress,
   getWindowRange,
+  shiftPeriod,
   toIsoDate,
 } from '../utils/date.util';
 import {
@@ -54,6 +59,7 @@ const defaultCategoryPreferences: CategoryPreferences = {
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 const LAST_REFRESH_KEY = 'lunchbuddy.lastRefresh';
+const CUSTOM_PERIOD_KEY = 'lunchbuddy.customPeriod';
 const PREFERENCES_SCHEMA_VERSION = 1;
 const UNCATEGORISED_EXPENSES_LABEL = 'Uncategorised Expenses';
 const UNCATEGORISED_INCOME_LABEL = 'Uncategorised Income';
@@ -80,9 +86,38 @@ export class BudgetService {
   protected readonly startDate = signal(this.currentMonthStartKey);
   protected readonly endDate = signal(toIsoDate(this.currentMonthRange.end));
   protected readonly monthProgressRatio = signal(getMonthProgress());
-  protected readonly canNavigateToNextMonth = computed(
-    () => this.startDate() < this.currentMonthStartKey
-  );
+
+  // Period state.
+  protected readonly periodMode = signal<PeriodMode>('monthly');
+  protected readonly detectedPeriods = signal<BudgetPeriod[]>([]);
+  protected readonly activePeriodIndex = signal(0);
+  protected readonly nonAlignedPeriodRequired = signal(false);
+  private pendingSubMonthlyPeriod: BudgetPeriod | null = null;
+  protected readonly canNavigateToNextMonth = computed(() => {
+    const mode = this.periodMode();
+    if (mode === 'monthly') {
+      return this.startDate() < this.currentMonthStartKey;
+    }
+
+    if (mode === 'sub-monthly') {
+      const periods = this.detectedPeriods();
+      if (periods.length === 0) {
+        return false;
+      }
+
+      const activeIndex = this.activePeriodIndex();
+      if (activeIndex < periods.length - 1) {
+        return true;
+      }
+
+      const anchor = periods[periods.length - 1];
+      const shifted = shiftPeriod(anchor.startDate, anchor.endDate, 1);
+      return shifted !== null && shifted.start <= this.currentMonthStartKey;
+    }
+
+    const shifted = shiftPeriod(this.startDate(), this.endDate(), 1);
+    return shifted !== null && shifted.start <= this.currentMonthStartKey;
+  });
 
   // Data state.
   protected readonly budgetData = signal<BudgetProgress[]>([]);
@@ -183,6 +218,7 @@ export class BudgetService {
   });
 
   constructor() {
+    this.restoreSavedCustomPeriod();
     this.loadBudgetData();
     this.loadRecurringExpenses();
     this.syncBackgroundPreferences();
@@ -260,6 +296,7 @@ export class BudgetService {
     this.diagnostics.log('info', 'budget', 'Loading budget data', {
       startDate,
       endDate,
+      periodMode: this.periodMode(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       offset: new Date().getTimezoneOffset(),
     });
@@ -267,9 +304,19 @@ export class BudgetService {
     this.lunchMoneyService
       .getBudgetSummary(startDate, endDate)
       .pipe(
-        switchMap((summaries: BudgetSummaryItem[]) =>
-          this.buildBudgetProgressFromSummaries(summaries)
-        )
+        switchMap((result: BudgetSummaryResult) => {
+          if (this.periodMode() === 'monthly') {
+            const periodSwitch = this.detectPeriodMode(result);
+            if (periodSwitch) {
+              return periodSwitch;
+            }
+
+            if (this.nonAlignedPeriodRequired()) {
+              return of([]);
+            }
+          }
+          return this.buildBudgetProgressFromSummaries(result.items);
+        })
       )
       .subscribe({
         next: (progress: BudgetProgress[]) => {
@@ -279,6 +326,7 @@ export class BudgetService {
             'Budget data loaded successfully',
             {
               categoryCount: progress.length,
+              periodMode: this.periodMode(),
             }
           );
           this.budgetData.set(progress);
@@ -341,12 +389,55 @@ export class BudgetService {
     this.loadRecurringExpenses();
   }
 
+  goToPreviousPeriod(): void {
+    const mode = this.periodMode();
+    if (mode === 'monthly') {
+      this.shiftDisplayedMonth(-1);
+    } else if (mode === 'sub-monthly') {
+      this.shiftSubMonthlyPeriod(-1);
+    } else {
+      this.shiftCustomPeriod(-1);
+    }
+  }
+
+  goToNextPeriod(): void {
+    const mode = this.periodMode();
+    if (mode === 'monthly') {
+      this.shiftDisplayedMonth(1);
+    } else if (mode === 'sub-monthly') {
+      this.shiftSubMonthlyPeriod(1);
+    } else {
+      this.shiftCustomPeriod(1);
+    }
+  }
+
   goToPreviousMonth(): void {
-    this.shiftDisplayedMonth(-1);
+    this.goToPreviousPeriod();
   }
 
   goToNextMonth(): void {
-    this.shiftDisplayedMonth(1);
+    this.goToNextPeriod();
+  }
+
+  setCustomPeriod(start: string, end: string): void {
+    if (!start || !end || start > end) {
+      return;
+    }
+
+    this.periodMode.set('non-aligned');
+    this.detectedPeriods.set([]);
+    this.activePeriodIndex.set(0);
+    this.nonAlignedPeriodRequired.set(false);
+    this.pendingSubMonthlyPeriod = null;
+    this.startDate.set(start);
+    this.endDate.set(end);
+    this.monthProgressRatio.set(getPeriodProgress(start, end));
+    this.saveCustomPeriod(start, end);
+    this.refresh();
+  }
+
+  dismissCustomPeriodPrompt(): void {
+    this.nonAlignedPeriodRequired.set(false);
   }
 
   // Expose readonly signals for component consumers.
@@ -365,6 +456,10 @@ export class BudgetService {
   getLastRefresh = this.lastRefresh;
   getReferenceDate = this.referenceDate;
   getCanNavigateToNextMonth = this.canNavigateToNextMonth;
+  getPeriodMode = this.periodMode;
+  getNonAlignedPeriodRequired = this.nonAlignedPeriodRequired;
+  getSavedCustomPeriod = (): { start: string; end: string } | null =>
+    this.loadCustomPeriod();
 
   private buildBudgetProgressFromSummaries(
     summaries: BudgetSummaryItem[]
@@ -689,10 +784,237 @@ export class BudgetService {
     }
   }
 
+  private loadCustomPeriod(): { start: string; end: string } | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(CUSTOM_PERIOD_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw) as { start?: string; end?: string };
+      if (
+        typeof parsed.start === 'string' &&
+        typeof parsed.end === 'string' &&
+        parsed.start &&
+        parsed.end &&
+        parsed.start <= parsed.end
+      ) {
+        return { start: parsed.start, end: parsed.end };
+      }
+      return null;
+    } catch (error: unknown) {
+      this.logger.error('Failed to load custom period', error);
+      return null;
+    }
+  }
+
+  private saveCustomPeriod(start: string, end: string): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
+      localStorage.setItem(CUSTOM_PERIOD_KEY, JSON.stringify({ start, end }));
+    } catch (error: unknown) {
+      this.logger.error('Failed to save custom period', error);
+    }
+  }
+
+  private restoreSavedCustomPeriod(): void {
+    const saved = this.loadCustomPeriod();
+    if (!saved) {
+      return;
+    }
+    this.periodMode.set('non-aligned');
+    this.startDate.set(saved.start);
+    this.endDate.set(saved.end);
+    this.monthProgressRatio.set(getPeriodProgress(saved.start, saved.end));
+  }
+
   private canUseNavigator(): boolean {
     return (
       typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean'
     );
+  }
+
+  private detectPeriodMode(
+    result: BudgetSummaryResult
+  ): Observable<BudgetProgress[]> | null {
+    if (!result.aligned) {
+      this.pendingSubMonthlyPeriod = null;
+
+      // If a custom period is saved, apply it automatically.
+      const savedPeriod = this.loadCustomPeriod();
+      if (savedPeriod) {
+        this.periodMode.set('non-aligned');
+        this.detectedPeriods.set([]);
+        this.activePeriodIndex.set(0);
+        this.nonAlignedPeriodRequired.set(false);
+        this.startDate.set(savedPeriod.start);
+        this.endDate.set(savedPeriod.end);
+        this.monthProgressRatio.set(
+          getPeriodProgress(savedPeriod.start, savedPeriod.end)
+        );
+        return this.lunchMoneyService
+          .getBudgetSummary(savedPeriod.start, savedPeriod.end)
+          .pipe(
+            switchMap((narrowResult: BudgetSummaryResult) =>
+              this.buildBudgetProgressFromSummaries(narrowResult.items)
+            )
+          );
+      }
+
+      this.periodMode.set('non-aligned');
+      this.detectedPeriods.set([]);
+      this.activePeriodIndex.set(0);
+      this.nonAlignedPeriodRequired.set(true);
+      return null;
+    }
+
+    if (result.periods.length > 1) {
+      this.periodMode.set('sub-monthly');
+      this.nonAlignedPeriodRequired.set(false);
+      this.detectedPeriods.set(result.periods);
+      const currentIndex = this.resolveActivePeriodIndex(result.periods);
+      this.activePeriodIndex.set(currentIndex);
+
+      const period = result.periods[currentIndex];
+      this.startDate.set(period.startDate);
+      this.endDate.set(period.endDate);
+      this.monthProgressRatio.set(
+        getPeriodProgress(period.startDate, period.endDate)
+      );
+
+      // Re-fetch with narrowed dates for accurate totals.
+      return this.lunchMoneyService
+        .getBudgetSummary(period.startDate, period.endDate)
+        .pipe(
+          switchMap((narrowResult: BudgetSummaryResult) =>
+            this.buildBudgetProgressFromSummaries(narrowResult.items)
+          )
+        );
+    }
+
+    this.pendingSubMonthlyPeriod = null;
+
+    return null;
+  }
+
+  private resolveActivePeriodIndex(periods: BudgetPeriod[]): number {
+    const pendingPeriod = this.pendingSubMonthlyPeriod;
+    this.pendingSubMonthlyPeriod = null;
+
+    if (pendingPeriod) {
+      const pendingIndex = this.findMatchingPeriodIndex(periods, pendingPeriod);
+      if (pendingIndex >= 0) {
+        return pendingIndex;
+      }
+    }
+
+    return this.findCurrentPeriodIndex(periods);
+  }
+
+  private findMatchingPeriodIndex(
+    periods: BudgetPeriod[],
+    period: BudgetPeriod
+  ): number {
+    return periods.findIndex(
+      candidate =>
+        candidate.startDate === period.startDate &&
+        candidate.endDate === period.endDate
+    );
+  }
+
+  private findCurrentPeriodIndex(periods: BudgetPeriod[]): number {
+    const today = toIsoDate(new Date());
+    const index = periods.findIndex(
+      p => today >= p.startDate && today <= p.endDate
+    );
+    return index >= 0 ? index : 0;
+  }
+
+  private shiftSubMonthlyPeriod(direction: -1 | 1): void {
+    const periods = this.detectedPeriods();
+    const currentIdx = this.activePeriodIndex();
+    const nextIdx = currentIdx + direction;
+
+    if (nextIdx >= 0 && nextIdx < periods.length) {
+      // Navigate within detected periods.
+      this.activePeriodIndex.set(nextIdx);
+      const period = periods[nextIdx];
+      this.startDate.set(period.startDate);
+      this.endDate.set(period.endDate);
+      this.monthProgressRatio.set(
+        getPeriodProgress(period.startDate, period.endDate)
+      );
+      this.refresh();
+    } else {
+      // Cross month boundary: discover periods for the adjacent month.
+      this.discoverAdjacentMonthPeriods(direction);
+    }
+  }
+
+  private discoverAdjacentMonthPeriods(direction: -1 | 1): void {
+    const currentPeriods = this.detectedPeriods();
+    if (currentPeriods.length === 0) {
+      return;
+    }
+
+    const anchor =
+      direction === -1
+        ? currentPeriods[0]
+        : currentPeriods[currentPeriods.length - 1];
+
+    // Shift to adjacent period using period length.
+    const shifted = shiftPeriod(anchor.startDate, anchor.endDate, direction);
+    if (!shifted) {
+      return;
+    }
+
+    // Set dates to the shifted period and reset to monthly mode
+    // so the next load will re-detect periods.
+    this.periodMode.set('monthly');
+    this.detectedPeriods.set([]);
+    this.activePeriodIndex.set(0);
+    this.nonAlignedPeriodRequired.set(false);
+    this.pendingSubMonthlyPeriod = {
+      startDate: shifted.start,
+      endDate: shifted.end,
+    };
+
+    // Make a full-month discovery request.
+    const shiftedDate = new Date(
+      Number.parseInt(shifted.start.slice(0, 4), 10),
+      Number.parseInt(shifted.start.slice(5, 7), 10) - 1,
+      1
+    );
+    const monthRange = getCurrentMonthRange(shiftedDate);
+    const monthStart = toIsoDate(monthRange.start);
+    const monthEnd = toIsoDate(monthRange.end);
+
+    this.startDate.set(monthStart);
+    this.endDate.set(monthEnd);
+    this.monthProgressRatio.set(this.resolveMonthProgress(monthRange.start));
+    this.refresh();
+  }
+
+  private shiftCustomPeriod(direction: -1 | 1): void {
+    const shifted = shiftPeriod(this.startDate(), this.endDate(), direction);
+    if (!shifted) {
+      return;
+    }
+
+    // Prevent navigating into future periods when moving forward.
+    if (direction === 1 && shifted.start > this.currentMonthStartKey) {
+      return;
+    }
+
+    this.startDate.set(shifted.start);
+    this.endDate.set(shifted.end);
+    this.monthProgressRatio.set(getPeriodProgress(shifted.start, shifted.end));
+    this.saveCustomPeriod(shifted.start, shifted.end);
+    this.refresh();
   }
 
   private shiftDisplayedMonth(monthDelta: number): void {

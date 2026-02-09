@@ -39,3 +39,60 @@
   height: 40px;
   animation: spin 1s linear infinite;
 }
+
+@mixin dialog($width) {
+  dialog.dialog-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    width: min($width, calc(100vw - 32px));
+    max-height: min(90vh, calc(100vh - 32px));
+    box-shadow: var(--shadow-lg);
+    background: var(--color-surface);
+    z-index: 1000;
+
+    &::backdrop {
+      background: rgb(0 0 0 / 50%);
+    }
+  }
+
+  .dialog-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+  }
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--color-border);
+
+    h2 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    button[mat-icon-button] {
+      color: var(--color-text-tertiary);
+
+      &:hover {
+        color: var(--color-text-primary);
+      }
+    }
+  }
+}
+
+@mixin transition-interactive {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}

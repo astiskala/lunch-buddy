@@ -8,7 +8,7 @@
         aria-label="View previous month">
         <mat-icon>chevron_left</mat-icon>
       </button>
-      <h2>{{ monthName() }}</h2>
+      <h2>{{ periodLabel() }}</h2>
       @if (canGoToNextMonth()) {
         <button
           type="button"
@@ -20,28 +20,6 @@
       } @else {
         <span class="month-nav-spacer" aria-hidden="true"></span>
       }
-    </div>
-    <div class="action-buttons">
-      <button
-        mat-stroked-button
-        type="button"
-        class="action-btn customize-btn"
-        (click)="customize.emit()"
-        title="Open settings"
-        aria-label="Open settings">
-        <mat-icon>settings</mat-icon>
-        <span class="btn-label">Settings</span>
-      </button>
-      <button
-        mat-stroked-button
-        type="button"
-        class="action-btn logout-btn"
-        (click)="logout.emit()"
-        title="Logout"
-        aria-label="Logout">
-        <mat-icon>logout</mat-icon>
-        <span class="btn-label">Logout</span>
-      </button>
     </div>
   </div>
 

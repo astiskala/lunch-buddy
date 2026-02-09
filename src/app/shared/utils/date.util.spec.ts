@@ -8,6 +8,9 @@ import {
   getWindowRange,
   isPastDate,
   parseDateString,
+  getPeriodProgress,
+  formatDateRange,
+  shiftPeriod,
 } from './date.util';
 
 describe('Date Utils', () => {
@@ -151,6 +154,82 @@ describe('Date Utils', () => {
       const reference = new Date(2025, 10, 10, 12);
       const earlier = new Date(2025, 10, 9, 23);
       expect(isPastDate(earlier, reference)).toBe(true);
+    });
+  });
+
+  describe('getPeriodProgress', () => {
+    it('should return 0 for invalid dates', () => {
+      expect(getPeriodProgress('', '2025-10-14')).toBe(0);
+      expect(getPeriodProgress('2025-10-01', '')).toBe(0);
+    });
+
+    it('should return low progress at the start of period', () => {
+      const today = new Date(2025, 9, 1); // Oct 1
+      const progress = getPeriodProgress('2025-10-01', '2025-10-14', today);
+      expect(progress).toBeLessThan(0.15);
+      expect(progress).toBeGreaterThan(0);
+    });
+
+    it('should return mid progress in the middle of period', () => {
+      const today = new Date(2025, 9, 7); // Oct 7
+      const progress = getPeriodProgress('2025-10-01', '2025-10-14', today);
+      expect(progress).toBeGreaterThan(0.4);
+      expect(progress).toBeLessThan(0.6);
+    });
+
+    it('should cap at 1 when past end date', () => {
+      const today = new Date(2025, 9, 20); // Oct 20
+      const progress = getPeriodProgress('2025-10-01', '2025-10-14', today);
+      expect(progress).toBe(1);
+    });
+
+    it('should return 0 when before start date', () => {
+      const today = new Date(2025, 8, 30); // Sep 30
+      const progress = getPeriodProgress('2025-10-01', '2025-10-14', today);
+      expect(progress).toBe(0);
+    });
+  });
+
+  describe('formatDateRange', () => {
+    it('should format a date range with month abbreviations', () => {
+      const result = formatDateRange('2025-10-01', '2025-10-14', 'en-US');
+      expect(result).toContain('Oct');
+      expect(result).toContain('2025');
+    });
+
+    it('should format cross-month ranges', () => {
+      const result = formatDateRange('2025-10-15', '2025-11-14', 'en-US');
+      expect(result).toContain('Oct');
+      expect(result).toContain('Nov');
+      expect(result).toContain('2025');
+    });
+
+    it('should return empty string for invalid dates', () => {
+      expect(formatDateRange('', '2025-10-14', 'en-US')).toBe('');
+      expect(formatDateRange('2025-10-01', '', 'en-US')).toBe('');
+    });
+  });
+
+  describe('shiftPeriod', () => {
+    it('should shift a 14-day period forward', () => {
+      const result = shiftPeriod('2025-10-01', '2025-10-14', 1);
+      expect(result).toEqual({ start: '2025-10-15', end: '2025-10-28' });
+    });
+
+    it('should shift a 14-day period backward', () => {
+      const result = shiftPeriod('2025-10-15', '2025-10-28', -1);
+      expect(result).toEqual({ start: '2025-10-01', end: '2025-10-14' });
+    });
+
+    it('should handle month boundaries', () => {
+      const result = shiftPeriod('2025-10-20', '2025-11-02', 1);
+      expect(result).not.toBeNull();
+      expect(result?.start).toBe('2025-11-03');
+    });
+
+    it('should return null for invalid dates', () => {
+      expect(shiftPeriod('', '2025-10-14', 1)).toBeNull();
+      expect(shiftPeriod('2025-10-01', '', -1)).toBeNull();
     });
   });
 });
