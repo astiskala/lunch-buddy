@@ -3,6 +3,7 @@ import {
   calculateBudgetStatus,
   mergeSummaryWithCategories,
   pickOccurrence,
+  extractPeriods,
 } from './budget.util';
 import {
   LunchMoneyCategory,
@@ -150,6 +151,189 @@ describe('Budget Utilities', () => {
     it('should return undefined for empty or null input', () => {
       expect(pickOccurrence([])).toBeUndefined();
       expect(pickOccurrence()).toBeUndefined();
+    });
+  });
+
+  describe('extractPeriods', () => {
+    it('should return empty array for null/undefined summary', () => {
+      expect(extractPeriods(null)).toEqual([]);
+      expect(extractPeriods(undefined)).toEqual([]);
+    });
+
+    it('should return empty array when no category has multiple occurrences', () => {
+      const summary: SummaryResponse = {
+        aligned: true,
+        categories: [
+          {
+            category_id: 1,
+            totals: {
+              other_activity: 0,
+              recurring_activity: 0,
+              budgeted: 100,
+              available: 100,
+              recurring_remaining: 0,
+              recurring_expected: 0,
+            },
+            occurrences: [
+              {
+                current: true,
+                start_date: '2025-10-01',
+                end_date: '2025-10-31',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+            ],
+          },
+        ],
+      };
+      expect(extractPeriods(summary)).toEqual([]);
+    });
+
+    it('should extract periods from category with multiple occurrences', () => {
+      const summary: SummaryResponse = {
+        aligned: true,
+        categories: [
+          {
+            category_id: 1,
+            totals: {
+              other_activity: 0,
+              recurring_activity: 0,
+              budgeted: 200,
+              available: 200,
+              recurring_remaining: 0,
+              recurring_expected: 0,
+            },
+            occurrences: [
+              {
+                current: true,
+                start_date: '2025-10-01',
+                end_date: '2025-10-15',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+              {
+                current: false,
+                start_date: '2025-10-16',
+                end_date: '2025-10-31',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+            ],
+          },
+        ],
+      };
+
+      const periods = extractPeriods(summary);
+      expect(periods).toEqual([
+        { startDate: '2025-10-01', endDate: '2025-10-15' },
+        { startDate: '2025-10-16', endDate: '2025-10-31' },
+      ]);
+    });
+
+    it('should ignore out-of-range and duplicate occurrences', () => {
+      const summary: SummaryResponse = {
+        aligned: true,
+        categories: [
+          {
+            category_id: 1,
+            totals: {
+              other_activity: 0,
+              recurring_activity: 0,
+              budgeted: 200,
+              available: 200,
+              recurring_remaining: 0,
+              recurring_expected: 0,
+            },
+            occurrences: [
+              {
+                current: false,
+                in_range: false,
+                start_date: '2025-09-15',
+                end_date: '2025-09-30',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+              {
+                current: true,
+                in_range: true,
+                start_date: '2025-10-01',
+                end_date: '2025-10-14',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+              {
+                current: false,
+                in_range: true,
+                start_date: '2025-10-15',
+                end_date: '2025-10-31',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+              {
+                current: false,
+                in_range: true,
+                start_date: '2025-10-15',
+                end_date: '2025-10-31',
+                other_activity: 0,
+                recurring_activity: 0,
+                budgeted: 100,
+                budgeted_amount: '100.0000',
+                budgeted_currency: 'usd',
+                notes: null,
+              },
+            ],
+          },
+        ],
+      };
+
+      expect(extractPeriods(summary)).toEqual([
+        { startDate: '2025-10-01', endDate: '2025-10-14' },
+        { startDate: '2025-10-15', endDate: '2025-10-31' },
+      ]);
+    });
+
+    it('should return empty array when categories have no occurrences', () => {
+      const summary: SummaryResponse = {
+        aligned: false,
+        categories: [
+          {
+            category_id: 1,
+            totals: {
+              other_activity: 0,
+              recurring_activity: 0,
+              budgeted: null,
+              available: null,
+              recurring_remaining: 0,
+              recurring_expected: 0,
+            },
+          },
+        ],
+      };
+      expect(extractPeriods(summary)).toEqual([]);
     });
   });
 });

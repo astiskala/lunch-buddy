@@ -12,17 +12,16 @@
 
   .header {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: flex-start;
-    gap: 16px;
     margin-left: -8px;
     margin-bottom: 10px;
 
     .month-controls {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
+      margin-bottom: 10px;
 
       h2 {
         margin: 0;
@@ -67,73 +66,6 @@
       .month-nav-spacer {
         width: 28px;
         height: 28px;
-      }
-    }
-  }
-
-  .action-buttons {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-
-    .action-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 40px;
-      padding: 0 18px;
-      border-radius: 22px;
-      font-weight: 600;
-      color: var(--color-secondary);
-      background: rgb(251 183 0 / 8%);
-      transition:
-        background-color 0.2s ease,
-        box-shadow 0.2s ease;
-
-      --mdc-filled-button-container-height: 40px;
-      --mdc-outlined-button-container-height: 40px;
-      --mdc-filled-button-horizontal-padding: 18px;
-      --mdc-outlined-button-horizontal-padding: 18px;
-      --mdc-outlined-button-outline-width: 1px;
-      --mdc-outlined-button-outline-color: rgb(251 183 0 / 55%);
-      --mdc-outlined-button-label-text-color: var(--color-secondary);
-      --mat-outlined-button-state-layer-color: var(--color-secondary);
-
-      &.mat-mdc-outlined-button {
-        border-radius: 22px;
-      }
-
-      .mdc-button__label {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-      }
-
-      .btn-label {
-        white-space: nowrap;
-      }
-
-      mat-icon {
-        font-size: 20px;
-        line-height: 1;
-        color: inherit;
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      &:hover {
-        background: rgb(251 183 0 / 14%);
-      }
-
-      &:active {
-        background: rgb(251 183 0 / 20%);
-      }
-
-      &:focus-visible {
-        box-shadow: 0 0 0 3px rgb(251 183 0 / 25%);
       }
     }
   }
@@ -214,6 +146,8 @@
     padding: 24px;
 
     .header {
+      justify-content: center;
+
       .month-controls {
         h2 {
           min-width: 140px;
@@ -222,31 +156,6 @@
       }
 
       margin-bottom: 8px;
-    }
-
-    .action-buttons {
-      .action-btn {
-        &.mat-mdc-outlined-button {
-          min-width: 36px;
-          width: 36px;
-          padding: 0;
-          border-radius: 18px;
-          justify-content: center;
-          gap: 0;
-
-          --mdc-filled-button-horizontal-padding: 0;
-          --mdc-outlined-button-horizontal-padding: 0;
-          --mdc-filled-button-container-height: 34px;
-          --mdc-outlined-button-container-height: 36px;
-          --mdc-outlined-button-outline-color: rgb(251 183 0 / 65%);
-
-          background: rgb(251 183 0 / 16%);
-        }
-
-        .btn-label {
-          display: none;
-        }
-      }
     }
 
     .month-controls {
@@ -283,52 +192,19 @@
     );
     border: 1px solid rgb(var(--color-primary-rgb) / 35%);
 
-    .budget-section {
-      .metrics {
-        .metric {
-          .metric-value {
-            &.highlight {
-              &.negative {
-                color: color-mix(
-                  in srgb,
-                  var(--color-error) 85%,
-                  var(--color-text-primary)
-                );
-              }
-            }
-          }
-        }
-      }
+    .metric-value.highlight.negative {
+      color: color-mix(
+        in srgb,
+        var(--color-error) 85%,
+        var(--color-text-primary)
+      );
     }
 
-    .action-buttons {
-      .action-btn {
-        color: var(--color-secondary-light);
+    .month-nav-btn {
+      color: var(--color-secondary-light);
 
-        --mdc-outlined-button-outline-color: rgb(251 183 0 / 70%);
-        --mdc-outlined-button-label-text-color: var(--color-secondary-light);
-
-        background: rgb(251 183 0 / 16%);
-
-        &:hover {
-          background: rgb(251 183 0 / 24%);
-        }
-
-        &:active {
-          background: rgb(251 183 0 / 30%);
-        }
-      }
-    }
-
-    .header {
-      .month-controls {
-        .month-nav-btn {
-          color: var(--color-secondary-light);
-
-          &:hover {
-            color: var(--color-secondary);
-          }
-        }
+      &:hover {
+        color: var(--color-secondary);
       }
     }
   }

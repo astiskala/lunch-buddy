@@ -6,7 +6,7 @@ import {
   inject,
   LOCALE_ID,
 } from '@angular/core';
-import { NgOptimizedImage, formatDate } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -21,6 +21,7 @@ import { CategoryProgressListComponent } from './category-progress-list.componen
 import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
+import { CustomPeriodDialogComponent } from './custom-period-dialog.component';
 import {
   formatCurrency,
   resolveAmount,
@@ -42,6 +43,7 @@ type TabType = 'expenses' | 'income';
     SummaryHeroComponent,
     RecurringExpensesPanelComponent,
     CategoryPreferencesDialogComponent,
+    CustomPeriodDialogComponent,
   ],
   templateUrl: './dashboard-page.component.html',
   styleUrls: ['./dashboard-page.component.scss'],
@@ -58,6 +60,7 @@ export class DashboardPageComponent {
   protected readonly statusFilter = signal<StatusFilter>('all');
   protected readonly showHidden = signal(false);
   protected readonly showPreferencesDialog = signal(false);
+  protected readonly showCustomPeriodDialog = signal(false);
 
   // Signals provided by the budget service.
   protected readonly isLoading = this.budgetService.getIsLoading;
@@ -72,6 +75,9 @@ export class DashboardPageComponent {
     this.budgetService.getMonthProgressRatio;
   protected readonly canNavigateToNextMonth =
     this.budgetService.getCanNavigateToNextMonth;
+  protected readonly periodMode = this.budgetService.getPeriodMode;
+  protected readonly nonAlignedPeriodRequired =
+    this.budgetService.getNonAlignedPeriodRequired;
   protected readonly recurringByCategory =
     this.budgetService.getRecurringByCategory;
   protected readonly errors = this.budgetService.getErrors;
@@ -212,14 +218,9 @@ export class DashboardPageComponent {
     () => this.isLoading() && this.hasLoadedOnce()
   );
 
-  protected readonly lastRefreshText = computed(() => {
-    const timestamp = this.lastRefresh();
-    if (!timestamp) {
-      return 'Waiting for first sync';
-    }
-
-    return `Last updated ${formatDate(timestamp, 'medium', this.locale)}`;
-  });
+  protected readonly customPeriodDialogOpen = computed(
+    () => this.nonAlignedPeriodRequired() || this.showCustomPeriodDialog()
+  );
 
   private getFilterDescription(): string | null {
     switch (this.statusFilter()) {
@@ -257,6 +258,11 @@ export class DashboardPageComponent {
     this.showPreferencesDialog.set(false);
   }
 
+  openCustomPeriodDialogFromSettings(): void {
+    this.showPreferencesDialog.set(false);
+    this.showCustomPeriodDialog.set(true);
+  }
+
   handlePreferencesChange(preferences: CategoryPreferences): void {
     this.budgetService.updatePreferences(() => preferences);
   }
@@ -267,12 +273,22 @@ export class DashboardPageComponent {
 
   goToPreviousMonth(): void {
     this.showHidden.set(false);
-    this.budgetService.goToPreviousMonth();
+    this.budgetService.goToPreviousPeriod();
   }
 
   goToNextMonth(): void {
     this.showHidden.set(false);
-    this.budgetService.goToNextMonth();
+    this.budgetService.goToNextPeriod();
+  }
+
+  handleCustomPeriodSelected(period: { start: string; end: string }): void {
+    this.showCustomPeriodDialog.set(false);
+    this.budgetService.setCustomPeriod(period.start, period.end);
+  }
+
+  dismissCustomPeriodDialog(): void {
+    this.showCustomPeriodDialog.set(false);
+    this.budgetService.dismissCustomPeriodPrompt();
   }
 
   async logout(): Promise<void> {

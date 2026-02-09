@@ -5,6 +5,7 @@ import { Observable, of, Subject, throwError } from 'rxjs';
 import { vi, type Mock } from 'vitest';
 import {
   BudgetSummaryItem,
+  BudgetSummaryResult,
   RecurringExpense,
   TransactionsResponse,
   Transaction,
@@ -16,6 +17,7 @@ import { BudgetService, CategoryPreferences } from './budget.service';
 import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
+const CUSTOM_PERIOD_KEY = 'lunchbuddy.customPeriod';
 
 const defaultPreferences: CategoryPreferences = {
   customOrder: [],
@@ -26,13 +28,19 @@ const defaultPreferences: CategoryPreferences = {
 };
 
 class MockLunchMoneyService {
-  budgetSummary$ = new Subject<BudgetSummaryItem[]>();
+  budgetSummary$ = new Subject<BudgetSummaryResult>();
+  budgetSummaryQueue: BudgetSummaryResult[] = [];
   categoryTransactionsResponse: TransactionsResponse = {
     transactions: [],
     has_more: false,
   };
 
-  getBudgetSummary(): Observable<BudgetSummaryItem[]> {
+  getBudgetSummary(): Observable<BudgetSummaryResult> {
+    const queued = this.budgetSummaryQueue.shift();
+    if (queued) {
+      return of(queued);
+    }
+
     return this.budgetSummary$.asObservable();
   }
 
@@ -52,6 +60,13 @@ class MockLunchMoneyService {
     return of([]);
   }
 }
+
+const emitAligned = (
+  subject: Subject<BudgetSummaryResult>,
+  items: BudgetSummaryItem[]
+): void => {
+  subject.next({ aligned: true, items, periods: [] });
+};
 
 const createSummary = (
   monthKey: string,
@@ -294,7 +309,7 @@ describe('BudgetService background sync', () => {
     backgroundSync.updateBudgetPreferences.mockClear();
 
     const monthKey = service.getStartDate();
-    lunchMoney.budgetSummary$.next([createSummary(monthKey, {})]);
+    emitAligned(lunchMoney.budgetSummary$, [createSummary(monthKey, {})]);
 
     expect(backgroundSync.updateBudgetPreferences).toHaveBeenCalled();
     const latestSyncCall =
@@ -319,7 +334,7 @@ describe('BudgetService background sync', () => {
       ],
     };
 
-    lunchMoney.budgetSummary$.next([
+    emitAligned(lunchMoney.budgetSummary$, [
       createSummary(monthKey, {
         category_id: null,
         category_name: 'Uncategorised',
@@ -368,7 +383,7 @@ describe('BudgetService background sync', () => {
       ],
     };
 
-    lunchMoney.budgetSummary$.next([
+    emitAligned(lunchMoney.budgetSummary$, [
       createSummary(monthKey, {
         category_id: null,
         category_name: 'Uncategorised',
@@ -414,7 +429,7 @@ describe('BudgetService background sync', () => {
     initService();
     const monthKey = service.getStartDate();
 
-    lunchMoney.budgetSummary$.next([
+    emitAligned(lunchMoney.budgetSummary$, [
       createSummary(monthKey, {
         category_id: 10,
         category_name: 'Dining Out',
@@ -458,7 +473,7 @@ describe('BudgetService background sync', () => {
     initService();
     const monthKey = service.getStartDate();
 
-    lunchMoney.budgetSummary$.next([
+    emitAligned(lunchMoney.budgetSummary$, [
       createSummary(monthKey, {
         category_id: 99,
         category_name: 'Household Essentials',
@@ -479,7 +494,7 @@ describe('BudgetService background sync', () => {
     initService();
     const monthKey = service.getStartDate();
 
-    lunchMoney.budgetSummary$.next([
+    emitAligned(lunchMoney.budgetSummary$, [
       createSummary(monthKey, {
         category_id: 900,
         category_name: 'Dining Group',
@@ -522,7 +537,7 @@ describe('BudgetService background sync', () => {
 
   it('formats object-shaped budget load errors into readable messages', () => {
     vi.spyOn(lunchMoney, 'getBudgetSummary').mockReturnValue(
-      new Observable<BudgetSummaryItem[]>(subscriber => {
+      new Observable<BudgetSummaryResult>(subscriber => {
         subscriber.error({ code: 503, detail: 'Upstream unavailable' });
       })
     );
@@ -592,5 +607,206 @@ describe('BudgetService background sync', () => {
 
     expect(loadBudgetSpy).toHaveBeenCalledTimes(1);
     expect(loadRecurringSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('sets non-aligned period mode when API returns aligned=false', () => {
+    initService();
+
+    lunchMoney.budgetSummary$.next({
+      aligned: false,
+      items: [createSummary(service.getStartDate(), {})],
+      periods: [],
+    });
+
+    expect(service.getPeriodMode()).toBe('non-aligned');
+    expect(service.getNonAlignedPeriodRequired()).toBe(true);
+    expect(service.getExpenses()).toEqual([]);
+    expect(service.getIncomes()).toEqual([]);
+  });
+
+  it('dismisses the custom period prompt without changing period mode', () => {
+    initService();
+
+    lunchMoney.budgetSummary$.next({
+      aligned: false,
+      items: [createSummary(service.getStartDate(), {})],
+      periods: [],
+    });
+
+    expect(service.getPeriodMode()).toBe('non-aligned');
+    expect(service.getNonAlignedPeriodRequired()).toBe(true);
+
+    service.dismissCustomPeriodPrompt();
+
+    expect(service.getPeriodMode()).toBe('non-aligned');
+    expect(service.getNonAlignedPeriodRequired()).toBe(false);
+  });
+
+  it('switches to sub-monthly mode when multiple periods are detected', () => {
+    initService();
+    const monthKey = service.getStartDate();
+
+    // First emit: full-month response with multiple periods.
+    const getBudgetSummarySpy = vi.spyOn(lunchMoney, 'getBudgetSummary');
+    getBudgetSummarySpy.mockClear();
+
+    lunchMoney.budgetSummary$.next({
+      aligned: true,
+      items: [createSummary(monthKey, {})],
+      periods: [
+        { startDate: '2026-02-01', endDate: '2026-02-14' },
+        { startDate: '2026-02-15', endDate: '2026-02-28' },
+      ],
+    });
+
+    expect(service.getPeriodMode()).toBe('sub-monthly');
+    // Should have re-requested with narrowed dates.
+    expect(getBudgetSummarySpy).toHaveBeenCalled();
+  });
+
+  it('applies custom period when setCustomPeriod is called', () => {
+    initService();
+    const refreshSpy = vi.spyOn(service, 'refresh');
+
+    service.setCustomPeriod('2026-01-15', '2026-01-28');
+
+    expect(service.getPeriodMode()).toBe('non-aligned');
+    expect(service.getNonAlignedPeriodRequired()).toBe(false);
+    expect(service.getStartDate()).toBe('2026-01-15');
+    expect(service.getEndDate()).toBe('2026-01-28');
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('navigates by period length in non-aligned mode', () => {
+    initService();
+
+    // Set up custom period mode.
+    service.setCustomPeriod('2026-01-01', '2026-01-14');
+    const refreshSpy = vi.spyOn(service, 'refresh');
+
+    service.goToPreviousPeriod();
+
+    expect(service.getStartDate()).toBe('2025-12-18');
+    expect(service.getEndDate()).toBe('2025-12-31');
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows navigating to an earlier period within the current month in non-aligned mode', () => {
+    initService();
+    const currentMonth = service.getStartDate().slice(0, 7);
+
+    service.setCustomPeriod(`${currentMonth}-10`, `${currentMonth}-16`);
+    const refreshSpy = vi.spyOn(service, 'refresh');
+
+    service.goToPreviousPeriod();
+
+    expect(service.getStartDate()).toBe(`${currentMonth}-03`);
+    expect(service.getEndDate()).toBe(`${currentMonth}-09`);
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps period-step direction when crossing sub-monthly month boundaries', () => {
+    lunchMoney.budgetSummaryQueue = [
+      {
+        aligned: true,
+        items: [createSummary('2024-02-01', {})],
+        periods: [
+          { startDate: '2024-02-01', endDate: '2024-02-14' },
+          { startDate: '2024-02-15', endDate: '2024-02-29' },
+        ],
+      },
+      {
+        aligned: true,
+        items: [createSummary('2024-02-01', {})],
+        periods: [],
+      },
+      {
+        aligned: true,
+        items: [createSummary('2024-01-01', {})],
+        periods: [
+          { startDate: '2024-01-01', endDate: '2024-01-17' },
+          { startDate: '2024-01-18', endDate: '2024-01-31' },
+        ],
+      },
+      {
+        aligned: true,
+        items: [createSummary('2024-01-18', {})],
+        periods: [],
+      },
+    ];
+
+    initService();
+
+    expect(service.getPeriodMode()).toBe('sub-monthly');
+    expect(service.getStartDate()).toBe('2024-02-01');
+    expect(service.getEndDate()).toBe('2024-02-14');
+
+    service.goToPreviousPeriod();
+
+    expect(service.getPeriodMode()).toBe('sub-monthly');
+    expect(service.getStartDate()).toBe('2024-01-18');
+    expect(service.getEndDate()).toBe('2024-01-31');
+  });
+
+  it('persists custom period to localStorage when setCustomPeriod is called', () => {
+    initService();
+
+    service.setCustomPeriod('2026-01-15', '2026-01-28');
+
+    const stored = localStorage.getItem(CUSTOM_PERIOD_KEY) ?? '';
+    expect(stored).not.toBe('');
+    const parsed = JSON.parse(stored) as { start: string; end: string };
+    expect(parsed.start).toBe('2026-01-15');
+    expect(parsed.end).toBe('2026-01-28');
+  });
+
+  it('restores saved custom period on initialization', () => {
+    localStorage.setItem(
+      CUSTOM_PERIOD_KEY,
+      JSON.stringify({ start: '2026-01-10', end: '2026-01-23' })
+    );
+
+    initService();
+
+    expect(service.getPeriodMode()).toBe('non-aligned');
+    expect(service.getStartDate()).toBe('2026-01-10');
+    expect(service.getEndDate()).toBe('2026-01-23');
+  });
+
+  it('uses saved custom period instead of prompting dialog when API returns aligned=false', () => {
+    localStorage.setItem(
+      CUSTOM_PERIOD_KEY,
+      JSON.stringify({ start: '2026-01-10', end: '2026-01-23' })
+    );
+
+    // Queue: first response (for saved period dates) returns aligned=false,
+    // second response (re-fetch with saved period) returns data.
+    lunchMoney.budgetSummaryQueue = [
+      {
+        aligned: false,
+        items: [],
+        periods: [],
+      },
+      {
+        aligned: false,
+        items: [createSummary('2026-01-10', {})],
+        periods: [],
+      },
+    ];
+
+    initService();
+
+    expect(service.getPeriodMode()).toBe('non-aligned');
+    expect(service.getNonAlignedPeriodRequired()).toBe(false);
+    expect(service.getStartDate()).toBe('2026-01-10');
+    expect(service.getEndDate()).toBe('2026-01-23');
+  });
+
+  it('ignores invalid saved custom period data', () => {
+    localStorage.setItem(CUSTOM_PERIOD_KEY, JSON.stringify({ start: '' }));
+    initService();
+
+    // Should fall back to current month (monthly mode).
+    expect(service.getPeriodMode()).toBe('monthly');
   });
 });

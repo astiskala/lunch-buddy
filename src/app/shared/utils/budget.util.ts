@@ -1,4 +1,5 @@
 import {
+  BudgetPeriod,
   BudgetProgress,
   BudgetSummaryItem,
   LunchMoneyCategory,
@@ -24,6 +25,43 @@ export const pickOccurrence = (
     return undefined;
   }
   return occurrences.find(item => item.current) ?? occurrences[0];
+};
+
+export const extractPeriods = (
+  summary: SummaryResponse | null | undefined
+): BudgetPeriod[] => {
+  if (!summary?.categories) {
+    return [];
+  }
+
+  const categoryWithOccurrences = summary.categories.find(
+    c => c.occurrences && c.occurrences.length > 1
+  );
+
+  if (!categoryWithOccurrences?.occurrences) {
+    return [];
+  }
+
+  const periods = categoryWithOccurrences.occurrences
+    .filter(occurrence => occurrence.in_range !== false)
+    .map(occurrence => ({
+      startDate: occurrence.start_date,
+      endDate: occurrence.end_date,
+    }))
+    .sort((left, right) => left.startDate.localeCompare(right.startDate));
+
+  const deduplicated: BudgetPeriod[] = [];
+  const seenPeriodKeys = new Set<string>();
+  for (const period of periods) {
+    const key = `${period.startDate}:${period.endDate}`;
+    if (seenPeriodKeys.has(key)) {
+      continue;
+    }
+    seenPeriodKeys.add(key);
+    deduplicated.push(period);
+  }
+
+  return deduplicated.length > 1 ? deduplicated : [];
 };
 
 const resolveCategoryGroupName = (

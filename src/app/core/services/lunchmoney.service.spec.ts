@@ -132,8 +132,10 @@ describe('LunchMoneyService', () => {
       ],
     };
 
-    service.getBudgetSummary('2025-11-01', '2025-11-30').subscribe(budget => {
-      expect(budget).toEqual([
+    service.getBudgetSummary('2025-11-01', '2025-11-30').subscribe(result => {
+      expect(result.aligned).toBe(true);
+      expect(result.periods).toEqual([]);
+      expect(result.items).toEqual([
         {
           category_id: 1,
           category_name: 'Food',

@@ -1,7 +1,7 @@
 <div class="dashboard-container">
   @if (showInitialLoading()) {
     <div class="skeleton-dashboard" aria-hidden="true">
-      <div class="dashboard-header skeleton-header">
+      <div class="dashboard-header">
         <div class="brand">
           <img
             ngSrc="icons/lunch-buddy.svg"
@@ -14,7 +14,8 @@
         </div>
         <div class="header-status">
           <div class="status-row">
-            <div class="skeleton-block skeleton-refresh-text"></div>
+            <div class="skeleton-block skeleton-header-action"></div>
+            <div class="skeleton-block skeleton-header-action"></div>
             <div class="skeleton-block skeleton-refresh-icon"></div>
           </div>
         </div>
@@ -22,21 +23,22 @@
 
       <div class="skeleton-hero">
         <div class="skeleton-hero-header">
-          <div class="skeleton-block skeleton-month"></div>
-          <div class="skeleton-hero-actions">
-            <div class="skeleton-block skeleton-hero-action"></div>
-            <div class="skeleton-block skeleton-hero-action"></div>
-          </div>
+          <div class="skeleton-block skeleton-month-nav"></div>
+          <div class="skeleton-block skeleton-month-label"></div>
+          <div class="skeleton-block skeleton-month-nav"></div>
         </div>
         <div class="skeleton-hero-grid">
           @for (section of [0, 1]; track section) {
             <div class="skeleton-hero-section">
               <div class="skeleton-block skeleton-section-title"></div>
               <div class="skeleton-block skeleton-progress-bar"></div>
-              <div class="skeleton-metrics">
-                <div class="skeleton-block skeleton-metric"></div>
-                <div class="skeleton-block skeleton-metric"></div>
-                <div class="skeleton-block skeleton-metric"></div>
+              <div class="skeleton-hero-metrics">
+                @for (metric of [0, 1, 2]; track metric) {
+                  <div class="skeleton-hero-metric">
+                    <div class="skeleton-block skeleton-metric-label"></div>
+                    <div class="skeleton-block skeleton-metric-value"></div>
+                  </div>
+                }
               </div>
             </div>
           }
@@ -54,13 +56,22 @@
         <div class="skeleton-block skeleton-filter"></div>
       </div>
 
-      <div class="skeleton-list">
+      <div class="skeleton-cards">
         @for (card of [0, 1, 2]; track card) {
-          <div class="skeleton-list-card">
-            <div class="skeleton-block skeleton-list-title"></div>
-            <div class="skeleton-block skeleton-list-bar"></div>
-            <div class="skeleton-block skeleton-list-line"></div>
-            <div class="skeleton-block skeleton-list-line short"></div>
+          <div class="skeleton-card">
+            <div class="skeleton-card-header">
+              <div class="skeleton-block skeleton-card-title"></div>
+              <div class="skeleton-block skeleton-card-badge"></div>
+            </div>
+            <div class="skeleton-block skeleton-card-bar"></div>
+            <div class="skeleton-card-metrics">
+              @for (metric of [0, 1, 2, 3]; track metric) {
+                <div class="skeleton-card-metric">
+                  <div class="skeleton-block skeleton-metric-label"></div>
+                  <div class="skeleton-block skeleton-metric-value"></div>
+                </div>
+              }
+            </div>
           </div>
         }
       </div>
@@ -92,9 +103,24 @@
       </div>
       <div class="header-status">
         <div class="status-row">
-          <span class="last-refresh" aria-live="polite">{{
-            lastRefreshText()
-          }}</span>
+          <button
+            mat-stroked-button
+            type="button"
+            class="header-action-btn settings-btn"
+            (click)="openPreferencesDialog()"
+            aria-label="Open settings">
+            <mat-icon>settings</mat-icon>
+            <span class="action-label">Settings</span>
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            class="header-action-btn logout-btn"
+            (click)="logout()"
+            aria-label="Logout">
+            <mat-icon>logout</mat-icon>
+            <span class="action-label">Logout</span>
+          </button>
           <button
             mat-icon-button
             type="button"
@@ -110,6 +136,8 @@
 
     <summary-hero
       [monthStart]="startDate()"
+      [monthEnd]="endDate()"
+      [periodMode]="periodMode()"
       [canGoToNextMonth]="canNavigateToNextMonth()"
       [monthProgressRatio]="monthProgressRatio()"
       [totalExpenseSpent]="totalExpenseSpent()"
@@ -120,9 +148,7 @@
       [totalIncomeUpcoming]="totalIncomeUpcoming()"
       [currency]="currency()"
       (previousMonth)="goToPreviousMonth()"
-      (nextMonth)="goToNextMonth()"
-      (customize)="openPreferencesDialog()"
-      (logout)="logout()" />
+      (nextMonth)="goToNextMonth()" />
 
     <mat-button-toggle-group
       class="segmented-control"
@@ -220,6 +246,12 @@
       [hiddenItems]="filteredHiddenItems()"
       [preferences]="preferences()"
       (dialogClose)="closePreferencesDialog()"
-      (preferencesChange)="handlePreferencesChange($event)" />
+      (preferencesChange)="handlePreferencesChange($event)"
+      (customPeriodRequested)="openCustomPeriodDialogFromSettings()" />
+
+    <app-custom-period-dialog
+      [open]="customPeriodDialogOpen()"
+      (dialogClose)="dismissCustomPeriodDialog()"
+      (periodSelected)="handleCustomPeriodSelected($event)" />
   }
 </div>

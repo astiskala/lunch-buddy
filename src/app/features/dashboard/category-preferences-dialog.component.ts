@@ -77,6 +77,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
 
   readonly dialogClose = output();
   readonly preferencesChange = output<CategoryPreferences>();
+  readonly customPeriodRequested = output();
 
   readonly orderedIds = signal<(number | null)[]>([]);
   readonly hiddenIds = signal<Set<number | null>>(new Set());
@@ -217,6 +218,11 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
 
   handleClose(): void {
     this.dialogClose.emit();
+  }
+
+  handleCustomPeriodRequest(): void {
+    this.dialogClose.emit();
+    this.customPeriodRequested.emit();
   }
 
   async handleNotificationsChange(event: Event): Promise<void> {

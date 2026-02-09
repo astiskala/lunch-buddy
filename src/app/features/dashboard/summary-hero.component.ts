@@ -9,13 +9,13 @@ import {
 } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { ProgressBarComponent } from '../../shared/components/progress-bar/progress-bar.component';
 import {
   formatCurrency,
   FormatCurrencyOptions,
 } from '../../shared/utils/currency.util';
-import { parseDateString } from '../../shared/utils/date.util';
+import { parseDateString, formatDateRange } from '../../shared/utils/date.util';
+import { PeriodMode } from '../../core/models/lunchmoney.types';
 import { toPercent } from '../../shared/utils/number.util';
 
 /**
@@ -59,7 +59,7 @@ const calculateBudgetMetrics = (
 
 @Component({
   selector: 'summary-hero',
-  imports: [MatIconModule, MatButtonModule, ProgressBarComponent],
+  imports: [MatIconModule, ProgressBarComponent],
   templateUrl: './summary-hero.component.html',
   styleUrls: ['./summary-hero.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,6 +68,8 @@ export class SummaryHeroComponent {
   private readonly locale = inject(LOCALE_ID);
 
   readonly monthStart = input.required<string>();
+  readonly monthEnd = input<string>('');
+  readonly periodMode = input<PeriodMode>('monthly');
   readonly canGoToNextMonth = input(false);
   readonly monthProgressRatio = input.required<number>();
   readonly totalExpenseSpent = input.required<number>();
@@ -80,8 +82,6 @@ export class SummaryHeroComponent {
 
   readonly previousMonth = output();
   readonly nextMonth = output();
-  readonly customize = output();
-  readonly logout = output();
 
   readonly monthProgressPercent = computed(() =>
     toPercent(this.monthProgressRatio())
@@ -148,13 +148,24 @@ export class SummaryHeroComponent {
     },
   ]);
 
-  readonly monthName = computed(() => {
+  readonly periodLabel = computed(() => {
+    const mode = this.periodMode();
+    if (mode !== 'monthly') {
+      const start = this.monthStart();
+      const end = this.monthEnd();
+      if (start && end) {
+        return formatDateRange(start, end, this.locale);
+      }
+    }
+
     const date = parseDateString(this.monthStart());
     if (!date) {
       return '';
     }
     return formatDate(date, 'MMMM y', this.locale);
   });
+
+  readonly monthName = this.periodLabel;
 
   private formatValue(
     value: number,

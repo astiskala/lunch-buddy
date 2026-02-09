@@ -2,8 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { SummaryHeroComponent } from './summary-hero.component';
 
+import { PeriodMode } from '../../core/models/lunchmoney.types';
+
 interface SummaryHeroInputs {
   monthStart: string;
+  monthEnd: string;
+  periodMode: PeriodMode;
   monthProgressRatio: number;
   totalExpenseSpent: number;
   totalExpenseBudget: number;
@@ -20,6 +24,8 @@ describe('SummaryHeroComponent', () => {
 
   const DEFAULT_INPUTS: SummaryHeroInputs = {
     monthStart: '2025-10-01',
+    monthEnd: '',
+    periodMode: 'monthly',
     monthProgressRatio: 0.5,
     totalExpenseSpent: 500,
     totalExpenseBudget: 1000,
@@ -34,6 +40,8 @@ describe('SummaryHeroComponent', () => {
     const nextInputs = { ...DEFAULT_INPUTS, ...overrides };
 
     fixture.componentRef.setInput('monthStart', nextInputs.monthStart);
+    fixture.componentRef.setInput('monthEnd', nextInputs.monthEnd);
+    fixture.componentRef.setInput('periodMode', nextInputs.periodMode);
     fixture.componentRef.setInput(
       'monthProgressRatio',
       nextInputs.monthProgressRatio
@@ -145,12 +153,6 @@ describe('SummaryHeroComponent', () => {
     expect(component.monthProgressPercent()).toBe(75);
   });
 
-  it('should emit customize event when button clicked', () => {
-    expectEventEmitted(listener => {
-      component.customize.subscribe(listener);
-    }, '.customize-btn');
-  });
-
   it('should emit previousMonth event when previous button clicked', () => {
     expectEventEmitted(listener => {
       component.previousMonth.subscribe(listener);
@@ -180,16 +182,38 @@ describe('SummaryHeroComponent', () => {
     expect(button).toBeNull();
   });
 
-  it('should emit logout event when button clicked', () => {
-    expectEventEmitted(listener => {
-      component.logout.subscribe(listener);
-    }, '.logout-btn');
-  });
-
   it('should display month name', () => {
     render();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h2')?.textContent).toContain('October');
+  });
+
+  it('should display date range for sub-monthly period mode', () => {
+    render({
+      monthStart: '2025-10-01',
+      monthEnd: '2025-10-15',
+      periodMode: 'sub-monthly',
+    });
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const heading = compiled.querySelector('h2')?.textContent ?? '';
+    expect(heading).toContain('Oct');
+    expect(heading).toContain('2025');
+    // Should not just show "October 2025" — it should show the date range
+    expect(heading).not.toBe('October 2025');
+  });
+
+  it('should display date range for non-aligned period mode', () => {
+    render({
+      monthStart: '2025-10-15',
+      monthEnd: '2025-10-28',
+      periodMode: 'non-aligned',
+    });
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const heading = compiled.querySelector('h2')?.textContent ?? '';
+    expect(heading).toContain('Oct');
+    expect(heading).toContain('2025');
   });
 });
