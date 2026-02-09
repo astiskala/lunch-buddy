@@ -30,6 +30,11 @@ import {
   buildBlockedNotificationGuidance,
   NotificationHelpLink,
 } from '../../shared/utils/notification-guidance.util';
+import {
+  BodyScrollLockController,
+  closeDialogElement,
+  openDialogElement,
+} from '../../shared/utils/dialog.util';
 
 interface NotificationErrorDetails {
   message: string;
@@ -60,12 +65,9 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   private readonly versionService = inject(VersionService);
   private readonly document = inject(DOCUMENT);
   protected readonly diagnostics = inject(DiagnosticsService);
-  private readonly bodyScrollLockCountAttribute =
-    'data-dialog-scroll-lock-count';
-  private readonly bodyOverflowAttribute = 'data-dialog-original-overflow';
-  private readonly bodyTouchActionAttribute =
-    'data-dialog-original-touch-action';
-  private isBodyScrollLocked = false;
+  private readonly bodyScrollLock = new BodyScrollLockController(
+    this.document.body
+  );
 
   readonly dialogElement =
     viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
@@ -116,29 +118,16 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
       const shouldOpen = this.open();
 
       if (!shouldOpen) {
-        this.unlockBodyScroll();
+        this.bodyScrollLock.unlock();
         this.visibleCategoriesExpanded.set(false);
-        if (dialog.open && typeof dialog.close === 'function') {
-          dialog.close();
-        }
-
-        dialog.removeAttribute('open');
+        closeDialogElement(dialog);
         return;
       }
 
-      this.lockBodyScroll();
-      if (!dialog.open) {
-        if (typeof dialog.showModal === 'function') {
-          try {
-            dialog.showModal();
-            return;
-          } catch (error) {
-            this.logger.error('Failed to open dialog with showModal', error);
-          }
-        }
-
-        dialog.setAttribute('open', '');
-      }
+      this.bodyScrollLock.lock();
+      openDialogElement(dialog, error => {
+        this.logger.error('Failed to open dialog with showModal', error);
+      });
     });
   }
 
@@ -153,7 +142,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unlockBodyScroll();
+    this.bodyScrollLock.unlock();
   }
 
   private ensureOrderContains(current: (number | null)[]): (number | null)[] {
@@ -364,61 +353,5 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
     }
 
     return navigator.userAgent;
-  }
-
-  private lockBodyScroll(): void {
-    if (this.isBodyScrollLocked) {
-      return;
-    }
-
-    const body = this.document.body;
-
-    const rawLockCount = Number.parseInt(
-      body.getAttribute(this.bodyScrollLockCountAttribute) ?? '0',
-      10
-    );
-    const lockCount =
-      Number.isFinite(rawLockCount) && rawLockCount > 0 ? rawLockCount : 0;
-    if (lockCount === 0) {
-      body.setAttribute(this.bodyOverflowAttribute, body.style.overflow);
-      body.setAttribute(this.bodyTouchActionAttribute, body.style.touchAction);
-      body.style.overflow = 'hidden';
-      body.style.touchAction = 'none';
-    }
-
-    body.setAttribute(this.bodyScrollLockCountAttribute, String(lockCount + 1));
-    this.isBodyScrollLocked = true;
-  }
-
-  private unlockBodyScroll(): void {
-    if (!this.isBodyScrollLocked) {
-      return;
-    }
-
-    const body = this.document.body;
-
-    const lockCount = Number.parseInt(
-      body.getAttribute(this.bodyScrollLockCountAttribute) ?? '0',
-      10
-    );
-    const nextCount =
-      Number.isFinite(lockCount) && lockCount > 0 ? lockCount - 1 : 0;
-
-    if (nextCount === 0) {
-      const previousOverflow =
-        body.getAttribute(this.bodyOverflowAttribute) ?? '';
-      const previousTouchAction =
-        body.getAttribute(this.bodyTouchActionAttribute) ?? '';
-
-      body.style.overflow = previousOverflow;
-      body.style.touchAction = previousTouchAction;
-      body.removeAttribute(this.bodyScrollLockCountAttribute);
-      body.removeAttribute(this.bodyOverflowAttribute);
-      body.removeAttribute(this.bodyTouchActionAttribute);
-    } else {
-      body.setAttribute(this.bodyScrollLockCountAttribute, String(nextCount));
-    }
-
-    this.isBodyScrollLocked = false;
   }
 }
