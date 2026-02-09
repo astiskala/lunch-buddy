@@ -7,6 +7,15 @@ describe('CustomPeriodDialogComponent', () => {
   let fixture: ComponentFixture<CustomPeriodDialogComponent>;
   let component: CustomPeriodDialogComponent;
 
+  const setDialogOpen = (open: boolean): void => {
+    fixture.componentRef.setInput('open', open);
+    fixture.detectChanges();
+  };
+
+  const initializeClosedDialog = (): void => {
+    setDialogOpen(false);
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CustomPeriodDialogComponent],
@@ -26,14 +35,12 @@ describe('CustomPeriodDialogComponent', () => {
   });
 
   it('should create', () => {
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    initializeClosedDialog();
     expect(component).toBeTruthy();
   });
 
   it('should emit periodSelected with valid dates on submit', () => {
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    initializeClosedDialog();
 
     component.startDate.set('2025-10-01');
     component.endDate.set('2025-10-14');
@@ -49,8 +56,7 @@ describe('CustomPeriodDialogComponent', () => {
   });
 
   it('should show validation error when start date is after end date', () => {
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    initializeClosedDialog();
 
     component.startDate.set('2025-10-15');
     component.endDate.set('2025-10-01');
@@ -65,8 +71,7 @@ describe('CustomPeriodDialogComponent', () => {
   });
 
   it('should show validation error when dates are empty', () => {
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    initializeClosedDialog();
 
     component.startDate.set('');
     component.endDate.set('');
@@ -81,8 +86,7 @@ describe('CustomPeriodDialogComponent', () => {
   });
 
   it('should clear validation error when date changes', () => {
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    initializeClosedDialog();
 
     component.validationError.set('Some error');
 
@@ -95,8 +99,7 @@ describe('CustomPeriodDialogComponent', () => {
   });
 
   it('should emit dialogClose when handleClose is called', () => {
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    initializeClosedDialog();
 
     const closeSpy = vi.spyOn(component.dialogClose, 'emit');
     component.handleClose();
@@ -108,8 +111,7 @@ describe('CustomPeriodDialogComponent', () => {
     document.body.style.overflow = 'auto';
     document.body.style.touchAction = 'pan-y';
 
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
+    setDialogOpen(true);
 
     const closeSpy = vi.spyOn(component.dialogClose, 'emit');
     component.handleClose();
@@ -127,14 +129,12 @@ describe('CustomPeriodDialogComponent', () => {
     document.body.style.overflow = 'auto';
     document.body.style.touchAction = 'pan-y';
 
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
+    setDialogOpen(true);
 
     expect(document.body.style.overflow).toBe('hidden');
     expect(document.body.style.touchAction).toBe('none');
 
-    fixture.componentRef.setInput('open', false);
-    fixture.detectChanges();
+    setDialogOpen(false);
 
     expect(document.body.style.overflow).toBe('auto');
     expect(document.body.style.touchAction).toBe('pan-y');
@@ -142,8 +142,7 @@ describe('CustomPeriodDialogComponent', () => {
 
   it('should release body scroll lock when destroyed while open', () => {
     document.body.style.overflow = 'visible';
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
+    setDialogOpen(true);
 
     expect(document.body.style.overflow).toBe('hidden');
 

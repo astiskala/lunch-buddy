@@ -931,7 +931,7 @@ export class BudgetService {
     const index = periods.findIndex(
       p => today >= p.startDate && today <= p.endDate
     );
-    return index >= 0 ? index : 0;
+    return Math.max(index, 0);
   }
 
   private shiftSubMonthlyPeriod(direction: -1 | 1): void {

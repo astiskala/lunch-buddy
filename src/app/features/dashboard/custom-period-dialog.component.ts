@@ -9,12 +9,18 @@ import {
   ElementRef,
   effect,
   OnDestroy,
+  WritableSignal,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { LoggerService } from '../../core/services/logger.service';
 import { toIsoDate } from '../../shared/utils/date.util';
+import {
+  BodyScrollLockController,
+  closeDialogElement,
+  openDialogElement,
+} from '../../shared/utils/dialog.util';
 
 @Component({
   selector: 'app-custom-period-dialog',
@@ -26,12 +32,9 @@ import { toIsoDate } from '../../shared/utils/date.util';
 export class CustomPeriodDialogComponent implements OnDestroy {
   private readonly logger = inject(LoggerService);
   private readonly document = inject(DOCUMENT);
-  private readonly bodyScrollLockCountAttribute =
-    'data-dialog-scroll-lock-count';
-  private readonly bodyOverflowAttribute = 'data-dialog-original-overflow';
-  private readonly bodyTouchActionAttribute =
-    'data-dialog-original-touch-action';
-  private isBodyScrollLocked = false;
+  private readonly bodyScrollLock = new BodyScrollLockController(
+    this.document.body
+  );
 
   readonly dialogElement =
     viewChild.required<ElementRef<HTMLDialogElement>>('dialogElement');
@@ -50,43 +53,28 @@ export class CustomPeriodDialogComponent implements OnDestroy {
       const shouldOpen = this.open();
 
       if (!shouldOpen) {
-        this.unlockBodyScroll();
-        if (dialog.open && typeof dialog.close === 'function') {
-          dialog.close();
-        }
-        dialog.removeAttribute('open');
+        this.bodyScrollLock.unlock();
+        closeDialogElement(dialog);
         return;
       }
 
-      this.lockBodyScroll();
-      if (!dialog.open) {
-        if (typeof dialog.showModal === 'function') {
-          try {
-            dialog.showModal();
-            return;
-          } catch (error) {
-            this.logger.error('Failed to open dialog with showModal', error);
-          }
-        }
-        dialog.setAttribute('open', '');
-      }
+      this.bodyScrollLock.lock();
+      openDialogElement(dialog, error => {
+        this.logger.error('Failed to open dialog with showModal', error);
+      });
     });
   }
 
   ngOnDestroy(): void {
-    this.unlockBodyScroll();
+    this.bodyScrollLock.unlock();
   }
 
   handleStartDateChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.startDate.set(target.value);
-    this.validationError.set(null);
+    this.handleDateChange(event, this.startDate);
   }
 
   handleEndDateChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    this.endDate.set(target.value);
-    this.validationError.set(null);
+    this.handleDateChange(event, this.endDate);
   }
 
   handleSubmit(): void {
@@ -108,64 +96,13 @@ export class CustomPeriodDialogComponent implements OnDestroy {
 
   handleClose(): void {
     const dialog = this.dialogElement().nativeElement;
-    if (dialog.open && typeof dialog.close === 'function') {
-      dialog.close();
-    } else {
-      dialog.removeAttribute('open');
-    }
-    this.unlockBodyScroll();
+    closeDialogElement(dialog);
+    this.bodyScrollLock.unlock();
     this.dialogClose.emit();
   }
 
-  private lockBodyScroll(): void {
-    if (this.isBodyScrollLocked) {
-      return;
-    }
-
-    const body = this.document.body;
-    const rawLockCount = Number.parseInt(
-      body.getAttribute(this.bodyScrollLockCountAttribute) ?? '0',
-      10
-    );
-    const lockCount =
-      Number.isFinite(rawLockCount) && rawLockCount > 0 ? rawLockCount : 0;
-    if (lockCount === 0) {
-      body.setAttribute(this.bodyOverflowAttribute, body.style.overflow);
-      body.setAttribute(this.bodyTouchActionAttribute, body.style.touchAction);
-      body.style.overflow = 'hidden';
-      body.style.touchAction = 'none';
-    }
-    body.setAttribute(this.bodyScrollLockCountAttribute, String(lockCount + 1));
-    this.isBodyScrollLocked = true;
-  }
-
-  private unlockBodyScroll(): void {
-    if (!this.isBodyScrollLocked) {
-      return;
-    }
-
-    const body = this.document.body;
-    const lockCount = Number.parseInt(
-      body.getAttribute(this.bodyScrollLockCountAttribute) ?? '0',
-      10
-    );
-    const nextCount =
-      Number.isFinite(lockCount) && lockCount > 0 ? lockCount - 1 : 0;
-
-    if (nextCount === 0) {
-      const previousOverflow =
-        body.getAttribute(this.bodyOverflowAttribute) ?? '';
-      const previousTouchAction =
-        body.getAttribute(this.bodyTouchActionAttribute) ?? '';
-      body.style.overflow = previousOverflow;
-      body.style.touchAction = previousTouchAction;
-      body.removeAttribute(this.bodyScrollLockCountAttribute);
-      body.removeAttribute(this.bodyOverflowAttribute);
-      body.removeAttribute(this.bodyTouchActionAttribute);
-    } else {
-      body.setAttribute(this.bodyScrollLockCountAttribute, String(nextCount));
-    }
-
-    this.isBodyScrollLocked = false;
+  private handleDateChange(event: Event, target: WritableSignal<string>): void {
+    target.set((event.target as HTMLInputElement).value);
+    this.validationError.set(null);
   }
 }
