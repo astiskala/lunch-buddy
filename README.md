@@ -3,6 +3,7 @@
 Lunch Buddy is an Angular PWA for tracking Lunch Money budget progress across the month.
 
 Production app: https://lunch-buddy.app
+Help and suggestions: [#lunch-buddy @ Lunch Money Discord](https://discord.com/channels/842337014556262411/1470488793391038485)
 
 ## What It Does
 
