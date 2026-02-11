@@ -48,8 +48,10 @@ const calculateBudgetMetrics = (
   invertRemaining = false
 ): BudgetMetrics => {
   const projected = spent + upcoming;
-  const spentPercent = budget > 0 ? toPercent(spent / budget) : 0;
-  const projectedPercent = budget > 0 ? toPercent(projected / budget) : 0;
+  const percentCap = { min: 0, max: 100 };
+  const spentPercent = budget > 0 ? toPercent(spent / budget, percentCap) : 0;
+  const projectedPercent =
+    budget > 0 ? toPercent(projected / budget, percentCap) : 0;
   let remaining = budget - projected;
   if (invertRemaining) {
     remaining = -remaining;

@@ -204,6 +204,17 @@ describe('SummaryHeroComponent', () => {
     expect(heading).not.toBe('October 2025');
   });
 
+  it('should cap income percent at 100 when received exceeds budget', () => {
+    render({
+      totalIncomeBudget: 3000,
+      totalIncomeSpent: 3500,
+      totalIncomeUpcoming: 200,
+    });
+
+    expect(component.incomeSpentPercent()).toBe(100);
+    expect(component.incomeProjectedPercent()).toBe(100);
+  });
+
   it('should display date range for non-aligned period mode', () => {
     render({
       monthStart: '2025-10-15',
