@@ -108,19 +108,18 @@ This project is configured for Vercel (`vercel.json`), but can be deployed as st
 
 ### Self-Hosting with a Container
 
-A `Containerfile` is included for running the app in a container:
+Pre-built images are published to GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/astiskala/lunch-buddy:latest
+docker run -p 3000:3000 ghcr.io/astiskala/lunch-buddy:latest
+```
+
+To build locally instead:
 
 ```bash
 docker build -f Containerfile -t lunch-buddy .
 docker run -p 3000:3000 lunch-buddy
-```
-
-To bake in environment variables at build time:
-
-```bash
-docker build -f Containerfile \
-  --build-arg NG_APP_LUNCHMONEY_API_KEY=your_key \
-  -t lunch-buddy .
 ```
 
 The container uses [Static Web Server](https://static-web-server.net/) to serve the Angular build with SPA fallback routing and security headers. See `sws.toml` for configuration.
