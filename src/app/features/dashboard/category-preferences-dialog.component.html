@@ -223,6 +223,45 @@
         </div>
       }
 
+      <!-- Transfer Settings -->
+      <div class="divider"></div>
+      <div class="setting-section transfer-section">
+        <div class="section-title">
+          <h3>Transfer settings</h3>
+          <p>Copy your settings to use on another device.</p>
+        </div>
+        <div class="transfer-actions">
+          <button mat-stroked-button (click)="exportSettings()">
+            <mat-icon fontIcon="content_copy"></mat-icon>
+            Copy to clipboard
+          </button>
+          <button mat-stroked-button (click)="toggleImportField()">
+            <mat-icon fontIcon="download"></mat-icon>
+            Import
+          </button>
+        </div>
+        @if (showImportField()) {
+          <div class="import-field">
+            <textarea
+              class="import-textarea"
+              placeholder="Paste settings JSON here..."
+              [value]="importText()"
+              (input)="handleImportTextChange($event)"
+              rows="4"></textarea>
+            @if (importError(); as error) {
+              <p class="import-error">{{ error }}</p>
+            }
+            <button
+              mat-flat-button
+              color="primary"
+              [disabled]="!importText()"
+              (click)="applyImport()">
+              Apply
+            </button>
+          </div>
+        }
+      </div>
+
       <!-- Diagnostics Section -->
       <div class="divider"></div>
       <div class="setting-section diagnostics-section">

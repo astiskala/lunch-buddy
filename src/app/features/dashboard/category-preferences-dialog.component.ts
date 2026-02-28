@@ -18,7 +18,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
-import { CategoryPreferences } from '../../shared/services/budget.service';
+import {
+  CategoryPreferences,
+  BudgetService,
+} from '../../shared/services/budget.service';
+import { AuthService } from '../../core/services/auth.service';
 import {
   PermissionDenialReason,
   PushNotificationService,
@@ -64,6 +68,8 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   private readonly logger = inject(LoggerService);
   private readonly versionService = inject(VersionService);
   private readonly document = inject(DOCUMENT);
+  private readonly authService = inject(AuthService);
+  private readonly budgetService = inject(BudgetService);
   protected readonly diagnostics = inject(DiagnosticsService);
   private readonly bodyScrollLock = new BodyScrollLockController(
     this.document.body
@@ -89,6 +95,9 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   readonly includeAllTransactions = signal(true);
   readonly hideGroupedCategories = signal(false);
   readonly visibleCategoriesExpanded = signal(false);
+  readonly importText = signal('');
+  readonly showImportField = signal(false);
+  readonly importError = signal<string | null>(null);
 
   readonly allCategories = computed(() => [
     ...this.items(),
@@ -318,6 +327,114 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
       await this.diagnostics.disable(true);
       this.logger.info('Diagnostics disabled and logs deleted');
     }
+  }
+
+  async exportSettings(): Promise<void> {
+    const payload: Record<string, unknown> = {
+      _type: 'lunch-buddy-settings',
+      _version: 1,
+    };
+
+    const apiKey = this.authService.getApiKey();
+    if (apiKey) {
+      payload['apiKey'] = apiKey;
+    }
+
+    // Read current in-dialog state (which may have unsaved changes)
+    payload['preferences'] = {
+      customOrder: this.ensureOrderContains(this.orderedIds()),
+      hiddenCategoryIds: Array.from(this.hiddenIds()),
+      notificationsEnabled: this.notificationsEnabled(),
+      includeAllTransactions: this.includeAllTransactions(),
+      hideGroupedCategories: this.hideGroupedCategories(),
+    };
+
+    const customPeriod = this.budgetService.getSavedCustomPeriod();
+    if (customPeriod) {
+      payload['customPeriod'] = customPeriod;
+    }
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(payload));
+      this.logger.info('Settings copied to clipboard');
+    } catch (err) {
+      this.logger.error('Failed to copy settings', err);
+    }
+  }
+
+  toggleImportField(): void {
+    this.showImportField.update(v => !v);
+    this.importText.set('');
+    this.importError.set(null);
+  }
+
+  handleImportTextChange(event: Event): void {
+    const target = event.target as HTMLTextAreaElement;
+    this.importText.set(target.value);
+    this.importError.set(null);
+  }
+
+  applyImport(): void {
+    const raw = this.importText().trim();
+    if (!raw) {
+      this.importError.set('Paste your settings JSON first.');
+      return;
+    }
+
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      this.importError.set(
+        'Invalid JSON. Please paste the exact text you exported.'
+      );
+      return;
+    }
+
+    if (data['_type'] !== 'lunch-buddy-settings') {
+      this.importError.set('This doesn\u2019t look like Lunch Buddy settings.');
+      return;
+    }
+
+    // Apply API key
+    if (typeof data['apiKey'] === 'string' && data['apiKey']) {
+      this.authService.setApiKey(data['apiKey']);
+    }
+
+    // Apply preferences into local signals
+    const prefs = data['preferences'] as
+      | Partial<CategoryPreferences>
+      | undefined;
+    if (prefs) {
+      if (Array.isArray(prefs.customOrder)) {
+        this.orderedIds.set([...prefs.customOrder]);
+      }
+      if (Array.isArray(prefs.hiddenCategoryIds)) {
+        this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
+      }
+      if (typeof prefs.notificationsEnabled === 'boolean') {
+        this.notificationsEnabled.set(prefs.notificationsEnabled);
+      }
+      if (typeof prefs.includeAllTransactions === 'boolean') {
+        this.includeAllTransactions.set(prefs.includeAllTransactions);
+      }
+      if (typeof prefs.hideGroupedCategories === 'boolean') {
+        this.hideGroupedCategories.set(prefs.hideGroupedCategories);
+      }
+    }
+
+    // Apply custom period directly (not part of dialog save flow)
+    const period = data['customPeriod'] as
+      | { start?: string; end?: string }
+      | undefined;
+    if (period?.start && period.end) {
+      this.budgetService.setCustomPeriod(period.start, period.end);
+    }
+
+    this.showImportField.set(false);
+    this.importText.set('');
+    this.importError.set(null);
+    this.logger.info('Settings imported successfully');
   }
 
   private resolveNotificationError(
