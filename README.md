@@ -105,3 +105,11 @@ This project is configured for Vercel (`vercel.json`), but can be deployed as st
 
 - Build output directory: `dist/lunch-buddy`
 - Ensure SPA routing falls back to `index.html`
+
+### Self-Hosting with a Container
+
+Pre-built images are published to GitHub Container Registry:
+
+```bash
+docker run -p 3000:3000 ghcr.io/astiskala/lunch-buddy:latest
+```

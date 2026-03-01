@@ -1,0 +1,21 @@
+[general]
+host = "::"
+port = 3000
+root = "/public"
+log-level = "error"
+page-fallback = "/public/index.html"
+
+[advanced]
+
+[[advanced.headers]]
+source = "**/*"
+[advanced.headers.headers]
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "DENY"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[advanced.headers]]
+source = "**/*.{js,css,ttf,woff,woff2,svg,png,jpg,webp,ico}"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"
