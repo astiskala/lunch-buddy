@@ -2,7 +2,8 @@
 
 Lunch Buddy is an Angular PWA for tracking Lunch Money budget progress across the month.
 
-Production app: https://lunch-buddy.app
+- Production app: https://lunch-buddy.app
+- Help and suggestions: [#lunch-buddy @ Lunch Money Discord](https://discord.com/channels/842337014556262411/1470488793391038485)
 
 ## What It Does
 
@@ -104,3 +105,11 @@ This project is configured for Vercel (`vercel.json`), but can be deployed as st
 
 - Build output directory: `dist/lunch-buddy`
 - Ensure SPA routing falls back to `index.html`
+
+### Self-Hosting with a Container
+
+Pre-built images are published to GitHub Container Registry:
+
+```bash
+docker run -p 3000:3000 ghcr.io/astiskala/lunch-buddy:latest
+```
