@@ -640,6 +640,13 @@ async function fetchWithTimeout(request, timeoutMs) {
 }
 
 globalThis.addEventListener('message', event => {
+  // Reject messages that don't originate from a same-origin client. Service
+  // workers in modern browsers only receive messages from their own scope,
+  // but defending explicitly closes the gap if that ever changes.
+  if (event.origin && event.origin !== globalThis.location.origin) {
+    return;
+  }
+
   const data = event.data;
   if (!data || typeof data !== 'object') {
     return;
@@ -954,7 +961,7 @@ function mergeSummaryWithCategories(summaryResponse, categories) {
 }
 
 function pickOccurrence(occurrences) {
-  if (!occurrences || !occurrences.length) {
+  if (!occurrences?.length) {
     return undefined;
   }
   return occurrences.find(item => item.current) ?? occurrences[0];

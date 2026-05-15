@@ -177,7 +177,7 @@ test.describe('Dashboard', () => {
     });
 
     await page.goto('/dashboard');
-    if (/\/dashboard$/.test(new URL(page.url()).pathname)) {
+    if (new URL(page.url()).pathname.endsWith('/dashboard')) {
       await expect(page).toHaveURL(/\/dashboard$/);
     } else {
       await page.evaluate(() => {

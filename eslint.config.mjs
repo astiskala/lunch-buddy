@@ -8,13 +8,24 @@ import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import sonarjsPlugin from 'eslint-plugin-sonarjs';
 import boundariesPlugin from 'eslint-plugin-boundaries';
 
+// Files that need type-aware linting but live outside the TS project graph.
+// Every block that initializes `projectService` must declare the same list —
+// typescript-eslint creates a single project-service instance per process and
+// uses whichever block's config is registered first.
+const ALLOW_DEFAULT_PROJECT = [
+  'public/*.js',
+  'tools/*.js',
+  'tools/*.mjs',
+  'karma.conf.js',
+  'e2e/*.ts',
+];
+
 export default tseslint.config(
   {
     // Global ignores
     ignores: [
       'projects/**/*',
       'playwright.config.ts',
-      'e2e/**/*',
       'dist/**/*',
       'coverage/**/*',
       'playwright-report/**/*',
@@ -25,9 +36,11 @@ export default tseslint.config(
   // Base config for all files
   js.configs.recommended,
 
-  // TypeScript files
+  // TypeScript files (excludes e2e — those are linted by a non-type-checked
+  // block below since they live outside the project graph).
   {
     files: ['**/*.ts'],
+    ignores: ['e2e/**/*.ts'],
     extends: [
       ...tseslint.configs.strictTypeChecked,
       ...tseslint.configs.stylisticTypeChecked,
@@ -47,7 +60,7 @@ export default tseslint.config(
     },
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: { allowDefaultProject: ALLOW_DEFAULT_PROJECT },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -137,15 +150,68 @@ export default tseslint.config(
     },
   },
 
-  // JavaScript files
+  // JavaScript files — use the TS parser with default-project type info so
+  // we can run the type-aware rules that catch the patterns SonarQube flags.
   {
     files: ['**/*.js'],
-    extends: [eslintConfigPrettier],
+    extends: [sonarjsPlugin.configs.recommended, eslintConfigPrettier],
     plugins: {
       prettier: prettierPlugin,
+      '@typescript-eslint': tseslint.plugin,
+    },
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        projectService: { allowDefaultProject: ALLOW_DEFAULT_PROJECT },
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
       'prettier/prettier': 'error',
+      // Catches `x && x.y` / `!x || !x.y` patterns the TS path already lints.
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      // Catches regex-based endsWith/startsWith checks.
+      '@typescript-eslint/prefer-string-starts-ends-with': 'error',
+    },
+  },
+
+  // Playwright e2e tests — TS but outside the typed project graph.
+  {
+    files: ['e2e/**/*.ts'],
+    extends: [
+      js.configs.recommended,
+      sonarjsPlugin.configs.recommended,
+      eslintConfigPrettier,
+    ],
+    plugins: {
+      prettier: prettierPlugin,
+      '@typescript-eslint': tseslint.plugin,
+    },
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        projectService: { allowDefaultProject: ALLOW_DEFAULT_PROJECT },
+        tsconfigRootDir: import.meta.dirname,
+      },
+      globals: {
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        indexedDB: 'readonly',
+        navigator: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+      },
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/prefer-string-starts-ends-with': 'error',
     },
   },
 
