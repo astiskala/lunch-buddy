@@ -1,6 +1,6 @@
 {
   "name": "lunch-buddy",
-  "version": "1.19.5",
+  "version": "1.19.6",
   "private": true,
   "scripts": {
     "build": "ng build",
