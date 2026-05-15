@@ -23,8 +23,10 @@ npm start
 - `npm test` - Unit tests (Vitest + coverage)
 - `npm run test:watch` - Unit tests in watch mode
 - `npm run test:e2e` - Playwright tests
-- `npm run lint` - Auto-fix lint/style/format issues
-- `npm run lint:check` - CI-style lint/style/format checks
+- `npm run test:integration` - Integration tests
+- `npm run lint` - CI-style lint/style/format checks
+- `npm run lint:fix` - Auto-fix lint/style/format issues
+- `npm run typecheck` - TypeScript type checking
 - `npm run generate:env` - Regenerate `src/environments/runtime-env.generated.ts`
 
 ## Pre-PR Checklist
@@ -32,8 +34,8 @@ npm start
 Run this before opening a pull request:
 
 ```bash
-npm run lint:check
-npx tsc --noEmit
+npm run lint
+npm run typecheck
 npm test
 npm run build
 ```

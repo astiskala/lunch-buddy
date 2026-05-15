@@ -1,5 +1,7 @@
 export const createDeferred = <T>() => {
-  let resolveFn: (value: T | PromiseLike<T>) => void = () => {
+  let resolveFn: (value: T | PromiseLike<T>) => void = (
+    _value: T | PromiseLike<T>
+  ) => {
     throw new Error('Deferred resolver not initialized');
   };
   const promise = new Promise<T>(res => {

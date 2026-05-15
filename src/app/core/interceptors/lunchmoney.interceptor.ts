@@ -24,7 +24,7 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
     try {
       requestUrl = new URL(req.url, globalThis.location.origin);
     } catch {
-      requestUrl = null;
+      // URL parsing failed; requestUrl remains null.
     }
 
     if (

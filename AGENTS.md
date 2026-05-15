@@ -4,6 +4,7 @@
 
 - Framework: Angular 21 (standalone components, signals, zoneless change detection).
 - Unit tests: Angular `@angular/build:unit-test` builder with Vitest.
+- Integration tests: Angular `@angular/build:unit-test` builder with Vitest (`*.integration.spec.ts`).
 - E2E tests: Playwright.
 
 ## Local Commands
@@ -13,8 +14,10 @@
 - `npm test` - Run unit tests with coverage.
 - `npm run test:watch` - Run unit tests in watch mode.
 - `npm run test:e2e` - Run Playwright E2E tests.
-- `npm run lint` - Auto-fix ESLint, stylelint, and formatting issues.
-- `npm run lint:check` - Run lint and formatting checks without modifying files.
+- `npm run test:integration` - Run integration tests.
+- `npm run lint` - Run lint and formatting checks without modifying files.
+- `npm run lint:fix` - Auto-fix ESLint, stylelint, and formatting issues.
+- `npm run typecheck` - Run TypeScript type check without emitting files.
 - `npm run generate:env` - Regenerate `src/environments/runtime-env.generated.ts`.
 
 ## Coding Standards

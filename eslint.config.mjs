@@ -5,6 +5,8 @@ import rxjsXPlugin from 'eslint-plugin-rxjs-x';
 import prettierPlugin from 'eslint-plugin-prettier';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
+import sonarjsPlugin from 'eslint-plugin-sonarjs';
+import boundariesPlugin from 'eslint-plugin-boundaries';
 
 export default tseslint.config(
   {
@@ -30,18 +32,32 @@ export default tseslint.config(
       ...tseslint.configs.strictTypeChecked,
       ...tseslint.configs.stylisticTypeChecked,
       ...ngeslint.configs.tsRecommended,
+      sonarjsPlugin.configs.recommended,
       eslintConfigPrettier,
     ],
     plugins: {
       'rxjs-x': rxjsXPlugin,
       prettier: prettierPlugin,
       'unused-imports': unusedImportsPlugin,
+      boundaries: boundariesPlugin,
+    },
+    linterOptions: {
+      noInlineConfig: false,
+      reportUnusedDisableDirectives: 'error',
     },
     languageOptions: {
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+    settings: {
+      'boundaries/elements': [
+        { type: 'core', pattern: 'src/app/core/**' },
+        { type: 'shared', pattern: 'src/app/shared/**' },
+        { type: 'features', pattern: 'src/app/features/**' },
+      ],
+      'boundaries/ignore': ['**/*.spec.ts'],
     },
     rules: {
       ...rxjsXPlugin.configs.recommended.rules,
@@ -60,6 +76,16 @@ export default tseslint.config(
       'no-unused-vars': 'off',
       'no-undef': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-check': false,
+          minimumDescriptionLength: 10,
+        },
+      ],
       '@angular-eslint/directive-selector': [
         'error',
         {
@@ -81,6 +107,33 @@ export default tseslint.config(
       '@typescript-eslint/unified-signatures': 'off', // Disabled due to bug with TypeScript 5.9+
       '@angular-eslint/prefer-standalone': 'error',
       '@angular-eslint/use-lifecycle-interface': 'error',
+      'boundaries/dependencies': [
+        'error',
+        {
+          default: 'disallow',
+          rules: [
+            // features can import from core, shared, and other features
+            {
+              from: [{ type: 'features' }],
+              allow: [
+                { to: { type: 'core' } },
+                { to: { type: 'shared' } },
+                { to: { type: 'features' } },
+              ],
+            },
+            // core can import from shared and other core
+            {
+              from: [{ type: 'core' }],
+              allow: [{ to: { type: 'shared' } }, { to: { type: 'core' } }],
+            },
+            // shared can import from other shared only
+            {
+              from: [{ type: 'shared' }],
+              allow: [{ to: { type: 'shared' } }],
+            },
+          ],
+        },
+      ],
     },
   },
 

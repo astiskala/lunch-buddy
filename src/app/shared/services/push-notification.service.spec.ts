@@ -205,8 +205,8 @@ describe('default notification channel', () => {
       }
     }
 
-    mockNotificationCtor = TestNotification as unknown as MockNotificationCtor;
-    globalWithNotification = globalThis as MutableGlobalWithNotification;
+    mockNotificationCtor = TestNotification;
+    globalWithNotification = globalThis;
     notificationBackup = globalWithNotification.Notification;
     globalWithNotification.Notification =
       TestNotification as unknown as typeof Notification;
@@ -220,7 +220,7 @@ describe('default notification channel', () => {
         showNotification: showNotificationSpy,
       } as unknown as ServiceWorkerRegistration)
     );
-    navigatorWithServiceWorker = navigator as MutableNavigatorWithServiceWorker;
+    navigatorWithServiceWorker = navigator;
     Object.defineProperty(navigatorWithServiceWorker, 'serviceWorker', {
       configurable: true,
       value: {
@@ -235,16 +235,13 @@ describe('default notification channel', () => {
   });
 
   afterEach(() => {
-    const notificationHost =
-      globalWithNotification ?? (globalThis as MutableGlobalWithNotification);
+    const notificationHost = globalWithNotification ?? globalThis;
     if (notificationBackup) {
       notificationHost.Notification = notificationBackup;
     } else {
       Reflect.deleteProperty(notificationHost, 'Notification');
     }
-    const navigatorHost =
-      navigatorWithServiceWorker ??
-      (navigator as MutableNavigatorWithServiceWorker);
+    const navigatorHost = navigatorWithServiceWorker ?? navigator;
     if (serviceWorkerDescriptor) {
       Object.defineProperty(
         navigatorHost,

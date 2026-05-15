@@ -95,6 +95,16 @@
             }
           }
         },
+        "test-integration": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "lunch-buddy:build:development",
+            "tsConfig": "tsconfig.integration.json",
+            "runner": "vitest",
+            "setupFiles": ["src/test/vitest-setup.ts"],
+            "include": ["src/**/*.integration.spec.ts"]
+          }
+        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {

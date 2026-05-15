@@ -23,7 +23,7 @@ describe('OfflineService', () => {
     );
     setNavigatorOnline(true);
 
-    fetchSpy = vi.fn().mockResolvedValue({ ok: true } as Response);
+    fetchSpy = vi.fn().mockResolvedValue({ ok: true });
     globalThis.fetch = fetchSpy as unknown as typeof fetch;
 
     TestBed.configureTestingModule({
@@ -72,7 +72,7 @@ describe('OfflineService', () => {
     expect(service.getOnlineStatus()()).toBe(true);
 
     // Mock fetch to fail for the next heartbeat.
-    fetchSpy.mockResolvedValueOnce({ ok: false } as Response);
+    fetchSpy.mockResolvedValueOnce({ ok: false });
 
     // Fast-forward 30 seconds.
     vi.advanceTimersByTime(30000);
@@ -83,7 +83,7 @@ describe('OfflineService', () => {
     expect(service.getOfflineStatus()()).toBe(true);
 
     // Mock fetch to succeed again.
-    fetchSpy.mockResolvedValueOnce({ ok: true } as Response);
+    fetchSpy.mockResolvedValueOnce({ ok: true });
 
     // Fast-forward another 30 seconds.
     vi.advanceTimersByTime(30000);

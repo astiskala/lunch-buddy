@@ -1,22 +1,58 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
-  - package-ecosystem: 'npm' # See documentation for possible values
-    directory: '/' # Location of package manifests
+  - package-ecosystem: npm
+    directory: /
     schedule:
-      interval: 'daily'
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/London
+    open-pull-requests-limit: 10
     groups:
       angular:
         patterns:
           - '@angular/*'
+          - '@angular-eslint/*'
+          - 'angular-eslint'
+      eslint:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - '@eslint/*'
+          - 'typescript-eslint'
+          - '@typescript-eslint/*'
+      testing:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - '@playwright/*'
+          - '@axe-core/playwright'
+          - 'jsdom'
+      semantic-release:
+        patterns:
+          - 'semantic-release'
+          - '@semantic-release/*'
       commitlint:
         patterns:
           - '@commitlint/*'
-      typescript-eslint:
+      stylelint:
         patterns:
-          - 'typescript-eslint'
-          - '@typescript-eslint/*'
+          - 'stylelint'
+          - 'stylelint-*'
+      vercel:
+        patterns:
+          - 'vercel'
+          - '@vercel/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/London
+    groups:
+      github-actions:
+        patterns:
+          - '*'

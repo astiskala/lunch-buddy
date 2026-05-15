@@ -58,6 +58,9 @@ jobs:
       - name: Generate runtime environment
         run: npm run generate:env
 
+      - name: Type check
+        run: npm run typecheck
+
       - name: Lint (TypeScript & templates)
         run: npx ng lint --fix=false
 
@@ -71,7 +74,7 @@ jobs:
         run: npm test
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: ./coverage/lunch-buddy/lcov.info
           fail_ci_if_error: false
