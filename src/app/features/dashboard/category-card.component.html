@@ -125,6 +125,17 @@
                       </div>
                     }
                   </div>
+                  @if (entry.deepLink) {
+                    <a
+                      class="open-in-lunchmoney"
+                      [href]="entry.deepLink"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      (click)="$event.stopPropagation()"
+                      aria-label="Open transaction in Lunch Money">
+                      <mat-icon>open_in_new</mat-icon>
+                    </a>
+                  }
                 </div>
               }
             </div>

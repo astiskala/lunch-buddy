@@ -762,4 +762,100 @@ describe('CategoryCardComponent', () => {
     expect(upcomingEntries.length).toBe(1);
     expect(upcomingEntries[0].label).toContain('Upcoming Tax');
   });
+
+  describe('transaction deep link', () => {
+    const transactionFixture = (): Transaction =>
+      buildTransaction({
+        id: 9001,
+        date: '2026-05-15',
+        amount: '-12.34',
+        currency: 'usd',
+        to_base: -12.34,
+        payee: 'Coffee',
+        category_id: 4242,
+      });
+
+    it('renders an open-in-lunchmoney link on real transaction rows', () => {
+      const item: BudgetProgress = {
+        ...mockItem,
+        categoryId: 4242,
+        transactionList: [transactionFixture()],
+      };
+      setupComponent(fixture, {
+        item,
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+        referenceDate: new Date('2026-05-20T00:00:00.000Z'),
+      });
+      const host = expandCard();
+      const anchor = host.querySelector<HTMLAnchorElement>(
+        '.activity-item a.open-in-lunchmoney'
+      );
+      expect(anchor).not.toBeNull();
+      expect(anchor?.getAttribute('href')).toBe(
+        'https://my.lunchmoney.app/transactions/2026/05' +
+          '?category=4242' +
+          '&start_date=2026-05-15' +
+          '&end_date=2026-05-15' +
+          '&match=all' +
+          '&time=custom'
+      );
+      expect(anchor?.getAttribute('target')).toBe('_blank');
+      expect(anchor?.getAttribute('rel')).toBe('noopener noreferrer');
+      expect(anchor?.getAttribute('aria-label')).toBe(
+        'Open transaction in Lunch Money'
+      );
+    });
+
+    it('does not render the link on upcoming recurring rows', () => {
+      const recurring = buildRecurringInstance(
+        { id: 555, payee: 'Netflix', amount: '15.00', to_base: 15 },
+        new Date('2026-05-20T00:00:00.000Z')
+      );
+      const item: BudgetProgress = {
+        ...mockItem,
+        categoryId: 4242,
+        transactionList: [],
+      };
+      setupComponent(fixture, {
+        item,
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+        referenceDate: new Date('2026-05-10T00:00:00.000Z'),
+        recurringExpenses: [recurring],
+      });
+      const host = expandCard();
+      const upcomingItem = Array.from(
+        host.querySelectorAll<HTMLElement>('.activity-item')
+      ).find(el => el.querySelector('.badge.upcoming'));
+      expect(upcomingItem).toBeDefined();
+      expect(upcomingItem?.querySelector('a.open-in-lunchmoney')).toBeNull();
+    });
+
+    it('clicking the link does not toggle the card details', () => {
+      const item: BudgetProgress = {
+        ...mockItem,
+        categoryId: 4242,
+        transactionList: [transactionFixture()],
+      };
+      setupComponent(fixture, {
+        item,
+        startDate: '2026-05-01',
+        endDate: '2026-05-31',
+        referenceDate: new Date('2026-05-20T00:00:00.000Z'),
+      });
+      const host = expandCard();
+      expect(component.showDetails()).toBe(true);
+      const anchor = host.querySelector<HTMLAnchorElement>(
+        '.activity-item a.open-in-lunchmoney'
+      );
+      expect(anchor).not.toBeNull();
+      anchor?.addEventListener('click', e => {
+        e.preventDefault();
+      });
+      anchor?.click();
+      fixture.detectChanges();
+      expect(component.showDetails()).toBe(true);
+    });
+  });
 });

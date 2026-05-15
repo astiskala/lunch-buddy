@@ -288,6 +288,37 @@
           color: var(--color-success);
         }
       }
+
+      .open-in-lunchmoney {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        color: var(--color-text-tertiary);
+        border-radius: 4px;
+        text-decoration: none;
+        transition:
+          color 0.2s ease,
+          background 0.2s ease;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          line-height: 18px;
+        }
+
+        &:hover,
+        &:focus-visible {
+          color: var(--color-primary);
+          background: rgb(var(--color-primary-rgb) / 8%);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
+      }
     }
   }
 }
