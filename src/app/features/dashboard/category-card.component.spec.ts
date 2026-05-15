@@ -19,6 +19,7 @@ describe('CategoryCardComponent', () => {
     notes: string | null;
     amount: number;
     currency: string | null;
+    deepLink: string | null;
   }
 
   interface ComponentInputs {
@@ -364,6 +365,7 @@ describe('CategoryCardComponent', () => {
       notes: null,
       amount: 42,
       currency: 'USD',
+      deepLink: null,
     };
 
     const upcomingEntry: TestActivityEntry = {

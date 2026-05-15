@@ -51,8 +51,7 @@ interface ActivityEntry {
   currency: string | null;
   originalCurrency?: string | null;
   originalAmount?: number | null;
-  transactionId?: number | null;
-  deepLink?: string | null;
+  deepLink: string | null;
 }
 
 interface ActivityGroup {
@@ -292,6 +291,7 @@ export class CategoryCardComponent {
     transactions: Transaction[]
   ): ActivityEntry[] {
     const isIncomeCategory = this.isIncomeCategory();
+    const cardCategoryId = this.safeItem()?.categoryId ?? null;
     return transactions.map(transaction => {
       const rawAmount = resolveAmount(
         transaction.amount,
@@ -312,7 +312,7 @@ export class CategoryCardComponent {
       const deepLink = buildTransactionDeepLink({
         transactionDate: transaction.date,
         transactionCategoryId: transaction.category_id,
-        cardCategoryId: this.safeItem()?.categoryId ?? null,
+        cardCategoryId,
       });
 
       return {
@@ -325,7 +325,6 @@ export class CategoryCardComponent {
         currency: displayCurrency,
         originalCurrency: transaction.currency,
         originalAmount,
-        transactionId: transaction.id,
         deepLink,
       };
     });
@@ -454,6 +453,7 @@ export class CategoryCardComponent {
   ): ActivityEntry[] {
     const entries: ActivityEntry[] = [];
     const isIncomeCategory = this.isIncomeCategory();
+    const cardCategoryId = this.safeItem()?.categoryId ?? null;
 
     for (const instance of recurring) {
       const found = instance.expense.found_transactions;
@@ -473,14 +473,13 @@ export class CategoryCardComponent {
         const deepLink = buildTransactionDeepLink({
           transactionDate: entry.date,
           transactionCategoryId: instance.expense.category_id ?? null,
-          cardCategoryId: this.safeItem()?.categoryId ?? null,
+          cardCategoryId,
         });
         entries.push({
           id: `found-${instance.expense.id.toString()}-${entry.transaction_id.toString()}`,
           kind: 'transaction',
           date: entryDate,
           ...base,
-          transactionId: entry.transaction_id,
           deepLink,
         });
       }
@@ -790,6 +789,7 @@ export class CategoryCardComponent {
       currency: displayCurrency,
       originalCurrency: instance.expense.currency,
       originalAmount,
+      deepLink: null,
     };
   }
 
