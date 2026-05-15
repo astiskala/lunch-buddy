@@ -22,12 +22,7 @@ import { SummaryHeroComponent } from './summary-hero.component';
 import { RecurringExpensesPanelComponent } from './recurring-expenses-panel.component';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
 import { CustomPeriodDialogComponent } from './custom-period-dialog.component';
-import {
-  formatCurrency,
-  resolveAmount,
-} from '../../shared/utils/currency.util';
-import { getWindowRange } from '../../shared/utils/date.util';
-import { filterPendingInstances } from '../../shared/utils/recurring.util';
+import { formatCurrency } from '../../shared/utils/currency.util';
 
 type StatusFilter = 'all' | 'over' | 'at-risk' | 'on-track';
 type TabType = 'expenses' | 'income';
@@ -90,16 +85,6 @@ export class DashboardPageComponent {
     this.activeTab() === 'expenses' ? this.expenses() : this.incomes()
   );
 
-  protected readonly allExpenses = computed(() => [
-    ...this.expenses(),
-    ...this.hiddenExpenses(),
-  ]);
-
-  protected readonly allIncomes = computed(() => [
-    ...this.incomes(),
-    ...this.hiddenIncomes(),
-  ]);
-
   protected readonly hiddenItems = computed(() =>
     this.activeTab() === 'expenses'
       ? this.hiddenExpenses()
@@ -122,29 +107,8 @@ export class DashboardPageComponent {
     this.filterItemsByStatus(this.hiddenItems(), this.statusFilter())
   );
 
-  protected readonly totalExpenseSpent = computed(() => {
-    return this.sumBy(this.allExpenses(), item => item.spent);
-  });
-
-  protected readonly totalExpenseBudget = computed(() => {
-    return this.sumBy(this.allExpenses(), item => item.budgetAmount);
-  });
-
-  protected readonly totalIncomeSpent = computed(() => {
-    return this.sumBy(this.allIncomes(), item => Math.abs(item.spent));
-  });
-
-  protected readonly totalIncomeBudget = computed(() => {
-    return this.sumBy(this.allIncomes(), item => Math.abs(item.budgetAmount));
-  });
-
-  protected readonly totalExpenseUpcoming = computed(() => {
-    return this.sumUpcomingTotal(this.allExpenses(), false);
-  });
-
-  protected readonly totalIncomeUpcoming = computed(() => {
-    return this.sumUpcomingTotal(this.allIncomes(), true);
-  });
+  protected readonly expenseTotals = this.budgetService.getExpenseTotals;
+  protected readonly incomeTotals = this.budgetService.getIncomeTotals;
 
   protected readonly statusCounts = computed(() => {
     const items = this.activeItems();
@@ -155,9 +119,13 @@ export class DashboardPageComponent {
     };
   });
 
-  protected readonly hiddenTotal = computed(() =>
-    this.filteredHiddenItems().reduce((sum, item) => sum + item.spent, 0)
-  );
+  protected readonly hiddenTotal = computed(() => {
+    const isIncome = this.activeTab() === 'income';
+    return this.filteredHiddenItems().reduce(
+      (sum, item) => sum + (isIncome ? Math.abs(item.spent) : item.spent),
+      0
+    );
+  });
 
   protected readonly hiddenLabel = computed(() =>
     this.activeTab() === 'expenses' ? 'categories' : 'income categories'
@@ -300,44 +268,5 @@ export class DashboardPageComponent {
     } finally {
       await this.router.navigate(['/login']);
     }
-  }
-
-  private sumBy(
-    items: BudgetProgress[],
-    selector: (item: BudgetProgress) => number
-  ): number {
-    return items.reduce((total, item) => total + selector(item), 0);
-  }
-
-  private sumUpcomingTotal(
-    categories: BudgetProgress[],
-    isIncome: boolean
-  ): number {
-    const recurring = this.recurringByCategory();
-    const referenceDate = this.referenceDate();
-    const windowRange = getWindowRange(this.startDate(), this.endDate());
-    const categoryMap = new Map(
-      categories.map(category => [category.categoryId, category])
-    );
-
-    let total = 0;
-    for (const [categoryId, instances] of recurring.assigned.entries()) {
-      const pendingInstances = filterPendingInstances(instances, {
-        referenceDate,
-        windowRange: windowRange ?? undefined,
-      });
-      if (pendingInstances.length === 0) {
-        continue;
-      }
-      const category = categoryMap.get(categoryId);
-      if (category?.isIncome === isIncome) {
-        for (const inst of pendingInstances) {
-          total += Math.abs(
-            resolveAmount(inst.expense.amount, inst.expense.to_base ?? null)
-          );
-        }
-      }
-    }
-    return total;
   }
 }

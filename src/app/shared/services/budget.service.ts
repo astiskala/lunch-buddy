@@ -135,25 +135,30 @@ export class BudgetService {
   );
 
   // Derived values.
-  protected readonly expenses = computed(() => {
-    const prefs = this.preferences();
-    return this.getVisibleItemsByType(false, prefs);
-  });
+  private readonly partitionedExpenses = computed(() =>
+    this.partitionByVisibility(
+      this.getOrderedItemsByType(false, this.preferences())
+    )
+  );
 
-  protected readonly hiddenExpenses = computed(() => {
-    const prefs = this.preferences();
-    return this.getHiddenItemsByType(false, prefs);
-  });
+  private readonly partitionedIncomes = computed(() =>
+    this.partitionByVisibility(
+      this.getOrderedItemsByType(true, this.preferences())
+    )
+  );
 
-  protected readonly incomes = computed(() => {
-    const prefs = this.preferences();
-    return this.getVisibleItemsByType(true, prefs);
-  });
-
-  protected readonly hiddenIncomes = computed(() => {
-    const prefs = this.preferences();
-    return this.getHiddenItemsByType(true, prefs);
-  });
+  protected readonly expenses = computed(
+    () => this.partitionedExpenses().visible
+  );
+  protected readonly hiddenExpenses = computed(
+    () => this.partitionedExpenses().hidden
+  );
+  protected readonly incomes = computed(
+    () => this.partitionedIncomes().visible
+  );
+  protected readonly hiddenIncomes = computed(
+    () => this.partitionedIncomes().hidden
+  );
 
   protected readonly currency = computed(() => {
     const data = this.budgetData();
@@ -217,6 +222,70 @@ export class BudgetService {
     );
 
     return { assigned, unassigned };
+  });
+
+  private readonly upcomingByType = computed(() => {
+    const recurring = this.recurringByCategory();
+    if (recurring.assigned.size === 0) {
+      return { expense: 0, income: 0 };
+    }
+
+    const referenceDate = this.referenceDate();
+    const windowRange =
+      getWindowRange(this.startDate(), this.endDate()) ?? undefined;
+    const expenseIds = new Set(this.expenses().map(item => item.categoryId));
+    const incomeIds = new Set(this.incomes().map(item => item.categoryId));
+
+    let expense = 0;
+    let income = 0;
+
+    for (const [categoryId, instances] of recurring.assigned.entries()) {
+      const pending = filterPendingInstances(instances, {
+        referenceDate,
+        windowRange,
+      });
+      if (pending.length === 0) {
+        continue;
+      }
+
+      let categoryTotal = 0;
+      for (const instance of pending) {
+        categoryTotal += Math.abs(
+          resolveAmount(
+            instance.expense.amount,
+            instance.expense.to_base ?? null
+          )
+        );
+      }
+
+      if (expenseIds.has(categoryId)) {
+        expense += categoryTotal;
+      } else if (incomeIds.has(categoryId)) {
+        income += categoryTotal;
+      }
+    }
+
+    return { expense, income };
+  });
+
+  readonly expenseTotals = computed(() => {
+    let spent = 0;
+    let budget = 0;
+    for (const item of this.expenses()) {
+      spent += item.spent;
+      budget += item.budgetAmount;
+    }
+    return { spent, budget, upcoming: this.upcomingByType().expense };
+  });
+
+  readonly incomeTotals = computed(() => {
+    let spent = 0;
+    let budget = 0;
+    for (const item of this.incomes()) {
+      spent += Math.abs(item.spent);
+      budget += Math.abs(item.budgetAmount);
+    }
+    return { spent, budget, upcoming: this.upcomingByType().income };
   });
 
   constructor() {
@@ -447,6 +516,8 @@ export class BudgetService {
   getHiddenExpenses = this.hiddenExpenses;
   getIncomes = this.incomes;
   getHiddenIncomes = this.hiddenIncomes;
+  getExpenseTotals = this.expenseTotals;
+  getIncomeTotals = this.incomeTotals;
   getCurrency = this.currency;
   getIsLoading = this.isLoading;
   getErrors = this.errors;
@@ -1083,24 +1154,21 @@ export class BudgetService {
     return new Date(year, month - 1, 1);
   }
 
-  private getVisibleItemsByType(
-    isIncome: boolean,
-    prefs: CategoryPreferences
-  ): BudgetProgress[] {
-    const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    return this.getOrderedItemsByType(isIncome, prefs).filter(
-      item => !hiddenIds.has(item.categoryId)
-    );
-  }
-
-  private getHiddenItemsByType(
-    isIncome: boolean,
-    prefs: CategoryPreferences
-  ): BudgetProgress[] {
-    const hiddenIds = new Set(prefs.hiddenCategoryIds);
-    return this.getOrderedItemsByType(isIncome, prefs).filter(item =>
-      hiddenIds.has(item.categoryId)
-    );
+  private partitionByVisibility(items: BudgetProgress[]): {
+    visible: BudgetProgress[];
+    hidden: BudgetProgress[];
+  } {
+    const hiddenIds = new Set(this.preferences().hiddenCategoryIds);
+    const visible: BudgetProgress[] = [];
+    const hidden: BudgetProgress[] = [];
+    for (const item of items) {
+      if (hiddenIds.has(item.categoryId)) {
+        hidden.push(item);
+      } else {
+        visible.push(item);
+      }
+    }
+    return { visible, hidden };
   }
 
   private getOrderedItemsByType(
