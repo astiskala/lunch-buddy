@@ -39,6 +39,7 @@ import {
   hasFoundTransactionForOccurrence,
   isRecurringInstancePending,
 } from '../../shared/utils/recurring.util';
+import { buildTransactionDeepLink } from '../../shared/utils/lunchmoney-link.util';
 
 interface ActivityEntry {
   id: string;
@@ -50,6 +51,8 @@ interface ActivityEntry {
   currency: string | null;
   originalCurrency?: string | null;
   originalAmount?: number | null;
+  transactionId?: number | null;
+  deepLink?: string | null;
 }
 
 interface ActivityGroup {
@@ -306,6 +309,11 @@ export class CategoryCardComponent {
         transaction.currency,
         transaction.to_base ?? null
       );
+      const deepLink = buildTransactionDeepLink({
+        transactionDate: transaction.date,
+        transactionCategoryId: transaction.category_id,
+        cardCategoryId: this.safeItem()?.categoryId ?? null,
+      });
 
       return {
         id: `txn-${transaction.id.toString()}`,
@@ -317,6 +325,8 @@ export class CategoryCardComponent {
         currency: displayCurrency,
         originalCurrency: transaction.currency,
         originalAmount,
+        transactionId: transaction.id,
+        deepLink,
       };
     });
   }
@@ -460,11 +470,18 @@ export class CategoryCardComponent {
         if (this.isDuplicateTransaction(entry.transaction_id, transactions)) {
           continue;
         }
+        const deepLink = buildTransactionDeepLink({
+          transactionDate: entry.date,
+          transactionCategoryId: instance.expense.category_id ?? null,
+          cardCategoryId: this.safeItem()?.categoryId ?? null,
+        });
         entries.push({
           id: `found-${instance.expense.id.toString()}-${entry.transaction_id.toString()}`,
           kind: 'transaction',
           date: entryDate,
           ...base,
+          transactionId: entry.transaction_id,
+          deepLink,
         });
       }
     }
