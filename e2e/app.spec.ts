@@ -171,7 +171,7 @@ test.describe('Dashboard', () => {
     // Mock authentication for dashboard tests by seeding storage
     await page.addInitScript(() => {
       localStorage.setItem(
-        'lunchmoney_api_key',
+        'lunchbuddy_api_key',
         'test-api-key-for-e2e-testing'
       );
     });
