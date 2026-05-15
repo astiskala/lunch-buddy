@@ -721,7 +721,14 @@ async function handleBudgetSync(trigger) {
       .filter(summary => !summary.exclude_from_budget && !summary.is_group)
       .map(summary => buildBudgetProgress(summary, monthKey, monthProgress));
 
-    const alerts = filterAlerts(progress, config.preferences.hiddenCategoryIds);
+    const alerts = enrichAlerts(
+      filterAlerts(
+        progress,
+        config.preferences.hiddenCategoryIds,
+        monthProgress
+      ),
+      monthProgress
+    );
     if (!alerts.length) {
       await storeState({
         lastRunMs: now.getTime(),
@@ -964,49 +971,179 @@ function emptyTotals() {
   };
 }
 
-function filterAlerts(progress, hiddenCategoryIds) {
+// Income alerts only fire from the back half of the month onward — the first
+// half is dominated by "salary hasn't arrived yet" false positives.
+const INCOME_ALERT_MIN_PROGRESS = 0.5;
+const AMOUNT_BUCKET_SIZE = 10;
+const MAX_ITEMS_PER_SECTION = 4;
+
+// Each section drives both the title summary and a body block, so its labels
+// and ordering live together. `compareMagnitude` ranks the most urgent items
+// first within the section (largest overage, smallest remaining, largest
+// shortfall).
+const ALERT_SECTIONS = [
+  {
+    type: 'over',
+    titleLabel: 'over',
+    heading: 'Over budget',
+    suffix: 'over',
+    compareMagnitude: (a, b) => b.magnitude - a.magnitude,
+  },
+  {
+    type: 'at-risk',
+    titleLabel: 'at risk',
+    heading: 'At risk',
+    suffix: 'left',
+    compareMagnitude: (a, b) => a.magnitude - b.magnitude,
+  },
+  {
+    type: 'income-behind',
+    titleLabel: 'income behind',
+    heading: 'Income behind',
+    suffix: 'short',
+    compareMagnitude: (a, b) => b.magnitude - a.magnitude,
+  },
+];
+
+const HTML_ENTITY_MAP = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&#39;': "'",
+  '&#x27;': "'",
+};
+
+function decodeHtmlEntities(value) {
+  if (value === null || value === undefined) return value;
+  return String(value)
+    .replaceAll(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+      try {
+        return String.fromCodePoint(Number.parseInt(hex, 16));
+      } catch {
+        return '�';
+      }
+    })
+    .replaceAll(/&#(\d+);/g, (_, dec) => {
+      try {
+        return String.fromCodePoint(Number.parseInt(dec, 10));
+      } catch {
+        return '�';
+      }
+    })
+    .replaceAll(
+      /&(?:amp|lt|gt|quot|apos|#39|#x27);/g,
+      entity => HTML_ENTITY_MAP[entity] ?? entity
+    );
+}
+
+function clampProgress(monthProgress) {
+  return Math.min(Math.max(monthProgress ?? 0, 0), 1);
+}
+
+function filterAlerts(progress, hiddenCategoryIds, monthProgress) {
   const hidden = new Set(hiddenCategoryIds ?? []);
-  return progress.filter(
-    item =>
-      !hidden.has(item.categoryId) &&
-      !item.isIncome &&
-      (item.status === 'over' || item.status === 'at-risk')
-  );
+  const incomeAllowed = (monthProgress ?? 0) >= INCOME_ALERT_MIN_PROGRESS;
+  return progress.filter(item => {
+    if (hidden.has(item.categoryId)) return false;
+    if (item.status !== 'over' && item.status !== 'at-risk') return false;
+    if (item.isIncome) return incomeAllowed;
+    return true;
+  });
+}
+
+// Annotates each alert with a `displayType` and a `magnitude` (overage,
+// remaining, or shortfall depending on type). Consumers treat magnitude as an
+// opaque positive scalar — it drives sort order and signature bucketing.
+function enrichAlerts(alerts, monthProgress) {
+  const progress = clampProgress(monthProgress);
+  return alerts.map(alert => {
+    if (alert.isIncome) {
+      const received = Math.max(0, Math.abs(alert.spent));
+      const expected = alert.budgetAmount * progress;
+      const shortfall = Math.max(0, expected - received);
+      return { ...alert, displayType: 'income-behind', magnitude: shortfall };
+    }
+    if (alert.status === 'over') {
+      const overage = Math.max(0, alert.spent - alert.budgetAmount);
+      return { ...alert, displayType: 'over', magnitude: overage };
+    }
+    const remaining = Math.max(0, alert.budgetAmount - alert.spent);
+    return { ...alert, displayType: 'at-risk', magnitude: remaining };
+  });
 }
 
 function buildSignature(alerts) {
   return alerts
-    .map(alert => `${alert.categoryId}:${alert.status}`)
+    .map(alert => {
+      const bucket =
+        Math.floor((alert.magnitude ?? 0) / AMOUNT_BUCKET_SIZE) *
+        AMOUNT_BUCKET_SIZE;
+      return `${alert.categoryId}:${alert.displayType}:${bucket}`;
+    })
     .sort()
     .join('|');
 }
 
+function createCurrencyFormatter(preferredCurrency) {
+  const code = (preferredCurrency || 'USD').toUpperCase();
+  try {
+    const formatter = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: code,
+      maximumFractionDigits: 0,
+    });
+    return value => formatter.format(value);
+  } catch {
+    return value => `$${String(Math.round(value))}`;
+  }
+}
+
+function bucketAlertsByDisplayType(alerts) {
+  const buckets = new Map();
+  for (const alert of alerts) {
+    const existing = buckets.get(alert.displayType);
+    if (existing) {
+      existing.push(alert);
+    } else {
+      buckets.set(alert.displayType, [alert]);
+    }
+  }
+  return buckets;
+}
+
 function buildNotificationPayload(alerts, preferredCurrency, monthProgress) {
-  const overBudget = alerts.filter(alert => alert.status === 'over');
-  const atRisk = alerts.filter(alert => alert.status === 'at-risk');
-  const parts = [];
+  const buckets = bucketAlertsByDisplayType(alerts);
+  const formatAmount = createCurrencyFormatter(preferredCurrency);
 
-  if (overBudget.length > 0) {
-    parts.push(
-      `${String(overBudget.length)} ${overBudget.length === 1 ? 'category' : 'categories'} over budget`
-    );
+  const progressLabel = Math.round(clampProgress(monthProgress) * 100);
+  const lines = [`${String(progressLabel)}% through month`];
+  const titleParts = [];
+
+  for (const section of ALERT_SECTIONS) {
+    const items = buckets.get(section.type);
+    if (!items || items.length === 0) continue;
+
+    titleParts.push(`${String(items.length)} ${section.titleLabel}`);
+    items.sort(section.compareMagnitude);
+    const visible = items.slice(0, MAX_ITEMS_PER_SECTION);
+    const overflow = items.length - visible.length;
+
+    lines.push('', `${section.heading}:`);
+    for (const item of visible) {
+      lines.push(
+        `• ${decodeHtmlEntities(item.categoryName)}: ${formatAmount(item.magnitude)} ${section.suffix}`
+      );
+    }
+    if (overflow > 0) {
+      lines.push(`+ ${String(overflow)} more`);
+    }
   }
-  if (atRisk.length > 0) {
-    parts.push(
-      `${String(atRisk.length)} ${atRisk.length === 1 ? 'category' : 'categories'} at risk`
-    );
-  }
 
-  const progressLabel = Math.round(
-    Math.min(Math.max(monthProgress ?? 0, 0), 1) * 100
-  );
-  const summary = parts.join(', ');
-  const fallbackText = 'Budget activity changed';
-
-  return {
-    title: 'Budget alerts',
-    body: `${summary || fallbackText} (${String(progressLabel)}% through month). Open Lunch Buddy for details.`,
-  };
+  const summary = titleParts.join(', ');
+  const title = summary ? `Budget alerts · ${summary}` : 'Budget alerts';
+  return { title, body: lines.join('\n') };
 }
 
 function getCurrentMonthRange(today) {
@@ -1177,6 +1314,9 @@ globalThis.__LB_SW_API__ = {
   handleAppShellRequest,
   isAppShellRequest,
   buildNotificationPayload,
+  enrichAlerts,
+  filterAlerts,
+  buildSignature,
   apiCacheName: API_CACHE_NAME,
   shellCacheName: SHELL_CACHE_NAME,
   appShellUrl: APP_SHELL_URL,

@@ -5,11 +5,38 @@ import { createDeferred } from '../../../test/deferred';
 type Handler = (request: Request) => Promise<Response>;
 type ApiRequestMatcher = (url: URL) => boolean;
 type AppShellRequestMatcher = (request: Request, url: URL) => boolean;
+interface RawAlert {
+  categoryId: number | null;
+  categoryName: string;
+  isIncome: boolean;
+  budgetAmount: number;
+  spent: number;
+  status: 'over' | 'at-risk' | 'on-track';
+}
+
+interface EnrichedAlert extends RawAlert {
+  displayType: 'over' | 'at-risk' | 'income-behind';
+  magnitude: number;
+}
+
 type NotificationPayloadBuilder = (
-  alerts: { status: 'over' | 'at-risk'; categoryName: string }[],
+  alerts: EnrichedAlert[],
   preferredCurrency: string | null,
   monthProgress: number
 ) => { title: string; body: string };
+
+type AlertFilter = (
+  progress: RawAlert[],
+  hiddenCategoryIds: (number | null)[],
+  monthProgress: number
+) => RawAlert[];
+
+type AlertEnricher = (
+  alerts: RawAlert[],
+  monthProgress: number
+) => EnrichedAlert[];
+
+type SignatureBuilder = (alerts: EnrichedAlert[]) => string;
 interface ApiTestContext {
   handler: Handler;
   cacheName: string;
@@ -68,6 +95,9 @@ describe('custom service worker API handler', () => {
   let isApiRequest: ApiRequestMatcher | undefined;
   let isAppShellRequest: AppShellRequestMatcher | undefined;
   let buildNotificationPayload: NotificationPayloadBuilder | undefined;
+  let filterAlerts: AlertFilter | undefined;
+  let enrichAlerts: AlertEnricher | undefined;
+  let buildSignature: SignatureBuilder | undefined;
 
   const resolveApiTestContext = (): ApiTestContext | undefined => {
     if (typeof caches === 'undefined' || !apiHandler || !apiCacheName) {
@@ -134,6 +164,9 @@ describe('custom service worker API handler', () => {
           isApiRequest: ApiRequestMatcher;
           isAppShellRequest: AppShellRequestMatcher;
           buildNotificationPayload: NotificationPayloadBuilder;
+          enrichAlerts: AlertEnricher;
+          filterAlerts: AlertFilter;
+          buildSignature: SignatureBuilder;
           apiCacheName: string;
           shellCacheName: string;
           appShellUrl: string;
@@ -151,6 +184,9 @@ describe('custom service worker API handler', () => {
     isApiRequest = api?.isApiRequest;
     isAppShellRequest = api?.isAppShellRequest;
     buildNotificationPayload = api?.buildNotificationPayload;
+    enrichAlerts = api?.enrichAlerts;
+    filterAlerts = api?.filterAlerts;
+    buildSignature = api?.buildSignature;
   });
 
   beforeEach(async () => {
@@ -172,6 +208,15 @@ describe('custom service worker API handler', () => {
   afterAll(() => {
     (globalThis as unknown as { importScripts: unknown }).importScripts =
       originalImportScripts;
+  });
+
+  it('exposes the service-worker test API', () => {
+    expect(apiHandler).toBeTypeOf('function');
+    expect(appShellHandler).toBeTypeOf('function');
+    expect(buildNotificationPayload).toBeTypeOf('function');
+    expect(enrichAlerts).toBeTypeOf('function');
+    expect(filterAlerts).toBeTypeOf('function');
+    expect(buildSignature).toBeTypeOf('function');
   });
 
   it('recognizes the production Lunch Money API host', () => {
@@ -579,26 +624,225 @@ describe('custom service worker API handler', () => {
     expect(cached).toBeFalsy();
   });
 
-  it('builds privacy-safe notification payload without category names or amounts', () => {
-    if (!buildNotificationPayload) {
-      return;
-    }
+  const findLine = (body: string, needle: string): string =>
+    body.split('\n').find(line => line.includes(needle)) ?? '';
 
-    const payload = buildNotificationPayload(
+  const makeAlert = (overrides: Partial<RawAlert>): RawAlert => ({
+    categoryId: 1,
+    categoryName: 'Sample',
+    isIncome: false,
+    budgetAmount: 100,
+    spent: 50,
+    status: 'on-track',
+    ...overrides,
+  });
+
+  it('includes category names and per-item amounts in the notification body', () => {
+    if (!enrichAlerts || !buildNotificationPayload) return;
+
+    const enriched = enrichAlerts(
       [
-        { status: 'over', categoryName: 'Dining Out' },
-        { status: 'at-risk', categoryName: 'Groceries' },
+        makeAlert({
+          categoryId: 1,
+          categoryName: 'Groceries',
+          budgetAmount: 300,
+          spent: 340,
+          status: 'over',
+        }),
+        makeAlert({
+          categoryId: 2,
+          categoryName: 'Dining Out',
+          budgetAmount: 100,
+          spent: 125,
+          status: 'over',
+        }),
+        makeAlert({
+          categoryId: 3,
+          categoryName: 'Entertainment',
+          budgetAmount: 100,
+          spent: 95,
+          status: 'at-risk',
+        }),
       ],
-      'USD',
       0.55
     );
 
-    expect(payload.title).toBe('Budget alerts');
-    expect(payload.body).toContain('1 category over budget');
-    expect(payload.body).toContain('1 category at risk');
+    const payload = buildNotificationPayload(enriched, 'USD', 0.55);
+
+    expect(payload.title).toBe('Budget alerts · 2 over, 1 at risk');
     expect(payload.body).toContain('55% through month');
-    expect(payload.body).not.toContain('Dining Out');
-    expect(payload.body).not.toContain('Groceries');
-    expect(payload.body).not.toMatch(/\$/);
+    expect(payload.body).toContain('Over budget:');
+    expect(findLine(payload.body, 'Groceries')).toContain('40');
+    expect(findLine(payload.body, 'Groceries')).toContain('over');
+    expect(findLine(payload.body, 'Dining Out')).toContain('25');
+    expect(payload.body).toContain('At risk:');
+    expect(findLine(payload.body, 'Entertainment')).toContain('5');
+    expect(findLine(payload.body, 'Entertainment')).toContain('left');
+  });
+
+  it('sorts over-budget by largest overage and at-risk by least remaining', () => {
+    if (!enrichAlerts || !buildNotificationPayload) return;
+
+    const enriched = enrichAlerts(
+      [
+        makeAlert({
+          categoryId: 1,
+          categoryName: 'Small Over',
+          budgetAmount: 100,
+          spent: 110,
+          status: 'over',
+        }),
+        makeAlert({
+          categoryId: 2,
+          categoryName: 'Big Over',
+          budgetAmount: 100,
+          spent: 200,
+          status: 'over',
+        }),
+        makeAlert({
+          categoryId: 3,
+          categoryName: 'Roomy',
+          budgetAmount: 100,
+          spent: 50,
+          status: 'at-risk',
+        }),
+        makeAlert({
+          categoryId: 4,
+          categoryName: 'Tight',
+          budgetAmount: 100,
+          spent: 95,
+          status: 'at-risk',
+        }),
+      ],
+      0.4
+    );
+
+    const { body } = buildNotificationPayload(enriched, 'USD', 0.4);
+    expect(body.indexOf('Big Over')).toBeLessThan(body.indexOf('Small Over'));
+    expect(body.indexOf('Tight')).toBeLessThan(body.indexOf('Roomy'));
+  });
+
+  it('truncates sections to 4 items and appends "+ N more"', () => {
+    if (!enrichAlerts || !buildNotificationPayload) return;
+
+    const overs = Array.from({ length: 6 }, (_, i) =>
+      makeAlert({
+        categoryId: i + 1,
+        categoryName: `Cat ${String(i + 1)}`,
+        budgetAmount: 100,
+        spent: 100 + (i + 1) * 10,
+        status: 'over',
+      })
+    );
+
+    const payload = buildNotificationPayload(
+      enrichAlerts(overs, 0.5),
+      'USD',
+      0.5
+    );
+    expect(payload.body).toContain('+ 2 more');
+    expect(
+      payload.body.split('\n').filter(line => line.startsWith('• '))
+    ).toHaveLength(4);
+  });
+
+  it('includes income-behind section when month is past half', () => {
+    if (!filterAlerts || !enrichAlerts || !buildNotificationPayload) return;
+
+    const income = makeAlert({
+      categoryId: 10,
+      categoryName: 'Salary',
+      isIncome: true,
+      budgetAmount: 1000,
+      spent: -400,
+      status: 'at-risk',
+    });
+
+    const filtered = filterAlerts([income], [], 0.6);
+    const enriched = enrichAlerts(filtered, 0.6);
+    const payload = buildNotificationPayload(enriched, 'USD', 0.6);
+
+    expect(payload.title).toContain('1 income behind');
+    expect(payload.body).toContain('Income behind:');
+    expect(findLine(payload.body, 'Salary')).toContain('200');
+    expect(findLine(payload.body, 'Salary')).toContain('short');
+  });
+
+  it('suppresses income-behind alerts in the first half of the month', () => {
+    if (!filterAlerts) return;
+
+    const income = makeAlert({
+      categoryId: 10,
+      categoryName: 'Salary',
+      isIncome: true,
+      budgetAmount: 1000,
+      spent: 0,
+      status: 'at-risk',
+    });
+
+    expect(filterAlerts([income], [], 0.2)).toHaveLength(0);
+    expect(filterAlerts([income], [], 0.5)).toHaveLength(1);
+  });
+
+  it('buckets amounts in the signature so small changes do not re-fire', () => {
+    if (!enrichAlerts || !buildSignature) return;
+
+    const base = (spent: number): RawAlert =>
+      makeAlert({
+        categoryId: 1,
+        categoryName: 'Groceries',
+        budgetAmount: 100,
+        spent,
+        status: 'over',
+      });
+
+    const sigAt140 = buildSignature(enrichAlerts([base(140)], 0.5));
+    const sigAt145 = buildSignature(enrichAlerts([base(145)], 0.5));
+    const sigAt155 = buildSignature(enrichAlerts([base(155)], 0.5));
+
+    expect(sigAt140).toBe(sigAt145);
+    expect(sigAt140).not.toBe(sigAt155);
+  });
+
+  it('decodes HTML entities in category names', () => {
+    if (!enrichAlerts || !buildNotificationPayload) return;
+
+    const enriched = enrichAlerts(
+      [
+        makeAlert({
+          categoryName: 'Food &amp; Drink',
+          budgetAmount: 100,
+          spent: 150,
+          status: 'over',
+        }),
+      ],
+      0.5
+    );
+
+    const payload = buildNotificationPayload(enriched, 'USD', 0.5);
+    expect(payload.body).toContain('Food & Drink');
+    expect(payload.body).not.toContain('&amp;');
+  });
+
+  it('respects preferred currency in formatted amounts', () => {
+    if (!enrichAlerts || !buildNotificationPayload) return;
+
+    const enriched = enrichAlerts(
+      [
+        makeAlert({
+          categoryName: 'Groceries',
+          budgetAmount: 100,
+          spent: 140,
+          status: 'over',
+        }),
+      ],
+      0.5
+    );
+
+    const payload = buildNotificationPayload(enriched, 'EUR', 0.5);
+    const line = findLine(payload.body, 'Groceries');
+    expect(line).toContain('40');
+    expect(line).toContain('over');
+    expect(line).not.toContain('$40');
   });
 });
