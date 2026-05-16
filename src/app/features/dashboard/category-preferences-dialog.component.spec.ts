@@ -5,6 +5,7 @@ import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 import { vi, type Mock } from 'vitest';
+import { buildBudgetProgress } from '../../../test/budget-progress.fixture';
 
 const createToggleEvent = (checked: boolean): Event =>
   ({
@@ -14,26 +15,8 @@ const createToggleEvent = (checked: boolean): Event =>
     }),
   }) as unknown as Event;
 
-const buildCategory = (id: number, name: string): BudgetProgress => ({
-  categoryId: id,
-  categoryName: name,
-  categoryGroupName: null,
-  groupId: null,
-  isGroup: false,
-  isIncome: false,
-  excludeFromBudget: false,
-  budgetAmount: 100,
-  budgetCurrency: 'USD',
-  spent: 0,
-  remaining: 100,
-  monthKey: '2025-10',
-  numTransactions: 0,
-  isAutomated: false,
-  recurringTotal: 0,
-  recurringItems: [],
-  status: 'on-track',
-  progressRatio: 0,
-});
+const buildCategory = (id: number, name: string): BudgetProgress =>
+  buildBudgetProgress({ categoryId: id, categoryName: name });
 
 describe('CategoryPreferencesDialogComponent notifications', () => {
   let fixture: ComponentFixture<CategoryPreferencesDialogComponent>;

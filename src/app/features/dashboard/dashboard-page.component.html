@@ -242,8 +242,8 @@
 
     <category-preferences-dialog
       [open]="showPreferencesDialog()"
-      [items]="filteredVisibleItems()"
-      [hiddenItems]="filteredHiddenItems()"
+      [items]="activeItems()"
+      [hiddenItems]="hiddenItems()"
       [preferences]="preferences()"
       [showCustomPeriodSetting]="showCustomPeriodSetting()"
       (dialogClose)="closePreferencesDialog()"
