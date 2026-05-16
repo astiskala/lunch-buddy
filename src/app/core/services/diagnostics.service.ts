@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { v4 as uuidv4 } from 'uuid';
 import { firstValueFrom } from 'rxjs';
 import {
   normalizeError,
@@ -158,7 +157,8 @@ export class DiagnosticsService {
     area: string,
     message: string,
     details?: unknown,
-    error?: unknown
+    error?: unknown,
+    correlationId?: string
   ) {
     if (!this.isEnabled()) return;
 
@@ -167,7 +167,7 @@ export class DiagnosticsService {
       level,
       area,
       message,
-      correlationId: uuidv4(),
+      correlationId,
       details: redact(details),
       error: error ? normalizeError(error) : undefined,
     };

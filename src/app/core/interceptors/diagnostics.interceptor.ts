@@ -8,7 +8,6 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { tap } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 import { DiagnosticsService } from '../services/diagnostics.service';
 
 export const diagnosticsInterceptor: HttpInterceptorFn = (
@@ -22,7 +21,7 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
   }
 
   const startTime = Date.now();
-  const correlationId = uuidv4();
+  const correlationId = crypto.randomUUID();
   const url = new URL(req.url, globalThis.location.origin);
   const path = url.pathname;
 
@@ -51,7 +50,6 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
               path,
               status: event.status,
               duration,
-              correlationId,
               request: {
                 paramKeys,
                 hasBody: requestBodyPresent,
@@ -59,7 +57,9 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
               response: {
                 hasBody: event.body !== null && event.body !== undefined,
               },
-            }
+            },
+            undefined,
+            correlationId
           );
         }
       },
@@ -80,7 +80,6 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
             path,
             status,
             duration,
-            correlationId,
             request: {
               paramKeys,
               hasBody: requestBodyPresent,
@@ -89,7 +88,8 @@ export const diagnosticsInterceptor: HttpInterceptorFn = (
               hasBody: responseBody !== null && responseBody !== undefined,
             },
           },
-          error
+          error,
+          correlationId
         );
       },
     })
