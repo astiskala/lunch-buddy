@@ -121,7 +121,7 @@
     "stylelint-scss": "^7.2.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.61.1",
-    "vercel": "^54.14.0",
+    "vercel": "^54.14.5",
     "vitest": "^4.1.6"
   },
   "engines": {
