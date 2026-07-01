@@ -15,13 +15,18 @@ updates:
           - '@angular/*'
           - '@angular-eslint/*'
           - 'angular-eslint'
-      eslint:
+          - 'rxjs'
+          - 'tslib'
+      linting:
         patterns:
           - 'eslint'
           - 'eslint-*'
           - '@eslint/*'
           - 'typescript-eslint'
           - '@typescript-eslint/*'
+          - 'prettier'
+          - 'stylelint'
+          - 'stylelint-*'
       testing:
         patterns:
           - 'vitest'
@@ -29,19 +34,21 @@ updates:
           - '@playwright/*'
           - '@axe-core/playwright'
           - 'jsdom'
-      semantic-release:
+      release-workflow:
         patterns:
           - 'semantic-release'
           - '@semantic-release/*'
-      commitlint:
-        patterns:
           - '@commitlint/*'
-      stylelint:
+          - 'husky'
+          - 'lint-staged'
+      typescript-tooling:
         patterns:
-          - 'stylelint'
-          - 'stylelint-*'
-      vercel:
+          - 'typescript'
+          - '@types/node'
+      platform:
         patterns:
+          - '@modelcontextprotocol/sdk'
+          - '@upstash/redis'
           - 'vercel'
           - '@vercel/*'
 
