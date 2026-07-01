@@ -1,11 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
 import { BudgetProgress } from '../../core/models/lunchmoney.types';
 import { CategoryPreferences } from '../../shared/services/budget.service';
 import { PushNotificationService } from '../../shared/services/push-notification.service';
 import { vi, type Mock } from 'vitest';
 import { buildBudgetProgress } from '../../../test/budget-progress.fixture';
+import { LoggerService } from '../../core/services/logger.service';
+import { VersionService } from '../../core/services/version.service';
+import { DiagnosticsService } from '../../core/services/diagnostics.service';
 
 const createToggleEvent = (checked: boolean): Event =>
   ({
@@ -115,6 +118,27 @@ describe('CategoryPreferencesDialogComponent', () => {
   let fixture: ComponentFixture<CategoryPreferencesDialogComponent>;
   let component: CategoryPreferencesDialogComponent;
   let ensurePermissionSpy: Mock;
+  let loggerSpy: {
+    info: Mock;
+    error: Mock;
+    debug: Mock;
+    warn: Mock;
+  };
+  let diagnosticsStub: {
+    isEnabled: ReturnType<typeof signal<boolean>>;
+    session: ReturnType<
+      typeof signal<{
+        supportCode: string;
+        sessionId: string;
+        writeKey: string;
+        expiresAt: number;
+      } | null>
+    >;
+    enable: Mock;
+    disable: Mock;
+    flush: Mock;
+    log: Mock;
+  };
 
   const basePreferences: CategoryPreferences = {
     customOrder: [1],
@@ -133,6 +157,20 @@ describe('CategoryPreferencesDialogComponent', () => {
 
   beforeEach(async () => {
     ensurePermissionSpy = vi.fn().mockResolvedValue({ granted: true });
+    loggerSpy = {
+      info: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+    };
+    diagnosticsStub = {
+      isEnabled: signal(false),
+      session: signal(null),
+      enable: vi.fn().mockResolvedValue(undefined),
+      disable: vi.fn().mockResolvedValue(undefined),
+      flush: vi.fn().mockResolvedValue(undefined),
+      log: vi.fn(),
+    };
 
     await TestBed.configureTestingModule({
       imports: [CategoryPreferencesDialogComponent],
@@ -144,6 +182,9 @@ describe('CategoryPreferencesDialogComponent', () => {
             ensurePermission: ensurePermissionSpy,
           },
         },
+        { provide: LoggerService, useValue: loggerSpy },
+        { provide: VersionService, useValue: { getVersion: () => 'test' } },
+        { provide: DiagnosticsService, useValue: diagnosticsStub },
       ],
     }).compileComponents();
 
@@ -249,6 +290,175 @@ describe('CategoryPreferencesDialogComponent', () => {
     expect(component.notificationsEnabled()).toBe(false);
     expect(component.includeAllTransactions()).toBe(true);
     expect(component.hideGroupedCategories()).toBe(false);
+  });
+
+  it('moves visible category ordering in both directions and clamps at boundaries', () => {
+    setRequiredInputs();
+    component.ngOnInit();
+
+    expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
+      1,
+    ]);
+
+    component.moveCategory(2, -1);
+    expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
+      1,
+    ]);
+
+    component.toggleVisibility(2);
+    expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
+      2, 1,
+    ]);
+
+    component.moveCategory(2, -1);
+    expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
+      2, 1,
+    ]);
+
+    component.moveCategory(2, -1);
+    expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
+      2, 1,
+    ]);
+
+    component.moveCategory(2, 1);
+    expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
+      1, 2,
+    ]);
+  });
+
+  it('toggles category visibility in and out of hidden set', () => {
+    component.hiddenIds.set(new Set());
+
+    component.toggleVisibility(1);
+    expect(component.hiddenIds().has(1)).toBe(true);
+
+    component.toggleVisibility(1);
+    expect(component.hiddenIds().has(1)).toBe(false);
+  });
+
+  it('emits close without saving when handleClose is called', () => {
+    const closeSpy = vi.spyOn(component.dialogClose, 'emit');
+
+    component.handleClose();
+
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates include-all-transactions and hide-grouped toggles from events', () => {
+    component.handleIncludeAllTransactionsChange(createToggleEvent(false));
+    expect(component.includeAllTransactions()).toBe(false);
+
+    component.handleHideGroupedCategoriesChange(createToggleEvent(true));
+    expect(component.hideGroupedCategories()).toBe(true);
+  });
+
+  it('reports move eligibility from list indexes', () => {
+    setRequiredInputs();
+    component.ngOnInit();
+    component.toggleVisibility(2);
+
+    expect(component.canMoveUp(0)).toBe(false);
+    expect(component.canMoveUp(1)).toBe(true);
+    expect(component.canMoveDown(0)).toBe(true);
+    expect(component.canMoveDown(1)).toBe(false);
+  });
+
+  it('enables diagnostics when diagnostics toggle is checked', async () => {
+    await component.toggleDiagnostics(createToggleEvent(true));
+
+    expect(diagnosticsStub.enable).toHaveBeenCalledTimes(1);
+    expect(diagnosticsStub.disable).not.toHaveBeenCalled();
+  });
+
+  it('disables diagnostics when diagnostics toggle is unchecked', async () => {
+    await component.toggleDiagnostics(createToggleEvent(false));
+
+    expect(diagnosticsStub.disable).toHaveBeenCalledTimes(1);
+    expect(diagnosticsStub.enable).not.toHaveBeenCalled();
+  });
+
+  it('copies support code to clipboard when a diagnostics session exists', async () => {
+    diagnosticsStub.session.set({
+      supportCode: 'SUP-123',
+      sessionId: 'session',
+      writeKey: 'write',
+      expiresAt: Date.now() + 1000,
+    });
+    const writeTextSpy = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      value: { writeText: writeTextSpy },
+      configurable: true,
+    });
+
+    await component.copySupportCode();
+
+    expect(writeTextSpy).toHaveBeenCalledWith('SUP-123');
+    expect(loggerSpy.info).toHaveBeenCalledWith(
+      'Support code copied to clipboard'
+    );
+  });
+
+  it('does not attempt clipboard write when there is no diagnostics session', async () => {
+    const writeTextSpy = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      value: { writeText: writeTextSpy },
+      configurable: true,
+    });
+
+    await component.copySupportCode();
+
+    expect(writeTextSpy).not.toHaveBeenCalled();
+  });
+
+  it('logs clipboard failures while copying support code', async () => {
+    diagnosticsStub.session.set({
+      supportCode: 'SUP-456',
+      sessionId: 'session',
+      writeKey: 'write',
+      expiresAt: Date.now() + 1000,
+    });
+    const writeTextSpy = vi
+      .fn()
+      .mockRejectedValue(new Error('clipboard not available'));
+    Object.defineProperty(globalThis.navigator, 'clipboard', {
+      value: { writeText: writeTextSpy },
+      configurable: true,
+    });
+
+    await component.copySupportCode();
+
+    expect(loggerSpy.error).toHaveBeenCalledWith(
+      'Failed to copy support code',
+      expect.any(Error)
+    );
+  });
+
+  it('flushes logs and logs success', async () => {
+    await component.flushLogs();
+
+    expect(diagnosticsStub.flush).toHaveBeenCalledTimes(1);
+    expect(loggerSpy.info).toHaveBeenCalledWith('Logs sent successfully');
+  });
+
+  it('disables diagnostics and deletes logs when user confirms', async () => {
+    const confirmSpy = vi.spyOn(globalThis, 'confirm').mockReturnValue(true);
+
+    await component.disableAndDeleteLogs();
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(diagnosticsStub.disable).toHaveBeenCalledWith(true);
+    expect(loggerSpy.info).toHaveBeenCalledWith(
+      'Diagnostics disabled and logs deleted'
+    );
+  });
+
+  it('does not disable diagnostics when user cancels delete confirmation', async () => {
+    const confirmSpy = vi.spyOn(globalThis, 'confirm').mockReturnValue(false);
+
+    await component.disableAndDeleteLogs();
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(diagnosticsStub.disable).not.toHaveBeenCalled();
   });
 
   it('keeps visible categories collapsed by default and toggles open state', () => {

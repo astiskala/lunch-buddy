@@ -89,7 +89,7 @@ describe('Budget Utilities', () => {
     it('should merge summary and category data', () => {
       const result = mergeSummaryWithCategories(mockSummary, mockCategories);
 
-      expect(result.length).toBe(2);
+      expect(result).toHaveLength(2);
 
       const groceries = result.find(index => index.category_id === 1);
       expect(groceries?.category_name).toBe('Groceries');
@@ -111,7 +111,7 @@ describe('Budget Utilities', () => {
         { aligned: true, categories: [] },
         mockCategories
       );
-      expect(result.length).toBe(2);
+      expect(result).toHaveLength(2);
       expect(result.every(index => index.totals.other_activity === 0)).toBe(
         true
       );

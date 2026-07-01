@@ -130,7 +130,7 @@ describe('DiagnosticsUtils', () => {
 
     it('should return non-objects as-is', () => {
       expect(redact(123)).toBe(123);
-      expect(redact(null)).toBe(null);
+      expect(redact(null)).toBeNull();
     });
   });
 

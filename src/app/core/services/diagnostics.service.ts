@@ -179,7 +179,7 @@ export class DiagnosticsService {
     }
 
     this.eventBuffer.push(event);
-    if (this.eventBuffer.length >= this.MAX_BUFFER_SIZE) {
+    if (this.eventBuffer.length > this.MAX_BUFFER_SIZE) {
       this.eventBuffer.shift();
     }
   }

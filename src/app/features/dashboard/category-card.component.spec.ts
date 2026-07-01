@@ -165,14 +165,14 @@ describe('CategoryCardComponent', () => {
       defaultCurrency: 'SGD',
       referenceDate: new Date('2025-10-19T00:00:00.000Z'),
     });
-    expect(component.activityEntries().length).toBe(1);
+    expect(component.activityEntries()).toHaveLength(1);
     expect(component.activityEntries()[0].amount).toBeCloseTo(1641.88, 2);
     setupComponent(fixture, {
       item: expenseItem,
       defaultCurrency: 'SGD',
       referenceDate: new Date('2025-10-19T00:00:00.000Z'),
     });
-    expect(component.activityEntries().length).toBe(1);
+    expect(component.activityEntries()).toHaveLength(1);
     expect(component.activityEntries()[0].amount).toBeCloseTo(100, 2);
   });
   let component: CategoryCardComponent;
@@ -249,15 +249,15 @@ describe('CategoryCardComponent', () => {
   };
 
   const expectOnlyTransactionEntries = (hostElement: HTMLElement): void => {
-    expect(hostElement.querySelectorAll('.badge.upcoming').length).toBe(0);
+    expect(hostElement.querySelectorAll('.badge.upcoming')).toHaveLength(0);
 
     const activityEntries = component.activityEntries();
     expect(
-      activityEntries.filter(entry => entry.kind === 'upcoming').length
-    ).toBe(0);
+      activityEntries.filter(entry => entry.kind === 'upcoming')
+    ).toHaveLength(0);
     expect(
-      activityEntries.filter(entry => entry.kind === 'transaction').length
-    ).toBe(1);
+      activityEntries.filter(entry => entry.kind === 'transaction')
+    ).toHaveLength(1);
   };
 
   const setupChargedRecurringScenario = (options: {
@@ -427,9 +427,9 @@ describe('CategoryCardComponent', () => {
     });
 
     const groups = component.activityGroups();
-    expect(groups.length).toBe(2);
-    expect(groups[0].entries.length).toBe(2);
-    expect(groups[1].entries.length).toBe(1);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].entries).toHaveLength(2);
+    expect(groups[1].entries).toHaveLength(1);
 
     const firstGroupDates = new Set(
       groups[0].entries.map(entry => entry.date?.getTime() ?? 0)
@@ -535,7 +535,7 @@ describe('CategoryCardComponent', () => {
     const upcomingEntries = component
       .activityEntries()
       .filter(entry => entry.kind === 'upcoming');
-    expect(upcomingEntries.length).toBe(2);
+    expect(upcomingEntries).toHaveLength(2);
   });
 
   it('shows past-window recurring instances as due when not yet charged', () => {
@@ -698,11 +698,10 @@ describe('CategoryCardComponent', () => {
     const hostElement = expandCard();
 
     const upcomingBadges = hostElement.querySelectorAll('.badge.upcoming');
-    expect(upcomingBadges.length).toBe(0);
+    expect(upcomingBadges).toHaveLength(0);
     expect(
       component.activityEntries().filter(entry => entry.kind === 'upcoming')
-        .length
-    ).toBe(0);
+    ).toHaveLength(0);
   });
 
   it('renders found transactions as regular activity when no fetched txn exists', () => {
@@ -732,11 +731,11 @@ describe('CategoryCardComponent', () => {
 
     const activityEntries = component.activityEntries();
     expect(
-      activityEntries.filter(entry => entry.kind === 'upcoming').length
-    ).toBe(0);
+      activityEntries.filter(entry => entry.kind === 'upcoming')
+    ).toHaveLength(0);
     expect(
-      activityEntries.filter(entry => entry.kind === 'transaction').length
-    ).toBe(1);
+      activityEntries.filter(entry => entry.kind === 'transaction')
+    ).toHaveLength(1);
     const badge = hostElement.querySelector<HTMLElement>('.badge.upcoming');
     expect(badge).toBeNull();
   });
@@ -766,7 +765,7 @@ describe('CategoryCardComponent', () => {
     const upcomingEntries = component
       .activityEntries()
       .filter(entry => entry.kind === 'upcoming');
-    expect(upcomingEntries.length).toBe(1);
+    expect(upcomingEntries).toHaveLength(1);
     expect(upcomingEntries[0].label).toContain('Upcoming Tax');
   });
 

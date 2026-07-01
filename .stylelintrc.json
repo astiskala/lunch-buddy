@@ -25,6 +25,7 @@
         "resolveNestedSelectors": true
       }
     ],
+    "nesting-selector-no-missing-scoping-root": true,
     "no-descending-specificity": null,
     "scss/at-rule-no-unknown": [
       true,

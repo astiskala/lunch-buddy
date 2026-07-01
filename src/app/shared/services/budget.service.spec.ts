@@ -422,13 +422,13 @@ describe('BudgetService background sync', () => {
     const uncategorisedExpenses = expenses.filter(
       item => item.categoryName === 'Uncategorised Expenses'
     );
-    expect(uncategorisedExpenses.length).toBe(1);
+    expect(uncategorisedExpenses).toHaveLength(1);
     expect(uncategorisedExpenses[0].spent).toBeCloseTo(200, 5);
 
     const uncategorisedIncome = incomes.filter(
       item => item.categoryName === 'Uncategorised Income'
     );
-    expect(uncategorisedIncome.length).toBe(1);
+    expect(uncategorisedIncome).toHaveLength(1);
     expect(Math.abs(uncategorisedIncome[0].spent)).toBeCloseTo(200, 5);
   });
 
@@ -492,7 +492,7 @@ describe('BudgetService background sync', () => {
 
     const expenses = service.getExpenses();
 
-    expect(expenses.length).toBe(1);
+    expect(expenses).toHaveLength(1);
     expect(expenses[0].isGroup).toBe(true);
     expect(expenses[0].categoryName).toBe('Household Essentials');
   });

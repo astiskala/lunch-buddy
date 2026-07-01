@@ -223,8 +223,8 @@ export default tseslint.config(
       'unicorn/switch-case-braces': 'error',
       'unicorn/template-indent': 'warn',
       'unicorn/throw-new-error': 'error',
-      // Disable overly strict sonarjs rules for test quality
-      'sonarjs/prefer-specific-assertions': 'off', // Cosmetic for tests
+      // Keep assertion style specific so test intent is explicit.
+      'sonarjs/prefer-specific-assertions': 'error',
       'sonarjs/no-floating-point-equality': 'warn', // Allow in some cases
       'sonarjs/no-trivial-assertions': 'warn', // Allow in tests
       'sonarjs/hooks-before-test-cases': 'warn', // Allow in some tests

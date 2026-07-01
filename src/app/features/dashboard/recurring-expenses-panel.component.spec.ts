@@ -67,7 +67,7 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.detectChanges();
 
     const sorted = component.sortedExpenses();
-    expect(sorted.length).toBe(2);
+    expect(sorted).toHaveLength(2);
     expect(sorted[0].expense.id).toBe(1); // Earlier comes first
     expect(sorted[1].expense.id).toBe(2);
   });
@@ -106,7 +106,7 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('windowEnd', '2025-11-30');
     fixture.detectChanges();
 
-    expect(component.sortedExpenses().length).toBe(1);
+    expect(component.sortedExpenses()).toHaveLength(1);
     expect(component.totalFormatted()).toContain('12');
   });
 
@@ -173,7 +173,7 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('windowEnd', '2025-11-30');
     fixture.detectChanges();
 
-    expect(component.sortedExpenses().length).toBe(0);
+    expect(component.sortedExpenses()).toHaveLength(0);
     expect(component.totalFormatted()).toContain('0');
   });
 
@@ -195,6 +195,6 @@ describe('RecurringExpensesPanelComponent', () => {
     fixture.componentRef.setInput('windowEnd', '2025-11-30');
     fixture.detectChanges();
 
-    expect(component.sortedExpenses().length).toBe(0);
+    expect(component.sortedExpenses()).toHaveLength(0);
   });
 });

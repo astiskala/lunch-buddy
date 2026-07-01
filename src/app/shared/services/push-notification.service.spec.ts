@@ -282,7 +282,7 @@ describe('default notification channel', () => {
     expect(showNotificationSpy).toHaveBeenCalledWith('Hello', {
       body: 'world',
     });
-    expect(mockNotificationCtor.instances.length).toBe(0);
+    expect(mockNotificationCtor.instances).toHaveLength(0);
   });
 
   it('falls back to Notification constructor when no registration exists', async () => {
@@ -290,7 +290,7 @@ describe('default notification channel', () => {
 
     await channel.showNotification('Fallback', { body: 'offline' });
 
-    expect(mockNotificationCtor.instances.length).toBe(1);
+    expect(mockNotificationCtor.instances).toHaveLength(1);
     expect(mockNotificationCtor.instances[0]).toEqual({
       title: 'Fallback',
       options: { body: 'offline' },
@@ -302,7 +302,7 @@ describe('default notification channel', () => {
 
     await channel.showNotification('Failure', { body: 'fallback' });
 
-    expect(mockNotificationCtor.instances.length).toBe(1);
+    expect(mockNotificationCtor.instances).toHaveLength(1);
     expect(mockNotificationCtor.instances[0]).toEqual({
       title: 'Failure',
       options: { body: 'fallback' },

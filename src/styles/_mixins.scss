@@ -5,20 +5,20 @@
 }
 
 @mixin status-colors {
-  &[data-status='over'],
-  &.over {
+  @at-root #{&}[data-status='over'],
+    #{&}.over {
     background: var(--color-error-bg);
     color: var(--color-error);
   }
 
-  &[data-status='at-risk'],
-  &.at-risk {
+  @at-root #{&}[data-status='at-risk'],
+    #{&}.at-risk {
     background: var(--color-warning-bg);
     color: var(--color-warning);
   }
 
-  &[data-status='on-track'],
-  &.on-track {
+  @at-root #{&}[data-status='on-track'],
+    #{&}.on-track {
     background: var(--color-success-bg);
     color: var(--color-success);
   }

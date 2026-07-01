@@ -156,7 +156,7 @@ describe('LunchMoneyService', () => {
     });
 
     const requests = httpMock.match(() => true);
-    expect(requests.length).toBe(2);
+    expect(requests).toHaveLength(2);
 
     const summaryRequest = requests.find(request =>
       request.request.urlWithParams.startsWith(`${baseUrl}/summary`)
@@ -311,7 +311,7 @@ describe('LunchMoneyService', () => {
     service
       .getCategoryTransactions(null, '2025-11-01', '2025-11-30')
       .subscribe(response => {
-        expect(response.transactions.length).toBe(1);
+        expect(response.transactions).toHaveLength(1);
         expect(response.transactions[0].id).toBe(1);
         expect(response.has_more).toBe(false);
       });
