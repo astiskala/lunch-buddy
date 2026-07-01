@@ -146,7 +146,7 @@ export default tseslint.config(
       'unicorn/no-console-spaces': 'error',
       'unicorn/no-declarations-before-early-exit': 'off', // Too strict
       'unicorn/no-document-cookie': 'error',
-      'unicorn/no-global-object-property-assignment': 'off', // Test mocking needs this
+      'unicorn/no-global-object-property-assignment': 'error',
       'unicorn/no-hex-escape': 'error',
       'unicorn/no-instanceof-array': 'error',
       'unicorn/no-invalid-remove-event-listener': 'error',
@@ -298,6 +298,7 @@ export default tseslint.config(
       'unicorn/no-array-callback-reference': 'error',
       'unicorn/no-console-spaces': 'error',
       'unicorn/no-hex-escape': 'error',
+      'unicorn/no-global-object-property-assignment': 'error',
       'unicorn/no-instanceof-array': 'error',
       'unicorn/no-keyword-prefix': 'off', // Disabled for test mocking
       'unicorn/no-lonely-if': 'error',
@@ -382,6 +383,62 @@ export default tseslint.config(
       'prettier/prettier': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/prefer-string-starts-ends-with': 'error',
+      'unicorn/no-global-object-property-assignment': 'off',
+    },
+  },
+
+  // Tests may reassign globals, model explicit null payloads, and shape Error
+  // instances as part of environment and API mocking.
+  {
+    files: ['**/*.spec.ts', '**/*.integration.spec.ts', 'src/test/**/*.ts'],
+    rules: {
+      'unicorn/no-global-object-property-assignment': 'off',
+      'unicorn/no-null': 'off',
+      'unicorn/no-error-property-assignment': 'off',
+      'unicorn/prefer-iterator-to-array': 'off',
+    },
+  },
+
+  // These files intentionally preserve external null contracts from the API,
+  // storage, or platform interfaces.
+  {
+    files: [
+      'public/custom-service-worker.js',
+      'src/app/core/services/auth.service.ts',
+      'src/app/core/services/background-sync.service.ts',
+      'src/app/core/services/diagnostics.service.ts',
+      'src/app/core/interceptors/lunchmoney.interceptor.ts',
+      'src/app/core/services/lunchmoney.service.ts',
+      'src/app/core/services/offline.service.ts',
+      'src/app/features/dashboard/category-card.component.ts',
+      'src/app/features/dashboard/category-preferences-dialog.component.ts',
+      'src/app/features/dashboard/custom-period-dialog.component.ts',
+      'src/app/features/dashboard/dashboard-page.component.ts',
+      'src/app/features/dashboard/recurring-expenses-panel.component.ts',
+      'src/app/features/dashboard/summary-hero.component.ts',
+      'src/app/shared/pipes/format-currency.pipe.ts',
+      'src/app/shared/services/budget.service.ts',
+      'src/app/shared/utils/budget.util.ts',
+      'src/app/shared/utils/currency.util.ts',
+      'src/app/shared/utils/date.util.ts',
+      'src/app/shared/utils/lunchmoney-link.util.ts',
+      'src/app/shared/utils/notification-guidance.util.ts',
+      'src/app/shared/utils/recurring.util.ts',
+      'src/app/shared/utils/text.util.ts',
+      'src/environments/resolve-api-key.ts',
+      'tools/write-pwa-version.js',
+    ],
+    rules: {
+      'unicorn/no-null': 'off',
+    },
+  },
+
+  // Service worker messaging uses the Worker postMessage signature rather than
+  // the Window postMessage target-origin form this rule expects.
+  {
+    files: ['src/app/core/services/background-sync.service.ts'],
+    rules: {
+      'unicorn/require-post-message-target-origin': 'off',
     },
   },
 
@@ -447,6 +504,9 @@ export default tseslint.config(
         String: 'readonly',
         Intl: 'readonly',
       },
+    },
+    rules: {
+      'unicorn/no-global-object-property-assignment': 'off',
     },
   },
 
