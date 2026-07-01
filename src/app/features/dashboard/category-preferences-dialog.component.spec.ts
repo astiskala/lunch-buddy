@@ -165,7 +165,7 @@ describe('CategoryPreferencesDialogComponent', () => {
     component.ngOnInit();
 
     expect(component.orderedIds()).toEqual(basePreferences.customOrder);
-    expect(Array.from(component.hiddenIds())).toEqual(
+    expect([...component.hiddenIds()]).toEqual(
       basePreferences.hiddenCategoryIds
     );
     expect(component.notificationsEnabled()).toBe(true);

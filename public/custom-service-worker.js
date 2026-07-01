@@ -539,12 +539,12 @@ async function networkFirstAuthenticated(request) {
         'No cached data available and network returned no response'
       )
     );
-  } catch (err) {
+  } catch (error) {
     // Handle aborted and failed fetches explicitly.
-    const name = getErrorName(err);
+    const name = getErrorName(error);
     const message =
-      err && typeof err === 'object' && 'message' in err
-        ? err.message
+      error && typeof error === 'object' && 'message' in error
+        ? error.message
         : 'unknown error';
     console.warn(
       '[WARN] custom-service-worker: authenticated network failed',
@@ -736,7 +736,7 @@ async function handleBudgetSync(trigger) {
       ),
       monthProgress
     );
-    if (!alerts.length) {
+    if (alerts.length === 0) {
       await storeState({
         lastRunMs: now.getTime(),
         lastAlertSignature: null,

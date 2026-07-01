@@ -55,14 +55,14 @@ export class SiteDataService {
       return;
     }
 
-    const dbNames = new Set(KNOWN_DB_NAMES);
+    const databaseNames = new Set(KNOWN_DB_NAMES);
 
     if (typeof indexedDB.databases === 'function') {
       try {
         const databases = await indexedDB.databases();
         for (const database of databases) {
           if (database.name) {
-            dbNames.add(database.name);
+            databaseNames.add(database.name);
           }
         }
       } catch (error) {
@@ -73,7 +73,9 @@ export class SiteDataService {
       }
     }
 
-    await Promise.all([...dbNames].map(name => this.deleteDatabase(name)));
+    await Promise.all(
+      [...databaseNames].map(name => this.deleteDatabase(name))
+    );
   }
 
   private deleteDatabase(name: string): Promise<void> {

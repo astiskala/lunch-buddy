@@ -12,7 +12,7 @@ const createMemoryStorage = (): Storage => {
       return data.get(key) ?? null;
     },
     key(index: number) {
-      const keys = Array.from(data.keys());
+      const keys = [...data.keys()];
       return keys[index] ?? null;
     },
     removeItem(key: string) {

@@ -54,16 +54,19 @@ export class RecurringExpensesPanelComponent {
             windowEnd: windowRange?.end,
           }) && !hasFoundTransactionForOccurrence(instance)
       )
-      .sort((a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime());
+      .toSorted(
+        (a, b) => a.occurrenceDate.getTime() - b.occurrenceDate.getTime()
+      );
   });
 
   readonly totalFormatted = computed(() => {
-    const total = this.sortedExpenses().reduce((sum, entry) => {
+    let total = 0;
+    for (const entry of this.sortedExpenses()) {
       const amount = Math.abs(
         resolveAmount(entry.expense.amount, entry.expense.to_base ?? null)
       );
-      return sum + amount;
-    }, 0);
+      total += amount;
+    }
 
     const displayCurrency = this.displayCurrency();
     return formatCurrency(total, displayCurrency, {

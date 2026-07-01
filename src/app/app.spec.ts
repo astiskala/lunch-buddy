@@ -23,10 +23,8 @@ describe('App', () => {
         App.prototype as unknown as { reloadPage: () => void },
         'reloadPage'
       )
-      .mockImplementation(() => undefined);
-    consoleErrorSpy = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
+      .mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   beforeEach(async () => {

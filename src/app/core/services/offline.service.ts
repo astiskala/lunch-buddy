@@ -12,7 +12,7 @@ export class OfflineService implements OnDestroy {
   protected readonly isOffline = signal(!navigator.onLine);
 
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-  private readonly HEARTBEAT_INTERVAL = 30000; // 30s
+  private readonly HEARTBEAT_INTERVAL = 30_000; // 30s
   private readonly HEARTBEAT_URL = '/favicon.ico';
 
   constructor() {
@@ -71,17 +71,21 @@ export class OfflineService implements OnDestroy {
   }
 
   private stopHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
+    if (!this.heartbeatTimer) {
+      return;
     }
+
+    clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
   }
 
   private updateOnlineStatus(online: boolean): void {
-    if (this.isOnline() !== online) {
-      this.isOnline.set(online);
-      this.isOffline.set(!online);
+    if (this.isOnline() === online) {
+      return;
     }
+
+    this.isOnline.set(online);
+    this.isOffline.set(!online);
   }
 
   getOnlineStatus() {

@@ -4,7 +4,7 @@ import { from, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 
-export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
+export const lunchmoneyInterceptor: HttpInterceptorFn = (request, next) => {
   const LUNCH_MONEY_HOSTS = new Set([
     'api.lunchmoney.dev',
     'api.lunchmoney.app',
@@ -22,7 +22,7 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
   const isLunchMoneyRequest = (): boolean => {
     let requestUrl: URL | null = null;
     try {
-      requestUrl = new URL(req.url, globalThis.location.origin);
+      requestUrl = new URL(request.url, globalThis.location.origin);
     } catch {
       // URL parsing failed; requestUrl remains null.
     }
@@ -42,7 +42,7 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
 
     if (apiBase.startsWith('/')) {
       const normalizedPath = apiBase.endsWith('/') ? apiBase : `${apiBase}/`;
-      if (req.url === apiBase || req.url.startsWith(normalizedPath)) {
+      if (request.url === apiBase || request.url.startsWith(normalizedPath)) {
         return true;
       }
 
@@ -66,13 +66,13 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
           requestUrl.pathname.startsWith(normalizedPath))
       );
     } catch {
-      return req.url.startsWith(apiBase);
+      return request.url.startsWith(apiBase);
     }
   };
 
   // Add the auth header only for Lunch Money API requests.
   if (!isLunchMoneyRequest()) {
-    return next(req);
+    return next(request);
   }
 
   const authService = inject(AuthService);
@@ -84,15 +84,15 @@ export const lunchmoneyInterceptor: HttpInterceptorFn = (req, next) => {
       const apiKey = authService.getApiKey() ?? environment.lunchmoneyApiKey;
 
       if (!apiKey) {
-        return next(req);
+        return next(request);
       }
 
-      const clonedReq = req.clone({
+      const clonedRequest = request.clone({
         setHeaders: {
           Authorization: `Bearer ${apiKey}`,
         },
       });
-      return next(clonedReq);
+      return next(clonedRequest);
     })
   );
 };

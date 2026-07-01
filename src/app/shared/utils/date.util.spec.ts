@@ -99,31 +99,31 @@ describe('Date Utils', () => {
   describe('deriveReferenceDate', () => {
     it('should return start if today is before window', () => {
       const today = new Date(2025, 9, 1); // Oct 1
-      const ref = deriveReferenceDate('2025-10-10', '2025-10-20', today);
-      expect(ref.getFullYear()).toBe(2025);
-      expect(ref.getMonth()).toBe(9);
-      expect(ref.getDate()).toBe(10);
+      const reference = deriveReferenceDate('2025-10-10', '2025-10-20', today);
+      expect(reference.getFullYear()).toBe(2025);
+      expect(reference.getMonth()).toBe(9);
+      expect(reference.getDate()).toBe(10);
     });
     it('should return day after end if today is after window', () => {
       const today = new Date(2025, 9, 25); // Oct 25
-      const ref = deriveReferenceDate('2025-10-10', '2025-10-20', today);
-      expect(ref.getFullYear()).toBe(2025);
-      expect(ref.getMonth()).toBe(9);
-      expect(ref.getDate()).toBe(21);
+      const reference = deriveReferenceDate('2025-10-10', '2025-10-20', today);
+      expect(reference.getFullYear()).toBe(2025);
+      expect(reference.getMonth()).toBe(9);
+      expect(reference.getDate()).toBe(21);
     });
     it('should return today if within window', () => {
       const today = new Date(2025, 9, 15); // Oct 15
-      const ref = deriveReferenceDate('2025-10-10', '2025-10-20', today);
-      expect(ref.getFullYear()).toBe(2025);
-      expect(ref.getMonth()).toBe(9);
-      expect(ref.getDate()).toBe(15);
+      const reference = deriveReferenceDate('2025-10-10', '2025-10-20', today);
+      expect(reference.getFullYear()).toBe(2025);
+      expect(reference.getMonth()).toBe(9);
+      expect(reference.getDate()).toBe(15);
     });
     it('should return today if start/end invalid', () => {
       const today = new Date(2025, 9, 15); // Oct 15
-      const ref = deriveReferenceDate('', '', today);
-      expect(ref.getFullYear()).toBe(2025);
-      expect(ref.getMonth()).toBe(9);
-      expect(ref.getDate()).toBe(15);
+      const reference = deriveReferenceDate('', '', today);
+      expect(reference.getFullYear()).toBe(2025);
+      expect(reference.getMonth()).toBe(9);
+      expect(reference.getDate()).toBe(15);
     });
   });
 

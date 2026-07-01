@@ -51,8 +51,8 @@ describe('diagnosticsInterceptor', () => {
       })
       .subscribe();
 
-    const req = httpMock.expectOne('/v2/transactions?category=Dining');
-    req.flush({ id: 1, description: 'response-body' });
+    const request = httpMock.expectOne('/v2/transactions?category=Dining');
+    request.flush({ id: 1, description: 'response-body' });
 
     expect(diagnosticsSpy.log).toHaveBeenCalledTimes(1);
     const latestCall = diagnosticsSpy.log.mock.calls[0];
@@ -75,8 +75,8 @@ describe('diagnosticsInterceptor', () => {
       .post('/api/diagnostics/event', { supportCode: 'ABC' })
       .subscribe();
 
-    const req = httpMock.expectOne('/api/diagnostics/event');
-    req.flush({ accepted: 1 });
+    const request = httpMock.expectOne('/api/diagnostics/event');
+    request.flush({ accepted: 1 });
 
     expect(diagnosticsSpy.log).not.toHaveBeenCalled();
   });

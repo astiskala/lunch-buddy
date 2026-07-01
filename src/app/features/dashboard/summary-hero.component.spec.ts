@@ -88,9 +88,9 @@ describe('SummaryHeroComponent', () => {
     buttonSelector: string,
     overrides: Partial<SummaryHeroInputs> = {}
   ): void => {
-    let emitted = false;
+    let isEmitted = false;
     subscribe(() => {
-      emitted = true;
+      isEmitted = true;
     });
 
     render(overrides);
@@ -99,7 +99,7 @@ describe('SummaryHeroComponent', () => {
     expect(button).not.toBeNull();
     button?.click();
 
-    expect(emitted).toBe(true);
+    expect(isEmitted).toBe(true);
   };
 
   beforeEach(async () => {
@@ -160,9 +160,9 @@ describe('SummaryHeroComponent', () => {
   });
 
   it('should emit nextMonth event when enabled and clicked', () => {
-    let emitted = false;
+    let isEmitted = false;
     component.nextMonth.subscribe(() => {
-      emitted = true;
+      isEmitted = true;
     });
 
     render({ canGoToNextMonth: true });
@@ -172,7 +172,7 @@ describe('SummaryHeroComponent', () => {
     expect(button?.disabled).toBe(false);
     button?.click();
 
-    expect(emitted).toBe(true);
+    expect(isEmitted).toBe(true);
   });
 
   it('should hide next month button when viewing current month', () => {

@@ -19,7 +19,7 @@ function decodeWithFallback(html: string): string {
     })
     .replaceAll(/&#(\d+);/g, (_, dec: string) => {
       try {
-        return String.fromCodePoint(Number.parseInt(dec, 10));
+        return String.fromCodePoint(Number(dec));
       } catch {
         return '�';
       }

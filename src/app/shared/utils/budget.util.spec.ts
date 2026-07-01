@@ -91,12 +91,12 @@ describe('Budget Utilities', () => {
 
       expect(result.length).toBe(2);
 
-      const groceries = result.find(i => i.category_id === 1);
+      const groceries = result.find(index => index.category_id === 1);
       expect(groceries?.category_name).toBe('Groceries');
       expect(groceries?.category_group_name).toBe('Food');
       expect(groceries?.totals.other_activity).toBe(50);
 
-      const foodGroup = result.find(i => i.category_id === 10);
+      const foodGroup = result.find(index => index.category_id === 10);
       expect(foodGroup?.is_group).toBe(true);
       expect(foodGroup?.totals.other_activity).toBe(0); // Default empty totals
     });
@@ -112,7 +112,9 @@ describe('Budget Utilities', () => {
         mockCategories
       );
       expect(result.length).toBe(2);
-      expect(result.every(i => i.totals.other_activity === 0)).toBe(true);
+      expect(result.every(index => index.totals.other_activity === 0)).toBe(
+        true
+      );
     });
   });
 

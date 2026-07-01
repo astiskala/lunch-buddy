@@ -48,10 +48,10 @@ describe('LunchMoneyService', () => {
       expect(user).toEqual(mockUser);
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/me`);
-    expect(req.request.method).toBe('GET');
-    expect(req.request.headers.has('Cache-Control')).toBe(true);
-    req.flush(mockUser);
+    const request = httpMock.expectOne(`${baseUrl}/me`);
+    expect(request.request.method).toBe('GET');
+    expect(request.request.headers.has('Cache-Control')).toBe(true);
+    request.flush(mockUser);
   });
 
   it('should get categories', () => {
@@ -78,9 +78,11 @@ describe('LunchMoneyService', () => {
       expect(categories).toEqual(mockCategories);
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/categories?format=flattened`);
-    expect(req.request.method).toBe('GET');
-    req.flush({ categories: mockCategories });
+    const request = httpMock.expectOne(
+      `${baseUrl}/categories?format=flattened`
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({ categories: mockCategories });
   });
 
   it('should merge summary data with categories', () => {
@@ -156,18 +158,18 @@ describe('LunchMoneyService', () => {
     const requests = httpMock.match(() => true);
     expect(requests.length).toBe(2);
 
-    const summaryReq = requests.find(req =>
-      req.request.urlWithParams.startsWith(`${baseUrl}/summary`)
+    const summaryRequest = requests.find(request =>
+      request.request.urlWithParams.startsWith(`${baseUrl}/summary`)
     );
-    const categoriesReq = requests.find(req =>
-      req.request.urlWithParams.startsWith(`${baseUrl}/categories`)
+    const categoriesRequest = requests.find(request =>
+      request.request.urlWithParams.startsWith(`${baseUrl}/categories`)
     );
 
-    expect(summaryReq).toBeDefined();
-    expect(categoriesReq).toBeDefined();
+    expect(summaryRequest).toBeDefined();
+    expect(categoriesRequest).toBeDefined();
 
-    categoriesReq?.flush({ categories: mockCategories });
-    summaryReq?.flush(mockSummary);
+    categoriesRequest?.flush({ categories: mockCategories });
+    summaryRequest?.flush(mockSummary);
   });
 
   it('should get recurring expenses', () => {
@@ -227,24 +229,24 @@ describe('LunchMoneyService', () => {
         ]);
       });
 
-    const req = httpMock.expectOne(
+    const request = httpMock.expectOne(
       `${baseUrl}/recurring_items?start_date=2025-11-01&end_date=2025-11-30`
     );
-    expect(req.request.method).toBe('GET');
-    req.flush(mockRecurring);
+    expect(request.request.method).toBe('GET');
+    request.flush(mockRecurring);
   });
 
   it('should include no-cache headers in all requests', () => {
     service.getUser().subscribe();
 
-    const req = httpMock.expectOne(`${baseUrl}/me`);
-    expect(req.request.headers.get('Cache-Control')).toBe(
+    const request = httpMock.expectOne(`${baseUrl}/me`);
+    expect(request.request.headers.get('Cache-Control')).toBe(
       'no-cache, no-store, max-age=0, must-revalidate'
     );
-    expect(req.request.headers.get('Pragma')).toBe('no-cache');
-    expect(req.request.headers.get('Expires')).toBe('0');
-    expect(req.request.headers.get('If-Modified-Since')).toBe('0');
-    req.flush({});
+    expect(request.request.headers.get('Pragma')).toBe('no-cache');
+    expect(request.request.headers.get('Expires')).toBe('0');
+    expect(request.request.headers.get('If-Modified-Since')).toBe('0');
+    request.flush({});
   });
 
   it('should filter uncategorized transactions client-side', () => {
@@ -314,14 +316,14 @@ describe('LunchMoneyService', () => {
         expect(response.has_more).toBe(false);
       });
 
-    const req = httpMock.expectOne(request => {
+    const request = httpMock.expectOne(request => {
       return request.url === `${baseUrl}/transactions`;
     });
 
-    expect(req.request.params.get('start_date')).toBe('2025-11-01');
-    expect(req.request.params.get('end_date')).toBe('2025-11-30');
-    expect(req.request.params.has('category_id')).toBe(false);
-    req.flush(mockResponse);
+    expect(request.request.params.get('start_date')).toBe('2025-11-01');
+    expect(request.request.params.get('end_date')).toBe('2025-11-30');
+    expect(request.request.params.has('category_id')).toBe(false);
+    request.flush(mockResponse);
   });
 
   it('should request only cleared transactions when includeAllTransactions is false', () => {
@@ -338,14 +340,14 @@ describe('LunchMoneyService', () => {
         expect(response.transactions).toEqual([]);
       });
 
-    const req = httpMock.expectOne(request => {
+    const request = httpMock.expectOne(request => {
       return request.url === `${baseUrl}/transactions`;
     });
 
-    expect(req.request.params.get('category_id')).toBe('5');
-    expect(req.request.params.get('status')).toBe('cleared');
-    expect(req.request.params.get('include_pending')).toBe('true');
-    req.flush(mockResponse);
+    expect(request.request.params.get('category_id')).toBe('5');
+    expect(request.request.params.get('status')).toBe('cleared');
+    expect(request.request.params.get('include_pending')).toBe('true');
+    request.flush(mockResponse);
   });
 
   it('should surface HTTP errors to the caller', () => {
@@ -360,8 +362,8 @@ describe('LunchMoneyService', () => {
       },
     });
 
-    const req = httpMock.expectOne(`${baseUrl}/me`);
-    req.flush('error', {
+    const request = httpMock.expectOne(`${baseUrl}/me`);
+    request.flush('error', {
       status: expectedStatus,
       statusText: 'Server Error',
     });

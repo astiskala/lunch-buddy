@@ -49,23 +49,25 @@ export class DiagnosticsService {
 
   private eventBuffer: DiagnosticEvent[] = [];
   private readonly MAX_BUFFER_SIZE = 500;
-  private readonly FLUSH_INTERVAL = 30000; // 30s
+  private readonly FLUSH_INTERVAL = 30_000; // 30s
   private flushTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    if (this.isBrowser) {
-      this.loadState();
-
-      effect(() => {
-        const enabled = this.isEnabled();
-        if (enabled) {
-          this.startFlushTimer();
-        } else {
-          this.stopFlushTimer();
-        }
-        this.saveState();
-      });
+    if (!this.isBrowser) {
+      return;
     }
+
+    this.loadState();
+
+    effect(() => {
+      const isEnabled = this.isEnabled();
+      if (isEnabled) {
+        this.startFlushTimer();
+      } else {
+        this.stopFlushTimer();
+      }
+      this.saveState();
+    });
   }
 
   private loadState() {
@@ -82,9 +84,9 @@ export class DiagnosticsService {
         }>;
         this.isEnabled.set(parsed.isEnabled ?? false);
         this.session.set(parsed.session ?? null);
-      } catch (e) {
+      } catch (error) {
         if (isDevMode()) {
-          console.error('Failed to load diagnostics state', e);
+          console.error('Failed to load diagnostics state', error);
         }
       }
     }
@@ -116,9 +118,9 @@ export class DiagnosticsService {
       this.isEnabled.set(true);
       this.log('info', 'diagnostics', 'Diagnostic logging enabled');
       void this.flush();
-    } catch (e) {
+    } catch (error) {
       if (isDevMode()) {
-        console.error('Failed to enable diagnostics', e);
+        console.error('Failed to enable diagnostics', error);
       }
       this.isEnabled.set(false);
     }
@@ -136,9 +138,9 @@ export class DiagnosticsService {
             },
           })
         );
-      } catch (e) {
+      } catch (error) {
         if (isDevMode()) {
-          console.error('Failed to delete server logs', e);
+          console.error('Failed to delete server logs', error);
         }
       }
     }
@@ -197,9 +199,9 @@ export class DiagnosticsService {
           events: eventsToFlush,
         })
       );
-    } catch (e) {
+    } catch (error) {
       if (isDevMode()) {
-        console.error('Failed to flush diagnostic events', e);
+        console.error('Failed to flush diagnostic events', error);
       }
       this.eventBuffer = [
         ...eventsToFlush.slice(-50),
@@ -214,10 +216,12 @@ export class DiagnosticsService {
   }
 
   private stopFlushTimer() {
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer);
-      this.flushTimer = null;
+    if (!this.flushTimer) {
+      return;
     }
+
+    clearInterval(this.flushTimer);
+    this.flushTimer = null;
   }
 
   private canUseLocalStorage(): boolean {

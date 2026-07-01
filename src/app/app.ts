@@ -34,7 +34,7 @@ export class App implements OnInit {
   protected readonly _swUpdate = inject(SwUpdate);
 
   public ngOnInit(): void {
-    this._appUpdateService.init().catch((error: unknown) => {
+    void this._appUpdateService.init().catch((error: unknown) => {
       console.error('Failed to initialize app updates:', error);
     });
 
@@ -50,14 +50,14 @@ export class App implements OnInit {
         }))
       )
       .subscribe(() => {
-        this._swUpdate
-          .activateUpdate()
-          .then(() => {
+        void (async () => {
+          try {
+            await this._swUpdate.activateUpdate();
             this.reloadPage();
-          })
-          .catch((error: unknown) => {
+          } catch (error: unknown) {
             console.error('Failed to activate update:', error);
-          });
+          }
+        })();
       });
   }
 

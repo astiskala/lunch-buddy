@@ -195,14 +195,18 @@ export class DashboardPageComponent {
 
   private getFilterDescription(): string | null {
     switch (this.statusFilter()) {
-      case 'over':
+      case 'over': {
         return 'over budget';
-      case 'at-risk':
+      }
+      case 'at-risk': {
         return 'at risk';
-      case 'on-track':
+      }
+      case 'on-track': {
         return 'on track';
-      default:
+      }
+      default: {
         return null;
+      }
     }
   }
 

@@ -61,8 +61,8 @@ describe('CategoryProgressListComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const emptyMsg = compiled.querySelector('.empty-message');
-    expect(emptyMsg?.textContent).toContain('No categories available');
+    const emptyMessage = compiled.querySelector('.empty-message');
+    expect(emptyMessage?.textContent).toContain('No categories available');
   });
 
   it('should use custom empty message', () => {
@@ -70,7 +70,7 @@ describe('CategoryProgressListComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const emptyMsg = compiled.querySelector('.empty-message');
-    expect(emptyMsg?.textContent).toContain('Custom empty message');
+    const emptyMessage = compiled.querySelector('.empty-message');
+    expect(emptyMessage?.textContent).toContain('Custom empty message');
   });
 });

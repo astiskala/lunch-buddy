@@ -27,8 +27,7 @@ describe('RecurringExpensesPanelComponent', () => {
       payee: 'Test',
       description: null,
       amount: '-10.00',
-      to_base:
-        overrides?.to_base ?? Number.parseFloat(overrides?.amount ?? '-10.00'),
+      to_base: overrides?.to_base ?? Number(overrides?.amount ?? '-10.00'),
       currency: 'USD',
       anchor_date: occurrence,
       next_occurrence: occurrence,

@@ -2,7 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { vi, type Mock } from 'vitest';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from '../../../test/vitest-spy';
 import { createDeferred } from '../../../test/deferred';
 import { BackgroundSyncService } from './background-sync.service';
 import { LoggerService } from './logger.service';
@@ -51,21 +54,21 @@ type BudgetPreferencesPayload = Parameters<
 >[0];
 
 describe('BackgroundSyncService', () => {
-  let loggerSpy: SpyObj<LoggerService>;
-  let authServiceSpy: SpyObj<AuthService>;
+  let loggerSpy: SpyObject<LoggerService>;
+  let authServiceSpy: SpyObject<AuthService>;
   let apiKeySubject: BehaviorSubject<string | null>;
 
   const setup = (platformId: object | string = 'browser') => {
     apiKeySubject = new BehaviorSubject<string | null>(null);
 
-    loggerSpy = createSpyObj<LoggerService>('LoggerService', [
+    loggerSpy = createSpyObject<LoggerService>('LoggerService', [
       'debug',
       'info',
       'warn',
       'error',
     ]);
 
-    authServiceSpy = createSpyObj<AuthService>('AuthService', [], {
+    authServiceSpy = createSpyObject<AuthService>('AuthService', [], {
       apiKey$: apiKeySubject.asObservable(),
     });
 

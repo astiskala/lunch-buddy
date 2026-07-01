@@ -40,9 +40,9 @@ export const parseDateString = (
 
   const dayMatch = ISO_DAY_PATTERN.exec(trimmed);
   if (dayMatch) {
-    const year = Number.parseInt(dayMatch[1], 10);
-    const month = Number.parseInt(dayMatch[2], 10);
-    const day = Number.parseInt(dayMatch[3], 10);
+    const year = Number(dayMatch[1]);
+    const month = Number(dayMatch[2]);
+    const day = Number(dayMatch[3]);
 
     if (
       !Number.isFinite(year) ||
@@ -157,12 +157,12 @@ export const getPeriodProgress = (
 };
 
 export const formatDateRange = (
-  startDateStr: string,
-  endDateStr: string,
+  startDateString: string,
+  endDateString: string,
   locale: string
 ): string => {
-  const start = parseIsoDay(startDateStr);
-  const end = parseIsoDay(endDateStr);
+  const start = parseIsoDay(startDateString);
+  const end = parseIsoDay(endDateString);
 
   if (!start || !end) {
     return '';
@@ -179,12 +179,12 @@ export const formatDateRange = (
 };
 
 export const shiftPeriod = (
-  startDateStr: string,
-  endDateStr: string,
+  startDateString: string,
+  endDateString: string,
   direction: 1 | -1
 ): { start: string; end: string } | null => {
-  const start = parseIsoDay(startDateStr);
-  const end = parseIsoDay(endDateStr);
+  const start = parseIsoDay(startDateString);
+  const end = parseIsoDay(endDateString);
 
   if (!start || !end) {
     return null;

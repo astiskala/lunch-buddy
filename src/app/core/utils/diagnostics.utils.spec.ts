@@ -43,15 +43,15 @@ describe('DiagnosticsUtils', () => {
 
   describe('errorToString', () => {
     it('should format error with stack', () => {
-      const err = new Error('BOOM');
-      err.stack = 'Error: BOOM\n  at here';
-      const str = errorToString(err);
-      expect(str).toBe('Error: BOOM\n  at here');
+      const error = new Error('BOOM');
+      error.stack = 'Error: BOOM\n  at here';
+      const string_ = errorToString(error);
+      expect(string_).toBe('Error: BOOM\n  at here');
     });
 
     it('should format error without stack overlap', () => {
-      const str = errorToString('message');
-      expect(str).toBe('StringError: message');
+      const string_ = errorToString('message');
+      expect(string_).toBe('StringError: message');
     });
   });
 

@@ -89,7 +89,7 @@ const getCadenceDuration = (
   }
 
   const numberMatch = /(\d+)/.exec(normalized);
-  const magnitude = numberMatch ? Number.parseInt(numberMatch[1], 10) || 1 : 1;
+  const magnitude = numberMatch ? Number(numberMatch[1]) || 1 : 1;
   const hasNumber = !!numberMatch;
 
   if (normalized.includes('quarter')) {
@@ -313,7 +313,7 @@ export const getRecurringDate = (
     ? startOfDay(options.referenceDate)
     : null;
 
-  let candidateAdjustedByWindow = false;
+  let isCandidateAdjustedByWindow = false;
 
   if (windowStart && windowEnd) {
     if (isAfter(candidate, windowEnd)) {
@@ -327,7 +327,7 @@ export const getRecurringDate = (
       cadenceDuration
     );
     candidate = adjustment.candidate;
-    candidateAdjustedByWindow = adjustment.adjusted;
+    isCandidateAdjustedByWindow = adjustment.adjusted;
 
     if (!clampToWindow(candidate, windowStart, windowEnd)) {
       return null;
@@ -339,7 +339,7 @@ export const getRecurringDate = (
       candidate,
       reference,
       cadenceDuration,
-      candidateAdjustedByWindow,
+      isCandidateAdjustedByWindow,
       windowStart ?? undefined,
       windowEnd ?? undefined
     );
@@ -368,7 +368,7 @@ export const isRecurringInstancePending = (
   const reference = startOfDay(options?.referenceDate ?? new Date());
   const windowStart = options?.windowStart ?? null;
   const windowEnd = options?.windowEnd ?? null;
-  const withinWindow =
+  const isWithinWindow =
     !windowStart ||
     !windowEnd ||
     isWithinInterval(occurrence, {
@@ -378,7 +378,7 @@ export const isRecurringInstancePending = (
 
   if (
     (options?.includePastOccurrences ?? false) &&
-    withinWindow &&
+    isWithinWindow &&
     occurrence.getTime() <= reference.getTime()
   ) {
     return true;

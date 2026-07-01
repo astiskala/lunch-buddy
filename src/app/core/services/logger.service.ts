@@ -8,27 +8,27 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export class LoggerService {
   private readonly isDev = isDevMode();
 
-  debug(message: string, ...args: unknown[]): void {
+  debug(message: string, ...arguments_: unknown[]): void {
     if (this.isDev) {
-      console.debug(`[DEBUG] ${message}`, ...args);
+      console.debug(`[DEBUG] ${message}`, ...arguments_);
     }
   }
 
-  info(message: string, ...args: unknown[]): void {
+  info(message: string, ...arguments_: unknown[]): void {
     if (this.isDev) {
-      console.info(`[INFO] ${message}`, ...args);
+      console.info(`[INFO] ${message}`, ...arguments_);
     }
   }
 
-  warn(message: string, ...args: unknown[]): void {
+  warn(message: string, ...arguments_: unknown[]): void {
     if (this.isDev) {
-      console.warn(`[WARN] ${message}`, ...args);
+      console.warn(`[WARN] ${message}`, ...arguments_);
     }
   }
 
-  error(message: string, error?: unknown, ...args: unknown[]): void {
+  error(message: string, error?: unknown, ...arguments_: unknown[]): void {
     if (this.isDev) {
-      console.error(`[ERROR] ${message}`, error, ...args);
+      console.error(`[ERROR] ${message}`, error, ...arguments_);
     }
   }
 }

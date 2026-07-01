@@ -66,15 +66,15 @@ export class AuthService {
         }
       }
 
-      const envKey = resolveLunchMoneyApiKey();
-      if (envKey) {
-        if (this.shouldIgnoreApiKey(envKey)) {
+      const environmentKey = resolveLunchMoneyApiKey();
+      if (environmentKey) {
+        if (this.shouldIgnoreApiKey(environmentKey)) {
           this.logger.warn(
             'AuthService: ignoring mock API key because the API base points to a real Lunch Money host'
           );
         } else {
-          this.storeApiKey(envKey);
-          this.apiKey.next(envKey);
+          this.storeApiKey(environmentKey);
+          this.apiKey.next(environmentKey);
           return;
         }
       }

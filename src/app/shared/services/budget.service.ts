@@ -112,7 +112,10 @@ export class BudgetService {
         return true;
       }
 
-      const anchor = periods[periods.length - 1];
+      const anchor = periods.at(-1);
+      if (!anchor) {
+        return false;
+      }
       const shifted = shiftPeriod(anchor.startDate, anchor.endDate, 1);
       return shifted !== null && shifted.start <= todayKey;
     }
@@ -183,7 +186,7 @@ export class BudgetService {
     const unassigned: RecurringInstance[] = [];
     const expenses = this.recurringExpenses();
 
-    if (!expenses.length) {
+    if (expenses.length === 0) {
       return { assigned, unassigned };
     }
 
@@ -239,7 +242,7 @@ export class BudgetService {
     let expense = 0;
     let income = 0;
 
-    for (const [categoryId, instances] of recurring.assigned.entries()) {
+    for (const [categoryId, instances] of recurring.assigned) {
       const pending = filterPendingInstances(instances, {
         referenceDate,
         windowRange,
@@ -300,8 +303,7 @@ export class BudgetService {
       const stored = localStorage.getItem(PREFERENCES_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as
-          | Partial<CategoryPreferences>
-          | Partial<PersistedCategoryPreferences>;
+          Partial<CategoryPreferences> | Partial<PersistedCategoryPreferences>;
 
         const preferences = this.extractStoredPreferences(parsed);
         return {
@@ -368,7 +370,7 @@ export class BudgetService {
       startDate,
       endDate,
       periodMode: this.periodMode(),
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
       offset: new Date().getTimezoneOffset(),
     });
 
@@ -539,7 +541,7 @@ export class BudgetService {
   ): Observable<BudgetProgress[]> {
     const monthKey = this.startDate();
     const monthProgress = this.monthProgressRatio();
-    const includeAll = this.preferences().includeAllTransactions;
+    const isIncludeAll = this.preferences().includeAllTransactions;
     const filterBudgetableItems = (items: BudgetProgress[]): BudgetProgress[] =>
       items.filter(item => !item.excludeFromBudget);
 
@@ -594,7 +596,7 @@ export class BudgetService {
         this.startDate(),
         this.endDate(),
         {
-          includeAllTransactions: includeAll,
+          includeAllTransactions: isIncludeAll,
         }
       )
       .pipe(
@@ -607,8 +609,7 @@ export class BudgetService {
           const incomeTransactions: typeof response.transactions = [];
 
           for (const transaction of response.transactions) {
-            const value =
-              transaction.to_base ?? Number.parseFloat(transaction.amount);
+            const value = transaction.to_base ?? Number(transaction.amount);
             if (Number.isNaN(value)) continue;
             if (value < 0) {
               incomeTotal += Math.abs(value);
@@ -773,7 +774,7 @@ export class BudgetService {
     const prefs = this.preferences();
     const currency = this.currency();
 
-    this.backgroundSyncService
+    void this.backgroundSyncService
       .updateBudgetPreferences({
         hiddenCategoryIds: prefs.hiddenCategoryIds,
         notificationsEnabled: prefs.notificationsEnabled,
@@ -797,18 +798,19 @@ export class BudgetService {
 
     const updated = items.map(item => {
       const instances = assigned.get(item.categoryId) ?? [];
-      const upcomingTotal = filterPendingInstances(instances, {
+      const filteredInstances = filterPendingInstances(instances, {
         referenceDate,
         windowRange: windowRange ?? undefined,
-      })
-        .filter(instance => !hasFoundTransactionForOccurrence(instance))
-        .reduce((total, instance) => {
-          const amount = resolveAmount(
-            instance.expense.amount,
-            instance.expense.to_base ?? null
-          );
-          return total + Math.abs(amount);
-        }, 0);
+      }).filter(instance => !hasFoundTransactionForOccurrence(instance));
+
+      let upcomingTotal = 0;
+      for (const instance of filteredInstances) {
+        const amount = resolveAmount(
+          instance.expense.amount,
+          instance.expense.to_base ?? null
+        );
+        upcomingTotal += Math.abs(amount);
+      }
 
       const recurringTotal =
         upcomingTotal > 0 ? upcomingTotal : item.recurringTotal;
@@ -1009,13 +1011,13 @@ export class BudgetService {
 
   private shiftSubMonthlyPeriod(direction: -1 | 1): void {
     const periods = this.detectedPeriods();
-    const currentIdx = this.activePeriodIndex();
-    const nextIdx = currentIdx + direction;
+    const currentIndex = this.activePeriodIndex();
+    const nextIndex = currentIndex + direction;
 
-    if (nextIdx >= 0 && nextIdx < periods.length) {
+    if (nextIndex >= 0 && nextIndex < periods.length) {
       // Navigate within detected periods.
-      this.activePeriodIndex.set(nextIdx);
-      const period = periods[nextIdx];
+      this.activePeriodIndex.set(nextIndex);
+      const period = periods[nextIndex];
       this.startDate.set(period.startDate);
       this.endDate.set(period.endDate);
       this.monthProgressRatio.set(
@@ -1034,10 +1036,10 @@ export class BudgetService {
       return;
     }
 
-    const anchor =
-      direction === -1
-        ? currentPeriods[0]
-        : currentPeriods[currentPeriods.length - 1];
+    const anchor = direction === -1 ? currentPeriods[0] : currentPeriods.at(-1);
+    if (!anchor) {
+      return;
+    }
 
     // Shift to adjacent period using period length.
     const shifted = shiftPeriod(anchor.startDate, anchor.endDate, direction);
@@ -1058,8 +1060,8 @@ export class BudgetService {
 
     // Make a full-month discovery request.
     const shiftedDate = new Date(
-      Number.parseInt(shifted.start.slice(0, 4), 10),
-      Number.parseInt(shifted.start.slice(5, 7), 10) - 1,
+      Number(shifted.start.slice(0, 4)),
+      Number(shifted.start.slice(5, 7)) - 1,
       1
     );
     const monthRange = getCurrentMonthRange(shiftedDate);
@@ -1142,8 +1144,8 @@ export class BudgetService {
       return null;
     }
 
-    const year = Number.parseInt(match[1], 10);
-    const month = Number.parseInt(match[2], 10);
+    const year = Number(match[1]);
+    const month = Number(match[2]);
     if (!Number.isFinite(year) || !Number.isFinite(month)) {
       return null;
     }

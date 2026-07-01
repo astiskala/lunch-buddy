@@ -38,10 +38,10 @@ export class LunchMoneyService {
     'If-Modified-Since': '0',
   });
 
-  private createRequestOptions(params?: HttpParams) {
+  private createRequestOptions(parameters?: HttpParams) {
     return {
       headers: this.noCacheHeaders,
-      params,
+      params: parameters,
     };
   }
 
@@ -67,7 +67,7 @@ export class LunchMoneyService {
     startDate: string,
     endDate: string
   ): Observable<BudgetSummaryResult> {
-    const summaryParams = new HttpParams()
+    const summaryParameters = new HttpParams()
       .set('start_date', startDate)
       .set('end_date', endDate)
       .set('include_occurrences', 'true')
@@ -75,7 +75,7 @@ export class LunchMoneyService {
 
     const summary$ = this.http.get<SummaryResponse>(
       `${LUNCH_MONEY_API_BASE}/summary`,
-      this.createRequestOptions(summaryParams)
+      this.createRequestOptions(summaryParameters)
     );
     const categories$ = this.getCategories();
 
@@ -92,7 +92,7 @@ export class LunchMoneyService {
     startDate: string,
     endDate: string
   ): Observable<RecurringExpense[]> {
-    const params = new HttpParams()
+    const parameters = new HttpParams()
       .set('start_date', startDate)
       .set('end_date', endDate);
 
@@ -101,7 +101,7 @@ export class LunchMoneyService {
         recurring_items: RecurringItemResponse[];
       }>(
         `${LUNCH_MONEY_API_BASE}/recurring_items`,
-        this.createRequestOptions(params)
+        this.createRequestOptions(parameters)
       )
       .pipe(
         map(response =>
@@ -116,7 +116,7 @@ export class LunchMoneyService {
     endDate: string,
     options?: { includeAllTransactions?: boolean }
   ): Observable<TransactionsResponse> {
-    let params = new HttpParams()
+    let parameters = new HttpParams()
       .set('start_date', startDate)
       .set('end_date', endDate)
       .set('include_pending', 'true');
@@ -124,19 +124,19 @@ export class LunchMoneyService {
     // Set category_id for specific categories.
     // For uncategorized (null), filter client-side after fetching.
     if (categoryId !== null) {
-      params = params.set('category_id', categoryId.toString());
+      parameters = parameters.set('category_id', categoryId.toString());
     }
 
-    const includeAll = options?.includeAllTransactions ?? true;
-    if (!includeAll) {
+    const isIncludeAll = options?.includeAllTransactions ?? true;
+    if (!isIncludeAll) {
       // Filter to cleared status to exclude pending and unreviewed transactions.
-      params = params.set('status', 'cleared');
+      parameters = parameters.set('status', 'cleared');
     }
 
     return this.http
       .get<TransactionsResponse>(
         `${LUNCH_MONEY_API_BASE}/transactions`,
-        this.createRequestOptions(params)
+        this.createRequestOptions(parameters)
       )
       .pipe(
         map(response => {

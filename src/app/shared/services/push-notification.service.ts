@@ -2,10 +2,7 @@ import { Injectable, InjectionToken, inject } from '@angular/core';
 import { DiagnosticsService } from '../../core/services/diagnostics.service';
 
 export type PermissionDenialReason =
-  | 'not-supported'
-  | 'denied-by-browser'
-  | 'denied-by-user'
-  | 'request-failed';
+  'not-supported' | 'denied-by-browser' | 'denied-by-user' | 'request-failed';
 
 export interface PermissionResult {
   granted: boolean;
@@ -32,19 +29,19 @@ const defaultNotificationChannel: NotificationChannel = {
     }
     return Notification.permission;
   },
-  requestPermission(): Promise<NotificationPermission> {
+  async requestPermission(): Promise<NotificationPermission> {
     if (
       typeof Notification === 'undefined' ||
       typeof Notification.requestPermission !== 'function'
     ) {
-      return Promise.resolve('denied');
+      return 'denied';
     }
 
-    const result = Notification.requestPermission();
-    if (result instanceof Promise) {
-      return result.catch(() => 'denied');
+    try {
+      return await Notification.requestPermission();
+    } catch {
+      return 'denied';
     }
-    return Promise.resolve(result);
   },
   async showNotification(
     title: string,
@@ -89,8 +86,7 @@ export class PushNotificationService {
     }
 
     const storageManager = browserNavigator.storage as
-      | StorageManager
-      | undefined;
+      StorageManager | undefined;
     if (!storageManager || typeof storageManager.estimate !== 'function') {
       return false;
     }
@@ -173,10 +169,12 @@ export class PushNotificationService {
 
       // If denial was not instant, check private/incognito mode because that
       // mode often blocks notification requests by default.
-      if (requestResult === 'denied' && !isAutoDenied) {
-        if (await this.isPrivateMode()) {
-          isAutoDenied = true;
-        }
+      if (
+        requestResult === 'denied' &&
+        !isAutoDenied &&
+        (await this.isPrivateMode())
+      ) {
+        isAutoDenied = true;
       }
 
       const result: PermissionResult = {

@@ -24,12 +24,14 @@ export function normalizeError(error: unknown): NormalizedError {
   }
 
   if (typeof error === 'object' && error !== null) {
-    const errObj = error as Record<string, unknown>;
+    const errorObject = error as Record<string, unknown>;
     const name =
-      typeof errObj['name'] === 'string' ? errObj['name'] : 'ObjectError';
+      typeof errorObject['name'] === 'string'
+        ? errorObject['name']
+        : 'ObjectError';
     const message =
-      typeof errObj['message'] === 'string'
-        ? errObj['message']
+      typeof errorObject['message'] === 'string'
+        ? errorObject['message']
         : safeStringify(error);
     const extra = redact(error) as Record<string, unknown> | undefined;
     return {
@@ -107,39 +109,39 @@ const REDACTED_KEYS = new Set([
 /**
  * Redacts sensitive information from objects and arrays recursively.
  */
-export function redact(obj: unknown, depth = 0): unknown {
-  if (!obj || typeof obj !== 'object' || depth > 10) {
-    return obj;
+export function redact(object: unknown, depth = 0): unknown {
+  if (!object || typeof object !== 'object' || depth > 10) {
+    return object;
   }
 
-  if (Array.isArray(obj)) {
-    return obj.map(item => redact(item, depth + 1));
+  if (Array.isArray(object)) {
+    return object.map(item => redact(item, depth + 1));
   }
 
   const redacted: Record<string, unknown> = {};
-  const record = obj as Record<string, unknown>;
+  const record = object as Record<string, unknown>;
 
   for (const key in record) {
-    if (Object.hasOwn(record, key)) {
-      const lowerKey = key.toLowerCase();
-      const value = record[key];
+    if (!Object.hasOwn(record, key)) {
+      continue;
+    }
 
-      if (STRIPPED_KEYS.some(k => lowerKey.includes(k))) {
-        continue;
-      }
+    const lowerKey = key.toLowerCase();
+    const value = record[key];
 
-      const isRedactedPattern = REDACTED_PATTERNS.some(k =>
-        lowerKey.includes(k)
-      );
-      const isRedactedKey = REDACTED_KEYS.has(lowerKey);
+    if (STRIPPED_KEYS.some(k => lowerKey.includes(k))) {
+      continue;
+    }
 
-      if (isRedactedPattern || isRedactedKey) {
-        redacted[key] = '[REDACTED]';
-      } else if (typeof value === 'object' && value !== null) {
-        redacted[key] = redact(value, depth + 1);
-      } else {
-        redacted[key] = value;
-      }
+    const isRedactedPattern = REDACTED_PATTERNS.some(k => lowerKey.includes(k));
+    const isRedactedKey = REDACTED_KEYS.has(lowerKey);
+
+    if (isRedactedPattern || isRedactedKey) {
+      redacted[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null) {
+      redacted[key] = redact(value, depth + 1);
+    } else {
+      redacted[key] = value;
     }
   }
 
@@ -148,11 +150,11 @@ export function redact(obj: unknown, depth = 0): unknown {
 
 export function safeStringify(value: unknown, maxBytes = 8192): string {
   try {
-    const str = JSON.stringify(value);
-    if (str.length > maxBytes) {
-      return str.substring(0, maxBytes) + '... [TRUNCATED]';
+    const string_ = JSON.stringify(value);
+    if (string_.length > maxBytes) {
+      return string_.slice(0, Math.max(0, maxBytes)) + '... [TRUNCATED]';
     }
-    return str;
+    return string_;
   } catch {
     return '[Unserializable]';
   }

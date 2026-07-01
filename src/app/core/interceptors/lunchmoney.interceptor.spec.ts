@@ -10,7 +10,10 @@ import {
 } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from '../../../test/vitest-spy';
 import { lunchmoneyInterceptor } from './lunchmoney.interceptor';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -18,11 +21,11 @@ import { environment } from '../../../environments/environment';
 describe('lunchmoneyInterceptor', () => {
   let httpClient: HttpClient;
   let httpMock: HttpTestingController;
-  let authServiceSpy: SpyObj<AuthService>;
+  let authServiceSpy: SpyObject<AuthService>;
 
   beforeEach(() => {
     const apiKeySubject = new BehaviorSubject<string | null>('test-api-key');
-    authServiceSpy = createSpyObj<AuthService>('AuthService', [
+    authServiceSpy = createSpyObject<AuthService>('AuthService', [
       'ready',
       'getApiKey',
     ]);
@@ -56,20 +59,20 @@ describe('lunchmoneyInterceptor', () => {
     // Wait for the interceptor to process.
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
-    expect(req.request.headers.has('Authorization')).toBe(true);
-    expect(req.request.headers.get('Authorization')).toBe(
+    const request = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
+    expect(request.request.headers.has('Authorization')).toBe(true);
+    expect(request.request.headers.get('Authorization')).toBe(
       'Bearer test-api-key'
     );
-    req.flush({});
+    request.flush({});
   });
 
   it('should not add Authorization header for non-Lunch Money requests', () => {
     httpClient.get('https://example.com/api/data').subscribe();
 
-    const req = httpMock.expectOne('https://example.com/api/data');
-    expect(req.request.headers.has('Authorization')).toBe(false);
-    req.flush({});
+    const request = httpMock.expectOne('https://example.com/api/data');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
   });
 
   it('should not add Authorization header for lookalike hostnames', async () => {
@@ -77,9 +80,11 @@ describe('lunchmoneyInterceptor', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const req = httpMock.expectOne('https://api.lunchmoney.dev.evil.com/v2/me');
-    expect(req.request.headers.has('Authorization')).toBe(false);
-    req.flush({});
+    const request = httpMock.expectOne(
+      'https://api.lunchmoney.dev.evil.com/v2/me'
+    );
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
   });
 
   it('should not add Authorization header when lunchmoney appears in query only', async () => {
@@ -91,11 +96,11 @@ describe('lunchmoneyInterceptor', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const req = httpMock.expectOne(
+    const request = httpMock.expectOne(
       'https://example.com/api/data?redirect=https://api.lunchmoney.dev/v2'
     );
-    expect(req.request.headers.has('Authorization')).toBe(false);
-    req.flush({});
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
   });
 
   it('should handle missing API key gracefully', async () => {
@@ -106,17 +111,17 @@ describe('lunchmoneyInterceptor', () => {
     // Wait for the interceptor to process.
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
-    expect(req.request.headers.has('Authorization')).toBe(false);
-    req.flush({});
+    const request = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush({});
   });
 
   it('should wait for auth service to be ready', async () => {
-    let readyResolved = false;
+    let isReadyResolved = false;
     authServiceSpy.ready.mockReturnValue(
       new Promise(resolve => {
         setTimeout(() => {
-          readyResolved = true;
+          isReadyResolved = true;
           resolve();
         }, 10);
       })
@@ -127,9 +132,9 @@ describe('lunchmoneyInterceptor', () => {
     // Wait for the auth service and interceptor to process.
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    const req = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
-    expect(readyResolved).toBe(true);
-    req.flush({});
+    const request = httpMock.expectOne('https://api.lunchmoney.dev/v2/me');
+    expect(isReadyResolved).toBe(true);
+    request.flush({});
   });
 
   it('should add Authorization header for proxied mock API requests', async () => {
@@ -141,12 +146,12 @@ describe('lunchmoneyInterceptor', () => {
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
-      const req = httpMock.expectOne('/v2/me');
-      expect(req.request.headers.has('Authorization')).toBe(true);
-      expect(req.request.headers.get('Authorization')).toBe(
+      const request = httpMock.expectOne('/v2/me');
+      expect(request.request.headers.has('Authorization')).toBe(true);
+      expect(request.request.headers.get('Authorization')).toBe(
         'Bearer test-api-key'
       );
-      req.flush({});
+      request.flush({});
     } finally {
       environment.lunchmoneyApiBase = originalBase;
     }

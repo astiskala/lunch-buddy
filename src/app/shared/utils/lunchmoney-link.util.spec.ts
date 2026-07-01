@@ -5,7 +5,7 @@ describe('buildTransactionDeepLink', () => {
   it('builds the canonical URL for a transaction with its own category', () => {
     const url = buildTransactionDeepLink({
       transactionDate: '2026-05-15',
-      transactionCategoryId: 1766103,
+      transactionCategoryId: 1_766_103,
       cardCategoryId: 99,
     });
     expect(url).toBe(

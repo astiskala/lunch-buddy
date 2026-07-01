@@ -1,8 +1,8 @@
-import { runtimeEnv } from './runtime-env.generated';
+import { runtimeEnv as runtimeEnvironment } from './runtime-env.generated';
 
 const DEFAULT_API_BASE = 'https://api.lunchmoney.dev/v2';
 
-type MaybeEnv = Record<string, string | undefined>;
+type MaybeEnvironment = Record<string, string | undefined>;
 
 declare const process: {
   env?: {
@@ -12,7 +12,7 @@ declare const process: {
 
 const readFromImportMeta = (): string | undefined => {
   try {
-    const meta = import.meta as { env?: MaybeEnv } | undefined;
+    const meta = import.meta as { env?: MaybeEnvironment } | undefined;
     return meta?.env?.['NG_APP_LUNCHMONEY_API_BASE'];
   } catch {
     return undefined;
@@ -22,7 +22,7 @@ const readFromImportMeta = (): string | undefined => {
 const readFromGlobalThis = (): string | undefined => {
   const globalCandidate = globalThis as typeof globalThis & {
     NG_APP_LUNCHMONEY_API_BASE?: string;
-    process?: { env?: MaybeEnv };
+    process?: { env?: MaybeEnvironment };
   };
 
   return (
@@ -32,7 +32,7 @@ const readFromGlobalThis = (): string | undefined => {
   );
 };
 
-const readFromProcessEnv = (): string | undefined => {
+const readFromProcessEnvironment = (): string | undefined => {
   try {
     return process.env?.NG_APP_LUNCHMONEY_API_BASE;
   } catch {
@@ -41,12 +41,12 @@ const readFromProcessEnv = (): string | undefined => {
 };
 
 const readFromRuntimeModule = (): string | undefined =>
-  runtimeEnv['NG_APP_LUNCHMONEY_API_BASE'];
+  runtimeEnvironment['NG_APP_LUNCHMONEY_API_BASE'];
 
 export const resolveLunchMoneyApiBase = (): string => {
   return (
     readFromImportMeta() ??
-    readFromProcessEnv() ??
+    readFromProcessEnvironment() ??
     readFromRuntimeModule() ??
     readFromGlobalThis() ??
     DEFAULT_API_BASE

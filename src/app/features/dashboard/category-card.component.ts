@@ -103,8 +103,8 @@ export class CategoryCardComponent {
         return;
       }
 
-      const includeAll = this.includeAllTransactions();
-      if (this.lastIncludeAllTransactions === includeAll) {
+      const isIncludeAll = this.includeAllTransactions();
+      if (this.lastIncludeAllTransactions === isIncludeAll) {
         return;
       }
 
@@ -249,8 +249,8 @@ export class CategoryCardComponent {
   });
 
   toggleDetails(): void {
-    const newState = !this.showDetails();
-    this.showDetails.set(newState);
+    const isNewState = !this.showDetails();
+    this.showDetails.set(isNewState);
   }
 
   retryLoadTransactions(): void {
@@ -258,8 +258,8 @@ export class CategoryCardComponent {
   }
 
   private loadTransactions(): void {
-    const includeAll = this.includeAllTransactions();
-    this.lastIncludeAllTransactions = includeAll;
+    const isIncludeAll = this.includeAllTransactions();
+    this.lastIncludeAllTransactions = isIncludeAll;
 
     this.isLoadingTransactions.set(true);
     this.transactionsLoadError.set(false);
@@ -270,7 +270,7 @@ export class CategoryCardComponent {
         this.startDate(),
         this.endDate(),
         {
-          includeAllTransactions: includeAll,
+          includeAllTransactions: isIncludeAll,
         }
       )
       .subscribe({
@@ -341,7 +341,7 @@ export class CategoryCardComponent {
     return recordedIds;
   }
 
-  private convertRecurringToEntries(params: {
+  private convertRecurringToEntries(parameters: {
     recurring: RecurringInstance[];
     context: {
       referenceDate: Date;
@@ -350,7 +350,7 @@ export class CategoryCardComponent {
       transactions: Transaction[];
     };
   }): ActivityEntry[] {
-    const { recurring, context } = params;
+    const { recurring, context } = parameters;
     const entries: ActivityEntry[] = [];
     const isIncomeCategory = this.isIncomeCategory();
 
@@ -374,7 +374,7 @@ export class CategoryCardComponent {
   private sortEntriesByDateDescending(
     entries: ActivityEntry[]
   ): ActivityEntry[] {
-    return entries.sort((a, b) => {
+    return entries.toSorted((a, b) => {
       const timeA = a.date ? a.date.getTime() : -Infinity;
       const timeB = b.date ? b.date.getTime() : -Infinity;
       return timeB - timeA;
@@ -518,15 +518,15 @@ export class CategoryCardComponent {
       }
 
       const txnPayee = this.normalizeTransactionPayee(txn);
-      const payeeMatches = this.payeesAlign(recurringPayee, txnPayee);
-      if (!txn.is_pending && payeeMatches) {
+      const isPayeeMatches = this.payeesAlign(recurringPayee, txnPayee);
+      if (!txn.is_pending && isPayeeMatches) {
         return true;
       }
 
-      const amountsClose = this.amountsAlign(recurringAmount, txn, 0.01);
+      const isAmountsClose = this.amountsAlign(recurringAmount, txn, 0.01);
       const hasPayeeConflict =
-        recurringPayee !== null && txnPayee !== null && !payeeMatches;
-      if (!txn.is_pending && !hasPayeeConflict && amountsClose) {
+        recurringPayee !== null && txnPayee !== null && !isPayeeMatches;
+      if (!txn.is_pending && !hasPayeeConflict && isAmountsClose) {
         return true;
       }
     }
@@ -544,11 +544,11 @@ export class CategoryCardComponent {
     if (value === null || value === undefined) {
       return null;
     }
-    const num = Number(value);
-    if (!Number.isFinite(num)) {
+    const number_ = Number(value);
+    if (!Number.isFinite(number_)) {
       return null;
     }
-    return num.toString();
+    return number_.toString();
   }
 
   private shouldIncludeRecurringInstance(
@@ -573,14 +573,10 @@ export class CategoryCardComponent {
     }
 
     const normalizedId = this.normalizeRecurringId(instance.expense.id);
-    if (
-      (normalizedId && context.recordedRecurringIds.has(normalizedId)) ||
+    return !(
+      (normalizedId && context.recordedRecurringIds.has(normalizedId)) ??
       this.hasMatchingTransaction(instance, context.transactions)
-    ) {
-      return false;
-    }
-
-    return true;
+    );
   }
 
   private isWithinWindowRange(
@@ -711,7 +707,7 @@ export class CategoryCardComponent {
     if (typeof value !== 'string') {
       return null;
     }
-    const parsed = Number.parseFloat(value);
+    const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
   }
 

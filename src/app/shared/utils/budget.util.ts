@@ -48,7 +48,7 @@ export const extractPeriods = (
       startDate: occurrence.start_date,
       endDate: occurrence.end_date,
     }))
-    .sort((left, right) => left.startDate.localeCompare(right.startDate));
+    .toSorted((left, right) => left.startDate.localeCompare(right.startDate));
 
   const deduplicated: BudgetPeriod[] = [];
   const seenPeriodKeys = new Set<string>();
@@ -216,7 +216,7 @@ export const buildBudgetProgress = (
   const recurringTotal = totals.recurring_expected;
   const actualValue = summary.is_income ? Math.abs(spent) : spent;
   const remaining = budgetAmount - actualValue;
-  const numTransactions = occurrence?.num_transactions ?? 0;
+  const numberTransactions = occurrence?.num_transactions ?? 0;
   const isAutomated = occurrence?.is_automated ?? false;
   const progressRatio =
     budgetAmount > 0 ? Math.min(1, Math.max(0, actualValue / budgetAmount)) : 0;
@@ -235,7 +235,7 @@ export const buildBudgetProgress = (
     spent,
     remaining,
     monthKey,
-    numTransactions,
+    numTransactions: numberTransactions,
     isAutomated,
     recurringTotal,
     recurringItems: [],
@@ -262,7 +262,7 @@ export const rankBudgetProgress = (
     customOrder.map((categoryId, index) => [categoryId, index])
   );
 
-  return [...items].sort((a, b) => {
+  return items.toSorted((a, b) => {
     const orderA =
       a.categoryId === null ? undefined : orderMap.get(a.categoryId);
     const orderB =

@@ -196,7 +196,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   handleSave(): void {
     const newPreferences: CategoryPreferences = {
       customOrder: this.ensureOrderContains(this.orderedIds()),
-      hiddenCategoryIds: Array.from(this.hiddenIds()),
+      hiddenCategoryIds: [...this.hiddenIds()],
       notificationsEnabled: this.notificationsEnabled(),
       includeAllTransactions: this.includeAllTransactions(),
       hideGroupedCategories: this.hideGroupedCategories(),
@@ -298,8 +298,8 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
       try {
         await navigator.clipboard.writeText(session.supportCode);
         this.logger.info('Support code copied to clipboard');
-      } catch (err) {
-        this.logger.error('Failed to copy support code', err);
+      } catch (error) {
+        this.logger.error('Failed to copy support code', error);
       }
     }
   }
@@ -311,13 +311,15 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
 
   async disableAndDeleteLogs(): Promise<void> {
     if (
-      confirm(
+      !confirm(
         'Are you sure you want to disable diagnostics and delete all server-side logs for this session?'
       )
     ) {
-      await this.diagnostics.disable(true);
-      this.logger.info('Diagnostics disabled and logs deleted');
+      return;
     }
+
+    await this.diagnostics.disable(true);
+    this.logger.info('Diagnostics disabled and logs deleted');
   }
 
   private resolveNotificationError(

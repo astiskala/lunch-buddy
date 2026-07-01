@@ -21,9 +21,9 @@ describe('authGuard', () => {
   it('should allow activation when user has API key', async () => {
     authService.hasApiKey.mockReturnValue(true);
 
-    const result = await guardContext.runGuard<boolean>(authGuard);
+    const isResult = await guardContext.runGuard<boolean>(authGuard);
 
-    expect(result).toBe(true);
+    expect(isResult).toBe(true);
     expect(router.parseUrl).not.toHaveBeenCalled();
   });
 

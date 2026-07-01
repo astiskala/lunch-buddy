@@ -5,8 +5,8 @@ import { App } from './app/app';
 
 try {
   await bootstrapApplication(App, appConfig);
-} catch (err: unknown) {
+} catch (error: unknown) {
   if (isDevMode()) {
-    console.error(err);
+    console.error(error);
   }
 }

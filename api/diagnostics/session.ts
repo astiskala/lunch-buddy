@@ -13,25 +13,33 @@ const CREATE_LIMIT_PER_MIN = 10;
 const GET_LIMIT_PER_MIN = 60;
 const DELETE_LIMIT_PER_MIN = 60;
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const method = req.method;
+export default async function handler(
+  request: VercelRequest,
+  res: VercelResponse
+) {
+  const method = request.method;
 
-  if (method === 'POST') {
-    return createSession(req, res);
-  } else if (method === 'GET') {
-    return getSession(req, res);
-  } else if (method === 'DELETE') {
-    return deleteSession(req, res);
-  } else {
-    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
-    const methodStr = method ?? 'UNKNOWN';
-    return res.status(405).end(`Method ${methodStr} Not Allowed`);
+  switch (method) {
+    case 'POST': {
+      return createSession(request, res);
+    }
+    case 'GET': {
+      return getSession(request, res);
+    }
+    case 'DELETE': {
+      return deleteSession(request, res);
+    }
+    default: {
+      res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
+      const methodString = method ?? 'UNKNOWN';
+      return res.status(405).end(`Method ${methodString} Not Allowed`);
+    }
   }
 }
 
-async function createSession(req: VercelRequest, res: VercelResponse) {
+async function createSession(request: VercelRequest, res: VercelResponse) {
   try {
-    if (!(await checkIpRateLimit(req, CREATE_LIMIT_PER_MIN, 'create'))) {
+    if (!(await checkIpRateLimit(request, CREATE_LIMIT_PER_MIN, 'create'))) {
       return res.status(429).json({ error: 'Rate limit exceeded' });
     }
 
@@ -42,7 +50,8 @@ async function createSession(req: VercelRequest, res: VercelResponse) {
     const hashedKey = await hashWriteKey(writeKey);
 
     const keys = getSessionKeys(supportCode);
-    const body = req.body as { buildInfo?: { version?: string } } | undefined;
+    const body = request.body as
+      { buildInfo?: { version?: string } } | undefined;
     const buildInfo = body?.buildInfo ?? {};
 
     const meta = {
@@ -50,7 +59,7 @@ async function createSession(req: VercelRequest, res: VercelResponse) {
       sessionId,
       createdAt: Date.now(),
       expiresAt,
-      userAgent: req.headers['user-agent'],
+      userAgent: request.headers['user-agent'],
       appVersion: buildInfo.version,
       lastSeenAt: Date.now(),
     };
@@ -73,9 +82,9 @@ async function createSession(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function getSession(req: VercelRequest, res: VercelResponse) {
-  const rawSupportCode = req.query['supportCode'];
-  const adminToken = req.headers['x-admin-token'];
+async function getSession(request: VercelRequest, res: VercelResponse) {
+  const rawSupportCode = request.query['supportCode'];
+  const adminToken = request.headers['x-admin-token'];
   const expectedToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 
   if (!rawSupportCode || typeof rawSupportCode !== 'string') {
@@ -95,7 +104,7 @@ async function getSession(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    if (!(await checkIpRateLimit(req, GET_LIMIT_PER_MIN, 'get'))) {
+    if (!(await checkIpRateLimit(request, GET_LIMIT_PER_MIN, 'get'))) {
       return res.status(429).json({ error: 'Rate limit exceeded' });
     }
 
@@ -119,12 +128,12 @@ async function getSession(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function deleteSession(req: VercelRequest, res: VercelResponse) {
-  const { supportCode: rawSupportCode, writeKey } = req.body as {
+async function deleteSession(request: VercelRequest, res: VercelResponse) {
+  const { supportCode: rawSupportCode, writeKey } = request.body as {
     supportCode: string;
     writeKey?: string;
   };
-  const adminToken = req.headers['x-admin-token'];
+  const adminToken = request.headers['x-admin-token'];
   const expectedToken = process.env['DIAGNOSTICS_ADMIN_TOKEN'];
 
   if (!rawSupportCode) {
@@ -138,7 +147,7 @@ async function deleteSession(req: VercelRequest, res: VercelResponse) {
   const keys = getSessionKeys(supportCode);
 
   try {
-    if (!(await checkIpRateLimit(req, DELETE_LIMIT_PER_MIN, 'delete'))) {
+    if (!(await checkIpRateLimit(request, DELETE_LIMIT_PER_MIN, 'delete'))) {
       return res.status(429).json({ error: 'Rate limit exceeded' });
     }
 

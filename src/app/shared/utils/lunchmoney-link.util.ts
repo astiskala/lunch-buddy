@@ -25,14 +25,14 @@ export const buildTransactionDeepLink = (
   const categoryId =
     input.transactionCategoryId ?? input.cardCategoryId ?? null;
 
-  const params = new URLSearchParams();
+  const parameters = new URLSearchParams();
   if (categoryId !== null && Number.isFinite(categoryId)) {
-    params.set('category', categoryId.toString());
+    parameters.set('category', categoryId.toString());
   }
-  params.set('start_date', isoDay);
-  params.set('end_date', isoDay);
-  params.set('match', 'all');
-  params.set('time', 'custom');
+  parameters.set('start_date', isoDay);
+  parameters.set('end_date', isoDay);
+  parameters.set('match', 'all');
+  parameters.set('time', 'custom');
 
-  return `${LUNCH_MONEY_HOST}/transactions/${year}/${month}?${params.toString()}`;
+  return `${LUNCH_MONEY_HOST}/transactions/${year}/${month}?${parameters.toString()}`;
 };

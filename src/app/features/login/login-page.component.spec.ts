@@ -4,7 +4,10 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { LoginPageComponent } from './login-page.component';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from '../../../test/vitest-spy';
 
 describe('LoginPageComponent', () => {
   let component: LoginPageComponent;
@@ -18,18 +21,18 @@ describe('LoginPageComponent', () => {
     navigate: (commands: unknown[]) => Promise<boolean>;
   }
 
-  let authService: SpyObj<AuthServiceStub>;
-  let router: SpyObj<RouterStub>;
+  let authService: SpyObject<AuthServiceStub>;
+  let router: SpyObject<RouterStub>;
   let nativeElement: HTMLElement;
 
   beforeEach(async () => {
-    const authServiceSpy = createSpyObj<AuthServiceStub>('AuthService', [
+    const authServiceSpy = createSpyObject<AuthServiceStub>('AuthService', [
       'getApiKey',
       'setApiKey',
     ]);
     authServiceSpy.getApiKey.mockReturnValue(null);
-    authServiceSpy.setApiKey.mockImplementation(() => undefined);
-    const routerSpy = createSpyObj<RouterStub>('Router', ['navigate']);
+    authServiceSpy.setApiKey.mockImplementation(() => {});
+    const routerSpy = createSpyObject<RouterStub>('Router', ['navigate']);
     routerSpy.navigate.mockResolvedValue(true);
 
     await TestBed.configureTestingModule({
@@ -66,7 +69,7 @@ describe('LoginPageComponent', () => {
   const currentErrorMessage = () => {
     const element = nativeElement.querySelector('.error-message');
     if (!element) {
-      return undefined;
+      return;
     }
     const content = element.textContent;
     return content ? content.trim() : undefined;

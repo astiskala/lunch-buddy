@@ -33,18 +33,21 @@ function resolveRemainingTtlSeconds(expiresAt: number | undefined): number {
   return Math.max(1, Math.ceil(remainingMs / 1000));
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
+export default async function handler(
+  request: VercelRequest,
+  res: VercelResponse
+) {
+  if (request.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    const methodStr = req.method ?? 'UNKNOWN';
-    return res.status(405).end(`Method ${methodStr} Not Allowed`);
+    const methodString = request.method ?? 'UNKNOWN';
+    return res.status(405).end(`Method ${methodString} Not Allowed`);
   }
 
   const {
     supportCode: rawSupportCode,
     writeKey,
     events,
-  } = req.body as {
+  } = request.body as {
     supportCode?: string;
     writeKey: string;
     events: unknown[];
@@ -62,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Apply shared endpoint abuse resistance.
-    if (!(await checkIpRateLimit(req, IP_RATE_LIMIT_PER_MIN, 'event'))) {
+    if (!(await checkIpRateLimit(request, IP_RATE_LIMIT_PER_MIN, 'event'))) {
       return res.status(429).json({ error: 'Rate limit exceeded' });
     }
 
@@ -88,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Apply session-level rate limiting.
-    const minuteEpoch = Math.floor(Date.now() / 60000);
+    const minuteEpoch = Math.floor(Date.now() / 60_000);
     const rateLimitKey = keys.rateLimit(minuteEpoch);
     const currentCount = await redis.incr(rateLimitKey);
     if (currentCount === 1) {

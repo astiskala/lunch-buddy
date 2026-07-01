@@ -6,7 +6,10 @@ import {
   RouterStateSnapshot,
 } from '@angular/router';
 import { AuthService } from '../app/core/services/auth.service';
-import { createSpyObj, type SpyObj } from './vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from './vitest-spy';
 
 interface AuthServiceStub {
   hasApiKey: () => boolean;
@@ -17,26 +20,26 @@ interface RouterStub {
   parseUrl: (url: string) => ReturnType<Router['parseUrl']>;
 }
 
-type GuardFn = (
+type GuardFunction = (
   route: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
 ) => unknown;
 
-export type AuthServiceGuardSpy = SpyObj<AuthServiceStub>;
-export type RouterGuardSpy = SpyObj<RouterStub>;
+export type AuthServiceGuardSpy = SpyObject<AuthServiceStub>;
+export type RouterGuardSpy = SpyObject<RouterStub>;
 
 export interface GuardTestContext {
   authService: AuthServiceGuardSpy;
   router: RouterGuardSpy;
-  runGuard<T>(guard: GuardFn): Promise<T>;
+  runGuard<T>(guard: GuardFunction): Promise<T>;
 }
 
 export const setupGuardTestContext = (): GuardTestContext => {
-  const authService = createSpyObj<AuthServiceStub>('AuthService', [
+  const authService = createSpyObject<AuthServiceStub>('AuthService', [
     'hasApiKey',
     'ready',
   ]);
-  const router = createSpyObj<RouterStub>('Router', ['parseUrl']);
+  const router = createSpyObject<RouterStub>('Router', ['parseUrl']);
   const route = {} as ActivatedRouteSnapshot;
   const state = {} as RouterStateSnapshot;
 
@@ -53,7 +56,7 @@ export const setupGuardTestContext = (): GuardTestContext => {
   return {
     authService,
     router,
-    runGuard<T>(guard: GuardFn): Promise<T> {
+    runGuard<T>(guard: GuardFunction): Promise<T> {
       return Promise.resolve(
         TestBed.runInInjectionContext(() => guard(route, state) as T)
       );

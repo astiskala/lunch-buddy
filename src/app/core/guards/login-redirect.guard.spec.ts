@@ -35,9 +35,9 @@ describe('loginRedirectGuard', () => {
   it('should allow activation when user is not authenticated', async () => {
     authService.hasApiKey.mockReturnValue(false);
 
-    const result = await guardContext.runGuard<boolean>(loginRedirectGuard);
+    const isResult = await guardContext.runGuard<boolean>(loginRedirectGuard);
 
-    expect(result).toBe(true);
+    expect(isResult).toBe(true);
     expect(router.parseUrl).not.toHaveBeenCalled();
   });
 });

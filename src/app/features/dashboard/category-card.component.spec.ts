@@ -8,7 +8,10 @@ import {
 } from '../../core/models/lunchmoney.types';
 import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { of } from 'rxjs';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from '../../../test/vitest-spy';
 
 describe('CategoryCardComponent', () => {
   interface TestActivityEntry {
@@ -150,7 +153,7 @@ describe('CategoryCardComponent', () => {
   });
   let component: CategoryCardComponent;
   let fixture: ComponentFixture<CategoryCardComponent>;
-  let mockLunchmoneyService: SpyObj<LunchMoneyService>;
+  let mockLunchmoneyService: SpyObject<LunchMoneyService>;
   const decemberWindowInputs = {
     startDate: '2025-12-01',
     endDate: '2025-12-31',
@@ -263,7 +266,7 @@ describe('CategoryCardComponent', () => {
   };
 
   beforeEach(async () => {
-    mockLunchmoneyService = createSpyObj<LunchMoneyService>(
+    mockLunchmoneyService = createSpyObject<LunchMoneyService>(
       'LunchMoneyService',
       ['getCategoryTransactions']
     );
@@ -316,11 +319,13 @@ describe('CategoryCardComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const label = (
-      compiled.querySelector('.metrics .metric .label')?.textContent ?? ''
+      compiled.querySelector(':scope .metrics .metric .label')?.textContent ??
+      ''
     ).trim();
     expect(label).toBe('Received');
     const value =
-      compiled.querySelector('.metrics .metric .value')?.textContent ?? '';
+      compiled.querySelector(':scope .metrics .metric .value')?.textContent ??
+      '';
     expect(value).toContain('$650.00');
   });
 
@@ -677,7 +682,7 @@ describe('CategoryCardComponent', () => {
         currency: 'SGD',
         description: 'Nest Aware',
         found_transactions: [
-          { date: '2025-12-05', transaction_id: 2328343028 },
+          { date: '2025-12-05', transaction_id: 2_328_343_028 },
         ],
       },
       new Date('2025-12-05T00:00:00.000Z')
@@ -710,7 +715,7 @@ describe('CategoryCardComponent', () => {
         currency: 'SGD',
         description: 'Nest Aware',
         found_transactions: [
-          { date: '2025-12-05', transaction_id: 2328343028 },
+          { date: '2025-12-05', transaction_id: 2_328_343_028 },
         ],
       },
       new Date('2025-12-05T00:00:00.000Z')
@@ -791,7 +796,7 @@ describe('CategoryCardComponent', () => {
       });
       const host = expandCard();
       const anchor = host.querySelector<HTMLAnchorElement>(
-        '.activity-item a.open-in-lunchmoney'
+        ':scope .activity-item a.open-in-lunchmoney'
       );
       expect(anchor).not.toBeNull();
       expect(anchor?.getAttribute('href')).toBe(
@@ -827,9 +832,9 @@ describe('CategoryCardComponent', () => {
         recurringExpenses: [recurring],
       });
       const host = expandCard();
-      const upcomingItem = Array.from(
-        host.querySelectorAll<HTMLElement>('.activity-item')
-      ).find(el => el.querySelector('.badge.upcoming'));
+      const upcomingItem = [
+        ...host.querySelectorAll<HTMLElement>('.activity-item'),
+      ].find(element => element.querySelector('.badge.upcoming'));
       expect(upcomingItem).toBeDefined();
       expect(upcomingItem?.querySelector('a.open-in-lunchmoney')).toBeNull();
     });
@@ -849,7 +854,7 @@ describe('CategoryCardComponent', () => {
       const host = expandCard();
       expect(component.showDetails()).toBe(true);
       const anchor = host.querySelector<HTMLAnchorElement>(
-        '.activity-item a.open-in-lunchmoney'
+        ':scope .activity-item a.open-in-lunchmoney'
       );
       expect(anchor).not.toBeNull();
       anchor?.addEventListener('click', e => {

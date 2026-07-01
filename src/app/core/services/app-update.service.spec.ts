@@ -11,10 +11,12 @@ import { AppUpdateService } from './app-update.service';
 import { LoggerService } from './logger.service';
 
 interface LoggerSpies {
-  debug: Mock<(message: string, ...args: unknown[]) => void>;
-  info: Mock<(message: string, ...args: unknown[]) => void>;
-  warn: Mock<(message: string, ...args: unknown[]) => void>;
-  error: Mock<(message: string, error?: unknown, ...args: unknown[]) => void>;
+  debug: Mock<(message: string, ...arguments_: unknown[]) => void>;
+  info: Mock<(message: string, ...arguments_: unknown[]) => void>;
+  warn: Mock<(message: string, ...arguments_: unknown[]) => void>;
+  error: Mock<
+    (message: string, error?: unknown, ...arguments_: unknown[]) => void
+  >;
 }
 
 interface MutableSwUpdate {
@@ -49,7 +51,7 @@ describe('AppUpdateService', () => {
         AppUpdateService.prototype as unknown as { reloadWindow: () => void },
         'reloadWindow'
       )
-      .mockImplementation(() => undefined);
+      .mockImplementation(() => {});
   });
 
   beforeEach(() => {

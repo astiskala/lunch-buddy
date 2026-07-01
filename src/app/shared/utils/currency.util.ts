@@ -19,8 +19,7 @@ export const normalizeCurrencyCode = (
  * Returns 0 if the result is not a finite number.
  */
 export const resolveAmount = (value: string, toBase: number | null): number => {
-  const converted =
-    typeof toBase === 'number' ? toBase : Number.parseFloat(value);
+  const converted = typeof toBase === 'number' ? toBase : Number(value);
   return Number.isFinite(converted) ? converted : 0;
 };
 

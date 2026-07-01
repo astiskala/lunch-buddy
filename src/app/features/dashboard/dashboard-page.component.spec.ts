@@ -16,7 +16,10 @@ import { PushNotificationService } from '../../shared/services/push-notification
 import { DashboardPageComponent } from './dashboard-page.component';
 import { CategoryPreferencesDialogComponent } from './category-preferences-dialog.component';
 import { buildBudgetProgress } from '../../../test/budget-progress.fixture';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from '../../../test/vitest-spy';
 
 describe('DashboardPageComponent - Unit Tests', () => {
   interface BudgetServiceStub {
@@ -34,22 +37,22 @@ describe('DashboardPageComponent - Unit Tests', () => {
     navigate: (commands: unknown[]) => Promise<boolean>;
   }
 
-  let mockBudgetService: SpyObj<BudgetServiceStub>;
-  let mockAuthService: SpyObj<AuthServiceStub>;
-  let mockRouter: SpyObj<RouterStub>;
+  let mockBudgetService: SpyObject<BudgetServiceStub>;
+  let mockAuthService: SpyObject<AuthServiceStub>;
+  let mockRouter: SpyObject<RouterStub>;
 
   beforeEach(() => {
-    mockBudgetService = createSpyObj<BudgetServiceStub>('BudgetService', [
+    mockBudgetService = createSpyObject<BudgetServiceStub>('BudgetService', [
       'refresh',
       'updatePreferences',
     ]);
 
-    mockAuthService = createSpyObj<AuthServiceStub>('AuthService', [
+    mockAuthService = createSpyObject<AuthServiceStub>('AuthService', [
       'clearApiKey',
     ]);
     mockAuthService.clearApiKey.mockResolvedValue();
 
-    mockRouter = createSpyObj<RouterStub>('Router', ['navigate']);
+    mockRouter = createSpyObject<RouterStub>('Router', ['navigate']);
     mockRouter.navigate.mockResolvedValue(true);
   });
 
@@ -83,7 +86,7 @@ describe('DashboardPageComponent - settings dialog category source', () => {
     ).componentInstance as CategoryPreferencesDialogComponent;
     return dialog[input]()
       .map(c => c.categoryId)
-      .sort((a, b) => (a ?? 0) - (b ?? 0));
+      .toSorted((a, b) => (a ?? 0) - (b ?? 0));
   }
 
   function setup() {
@@ -115,15 +118,15 @@ describe('DashboardPageComponent - settings dialog category source', () => {
       getReferenceDate: signal(new Date('2026-05-16T00:00:00Z')),
       getExpenseTotals: signal({ spent: 0, budget: 0, upcoming: 0 }),
       getIncomeTotals: signal({ spent: 0, budget: 0, upcoming: 0 }),
-      refresh: () => undefined,
-      updatePreferences: () => undefined,
+      refresh: () => {},
+      updatePreferences: () => {},
     };
 
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         { provide: BudgetService, useValue: budgetStub },
-        { provide: AuthService, useValue: { clearApiKey: () => undefined } },
+        { provide: AuthService, useValue: { clearApiKey: () => {} } },
         {
           provide: Router,
           useValue: { navigate: () => Promise.resolve(true) },

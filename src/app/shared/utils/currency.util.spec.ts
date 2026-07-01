@@ -14,7 +14,7 @@ describe('Currency Utils', () => {
     });
 
     it('returns null for empty values', () => {
-      expect(normalizeCurrencyCode('   ')).toBeNull();
+      expect(normalizeCurrencyCode(' '.repeat(3))).toBeNull();
       expect(normalizeCurrencyCode()).toBeNull();
     });
   });
@@ -83,7 +83,7 @@ describe('Currency Utils', () => {
     });
 
     it('should format large numbers with commas', () => {
-      expect(formatCurrency(1234567.89, 'USD')).toBe('$1,234,567.89');
+      expect(formatCurrency(1_234_567.89, 'USD')).toBe('$1,234,567.89');
     });
 
     it('should handle null currency with default USD', () => {

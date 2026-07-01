@@ -112,6 +112,7 @@ export class BackgroundSyncService implements OnDestroy {
     };
 
     try {
+      // eslint-disable-next-line unicorn/require-post-message-target-origin
       worker.postMessage(message);
     } catch (error) {
       this.logger.error(
@@ -127,11 +128,11 @@ export class BackgroundSyncService implements OnDestroy {
       return;
     }
 
-    const notificationsEnabled =
+    const isNotificationsEnabled =
       this.currentConfig.preferences.notificationsEnabled;
     const hasCredentials = !!this.currentConfig.apiKey;
 
-    if (!notificationsEnabled || !hasCredentials) {
+    if (!isNotificationsEnabled || !hasCredentials) {
       await this.unregisterPeriodicSync(registration);
       return;
     }
@@ -168,22 +169,24 @@ export class BackgroundSyncService implements OnDestroy {
   private async registerOneOffSync(
     registration: ServiceWorkerRegistration
   ): Promise<void> {
-    if ('sync' in registration) {
-      const syncManager = (
-        registration as ServiceWorkerRegistration & {
-          sync?: SyncManager;
-        }
-      ).sync;
+    if (!('sync' in registration)) {
+      return;
+    }
 
-      if (syncManager) {
-        try {
-          await syncManager.register(PERIODIC_SYNC_TAG);
-        } catch (error) {
-          this.logger.warn(
-            'BackgroundSyncService: sync registration failed',
-            error
-          );
-        }
+    const syncManager = (
+      registration as ServiceWorkerRegistration & {
+        sync?: SyncManager;
+      }
+    ).sync;
+
+    if (syncManager) {
+      try {
+        await syncManager.register(PERIODIC_SYNC_TAG);
+      } catch (error) {
+        this.logger.warn(
+          'BackgroundSyncService: sync registration failed',
+          error
+        );
       }
     }
   }
@@ -191,25 +194,27 @@ export class BackgroundSyncService implements OnDestroy {
   private async unregisterPeriodicSync(
     registration: ServiceWorkerRegistration
   ): Promise<void> {
-    if ('periodicSync' in registration) {
-      const periodicSync = (
-        registration as ServiceWorkerRegistration & {
-          periodicSync?: PeriodicSyncManager;
-        }
-      ).periodicSync;
+    if (!('periodicSync' in registration)) {
+      return;
+    }
 
-      if (periodicSync) {
-        try {
-          const tags = await periodicSync.getTags();
-          if (tags.includes(PERIODIC_SYNC_TAG)) {
-            await periodicSync.unregister(PERIODIC_SYNC_TAG);
-          }
-        } catch (error) {
-          this.logger.warn(
-            'BackgroundSyncService: failed to unregister periodic sync',
-            error
-          );
+    const periodicSync = (
+      registration as ServiceWorkerRegistration & {
+        periodicSync?: PeriodicSyncManager;
+      }
+    ).periodicSync;
+
+    if (periodicSync) {
+      try {
+        const tags = await periodicSync.getTags();
+        if (tags.includes(PERIODIC_SYNC_TAG)) {
+          await periodicSync.unregister(PERIODIC_SYNC_TAG);
         }
+      } catch (error) {
+        this.logger.warn(
+          'BackgroundSyncService: failed to unregister periodic sync',
+          error
+        );
       }
     }
   }

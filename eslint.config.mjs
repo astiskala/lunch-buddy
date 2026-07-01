@@ -7,6 +7,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import sonarjsPlugin from 'eslint-plugin-sonarjs';
 import boundariesPlugin from 'eslint-plugin-boundaries';
+import unicornPlugin from 'eslint-plugin-unicorn';
 
 // Files that need type-aware linting but live outside the TS project graph.
 // Every block that initializes `projectService` must declare the same list —
@@ -46,6 +47,7 @@ export default tseslint.config(
       ...tseslint.configs.stylisticTypeChecked,
       ...ngeslint.configs.tsRecommended,
       sonarjsPlugin.configs.recommended,
+      unicornPlugin.configs.recommended,
       eslintConfigPrettier,
     ],
     plugins: {
@@ -53,6 +55,7 @@ export default tseslint.config(
       prettier: prettierPlugin,
       'unused-imports': unusedImportsPlugin,
       boundaries: boundariesPlugin,
+      unicorn: unicornPlugin,
     },
     linterOptions: {
       noInlineConfig: false,
@@ -120,6 +123,115 @@ export default tseslint.config(
       '@typescript-eslint/unified-signatures': 'off', // Disabled due to bug with TypeScript 5.9+
       '@angular-eslint/prefer-standalone': 'error',
       '@angular-eslint/use-lifecycle-interface': 'error',
+      // Enhanced Unicorn rules for stricter code quality
+      'unicorn/better-regex': 'error',
+      'unicorn/catch-error-name': 'error',
+      'unicorn/consistent-boolean-name': 'off', // Too strict
+      'unicorn/consistent-class-member-order': 'off', // Too strict
+      'unicorn/consistent-destructuring': 'error',
+      'unicorn/consistent-function-scoping': 'off', // Too strict for complex patterns
+      'unicorn/empty-brace-spaces': 'error',
+      'unicorn/error-message': 'error',
+      'unicorn/escape-case': 'error',
+      'unicorn/expiring-todo-comments': 'warn',
+      'unicorn/explicit-length-check': 'error',
+      'unicorn/import-style': 'error',
+      'unicorn/name-replacements': 'off', // Too strict on abbreviations
+      'unicorn/new-for-builtins': 'error',
+      'unicorn/no-abusive-eslint-disable': 'error',
+      'unicorn/no-array-callback-reference': 'error',
+      'unicorn/no-array-concat-in-loop': 'error',
+      'unicorn/no-array-reduce': 'error',
+      'unicorn/no-array-reverse': 'error',
+      'unicorn/no-console-spaces': 'error',
+      'unicorn/no-declarations-before-early-exit': 'off', // Too strict
+      'unicorn/no-document-cookie': 'error',
+      'unicorn/no-global-object-property-assignment': 'off', // Test mocking needs this
+      'unicorn/no-hex-escape': 'error',
+      'unicorn/no-instanceof-array': 'error',
+      'unicorn/no-invalid-remove-event-listener': 'error',
+      'unicorn/no-keyword-prefix': 'off', // Disabled for test mocking
+      'unicorn/no-lonely-if': 'error',
+      'unicorn/no-negated-condition': 'error',
+      'unicorn/no-negation-in-equality-check': 'error',
+      'unicorn/no-nested-ternary': 'error',
+      'unicorn/no-new-array': 'error',
+      'unicorn/no-new-buffer': 'error',
+      'unicorn/no-null': 'warn',
+      'unicorn/no-object-as-default-parameter': 'error',
+      'unicorn/no-process-exit': 'error',
+      'unicorn/no-useless-fallback-in-spread': 'error',
+      'unicorn/no-useless-length-check': 'error',
+      'unicorn/no-useless-promise-resolve-reject': 'error',
+      'unicorn/no-useless-spread': 'error',
+      'unicorn/no-useless-switch-case': 'error',
+      'unicorn/no-array-sort': 'error',
+      'unicorn/no-break-in-nested-loop': 'warn', // Sometimes necessary
+      'unicorn/no-unreadable-for-of-expression': 'warn', // Allow simple cases
+      'unicorn/no-error-property-assignment': 'warn', // Sometimes necessary for tests
+      'unicorn/no-await-expression-member': 'warn', // Allow in some cases
+      'unicorn/no-non-function-verb-prefix': 'warn', // Allow in some cases
+      'unicorn/prefer-add-event-listener': 'warn', // Allow onerror in some cases
+      'unicorn/prefer-minimal-ternary': 'warn', // Allow 3-part ternaries
+      'unicorn/prefer-number-is-safe-integer': 'warn', // Allow isFinite in some cases
+      'unicorn/prefer-iterator-to-array': 'warn', // .toArray() not available on all iterators
+      'unicorn/prefer-global-number-constants': 'off', // Conflicts with SonarQube (typescript:S7773) which requires Number.NaN
+      'unicorn/number-literal-case': 'error',
+      'unicorn/numeric-separators-style': 'warn',
+      'unicorn/prefer-array-find': 'error',
+      'unicorn/prefer-array-flat-map': 'error',
+      'unicorn/prefer-array-flat': 'error',
+      'unicorn/prefer-array-index-of': 'error',
+      'unicorn/prefer-array-some': 'error',
+      'unicorn/prefer-at': 'error',
+      'unicorn/prefer-code-point': 'error',
+      'unicorn/prefer-date-now': 'error',
+      'unicorn/prefer-default-parameters': 'error',
+      'unicorn/prefer-dom-node-append': 'error',
+      'unicorn/prefer-dom-node-remove': 'error',
+      'unicorn/prefer-dom-node-text-content': 'error',
+      'unicorn/prefer-export-from': 'error',
+      'unicorn/prefer-includes': 'error',
+      'unicorn/prefer-logical-operator-over-ternary': 'error',
+      'unicorn/prefer-math-min-max': 'error',
+      'unicorn/prefer-math-trunc': 'error',
+      'unicorn/prefer-modern-dom-apis': 'error',
+      'unicorn/prefer-modern-math-apis': 'error',
+      'unicorn/prefer-negative-index': 'error',
+      'unicorn/prefer-node-protocol': 'error',
+      'unicorn/prefer-number-properties': 'error',
+      'unicorn/prefer-object-from-entries': 'error',
+      'unicorn/prefer-optional-catch-binding': 'error',
+      'unicorn/prefer-prototype-methods': 'error',
+      'unicorn/prefer-query-selector': 'error',
+      'unicorn/prefer-reflect-apply': 'error',
+      'unicorn/prefer-regexp-test': 'error',
+      'unicorn/prefer-set-has': 'error',
+      'unicorn/prefer-string-replace-all': 'error',
+      'unicorn/prefer-string-slice': 'error',
+      'unicorn/prefer-string-starts-ends-with': 'error',
+      'unicorn/prefer-string-trim-start-end': 'error',
+      'unicorn/prefer-switch': 'error',
+      'unicorn/prefer-ternary': 'error',
+      'unicorn/prefer-top-level-await': 'warn', // Warn instead of error
+      'unicorn/prefer-url-href': 'error',
+      'unicorn/relative-url-style': 'error',
+      'unicorn/require-array-join-separator': 'error',
+      'unicorn/require-number-to-fixed-digits-argument': 'error',
+      'unicorn/require-post-message-target-origin': 'error',
+      'unicorn/string-content': 'warn',
+      'unicorn/switch-case-braces': 'error',
+      'unicorn/template-indent': 'warn',
+      'unicorn/throw-new-error': 'error',
+      // Disable overly strict sonarjs rules for test quality
+      'sonarjs/prefer-specific-assertions': 'off', // Cosmetic for tests
+      'sonarjs/no-floating-point-equality': 'warn', // Allow in some cases
+      'sonarjs/no-trivial-assertions': 'warn', // Allow in tests
+      'sonarjs/hooks-before-test-cases': 'warn', // Allow in some tests
+      '@typescript-eslint/no-empty-function': [
+        'error',
+        { allow: ['arrowFunctions'] },
+      ],
       'boundaries/dependencies': [
         'error',
         {
@@ -158,6 +270,7 @@ export default tseslint.config(
     plugins: {
       prettier: prettierPlugin,
       '@typescript-eslint': tseslint.plugin,
+      unicorn: unicornPlugin,
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -172,6 +285,62 @@ export default tseslint.config(
       '@typescript-eslint/prefer-optional-chain': 'error',
       // Catches regex-based endsWith/startsWith checks.
       '@typescript-eslint/prefer-string-starts-ends-with': 'error',
+      // Unicorn rules for JavaScript
+      'unicorn/better-regex': 'error',
+      'unicorn/catch-error-name': 'error',
+      'unicorn/consistent-destructuring': 'error',
+      'unicorn/empty-brace-spaces': 'error',
+      'unicorn/error-message': 'error',
+      'unicorn/escape-case': 'error',
+      'unicorn/explicit-length-check': 'error',
+      'unicorn/new-for-builtins': 'error',
+      'unicorn/no-abusive-eslint-disable': 'error',
+      'unicorn/no-array-callback-reference': 'error',
+      'unicorn/no-console-spaces': 'error',
+      'unicorn/no-hex-escape': 'error',
+      'unicorn/no-instanceof-array': 'error',
+      'unicorn/no-keyword-prefix': 'off', // Disabled for test mocking
+      'unicorn/no-lonely-if': 'error',
+      'unicorn/no-negated-condition': 'error',
+      'unicorn/no-negation-in-equality-check': 'error',
+      'unicorn/no-nested-ternary': 'error',
+      'unicorn/no-new-array': 'error',
+      'unicorn/no-new-buffer': 'error',
+      'unicorn/no-null': 'warn',
+      'unicorn/no-object-as-default-parameter': 'error',
+      'unicorn/no-process-exit': 'error',
+      'unicorn/no-useless-fallback-in-spread': 'error',
+      'unicorn/no-useless-length-check': 'error',
+      'unicorn/no-useless-spread': 'error',
+      'unicorn/no-useless-switch-case': 'error',
+      'unicorn/number-literal-case': 'error',
+      'unicorn/prefer-array-find': 'error',
+      'unicorn/prefer-array-flat-map': 'error',
+      'unicorn/prefer-array-flat': 'error',
+      'unicorn/prefer-array-index-of': 'error',
+      'unicorn/prefer-array-some': 'error',
+      'unicorn/prefer-code-point': 'error',
+      'unicorn/prefer-date-now': 'error',
+      'unicorn/prefer-default-parameters': 'error',
+      'unicorn/prefer-export-from': 'error',
+      'unicorn/prefer-includes': 'error',
+      'unicorn/prefer-logical-operator-over-ternary': 'error',
+      'unicorn/prefer-math-min-max': 'error',
+      'unicorn/prefer-math-trunc': 'error',
+      'unicorn/prefer-negative-index': 'error',
+      'unicorn/prefer-number-properties': 'error',
+      'unicorn/prefer-global-number-constants': 'off', // Conflicts with SonarQube (typescript:S7773) which requires Number.NaN
+      'unicorn/prefer-object-from-entries': 'error',
+      'unicorn/prefer-prototype-methods': 'error',
+      'unicorn/prefer-regexp-test': 'error',
+      'unicorn/prefer-set-has': 'error',
+      'unicorn/prefer-spread': 'error',
+      'unicorn/prefer-string-replace-all': 'error',
+      'unicorn/prefer-string-slice': 'error',
+      'unicorn/prefer-string-starts-ends-with': 'error',
+      'unicorn/prefer-string-trim-start-end': 'error',
+      'unicorn/prefer-switch': 'error',
+      'unicorn/throw-new-error': 'error',
     },
   },
 
@@ -186,6 +355,7 @@ export default tseslint.config(
     plugins: {
       prettier: prettierPlugin,
       '@typescript-eslint': tseslint.plugin,
+      unicorn: unicornPlugin,
     },
     languageOptions: {
       parser: tseslint.parser,

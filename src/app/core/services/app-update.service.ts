@@ -37,10 +37,12 @@ export class AppUpdateService {
 
   private subscribeToUpdates(): void {
     this.swUpdate?.versionUpdates.subscribe(event => {
-      if (event.type === 'VERSION_READY') {
-        this.logger.info('AppUpdateService: new version ready, activating');
-        void this.activateAndReload();
+      if (event.type !== 'VERSION_READY') {
+        return;
       }
+
+      this.logger.info('AppUpdateService: new version ready, activating');
+      void this.activateAndReload();
     });
   }
 

@@ -1,14 +1,16 @@
 import { vi, type Mock } from 'vitest';
 
 type MethodKeys<T extends object> = {
-  [K in keyof T]-?: T[K] extends (...args: infer _Args) => unknown ? K : never;
+  [K in keyof T]-?: T[K] extends (...arguments_: infer _Arguments) => unknown
+    ? K
+    : never;
 }[keyof T];
 
 type PropertyKeys<T extends object> = Exclude<keyof T, MethodKeys<T>>;
 
 export type SpyObj<T extends object> = T & {
-  [K in MethodKeys<T>]: T[K] extends (...args: infer A) => infer R
-    ? Mock<(...args: A) => R>
+  [K in MethodKeys<T>]: T[K] extends (...arguments_: infer A) => infer R
+    ? Mock<(...arguments_: A) => R>
     : never;
 };
 

@@ -52,7 +52,7 @@ const API_CATEGORIES_URL = 'https://api.lunchmoney.dev/v2/categories';
 const AUTH_HEADERS = { Authorization: 'Bearer test-key' } as const;
 
 const createNavigationRequest = (url: URL): Request => {
-  const request = new Request(url.toString());
+  const request = new Request(url.href);
   try {
     Object.defineProperty(request, 'mode', {
       value: 'navigate',
@@ -61,7 +61,7 @@ const createNavigationRequest = (url: URL): Request => {
     return request;
   } catch {
     return {
-      url: url.toString(),
+      url: url.href,
       method: 'GET',
       mode: 'navigate',
       destination: 'document',
@@ -150,7 +150,7 @@ describe('custom service worker API handler', () => {
       globalThis as unknown as { importScripts: unknown }
     ).importScripts;
     (globalThis as unknown as { importScripts: () => void }).importScripts =
-      () => undefined;
+      () => {};
 
     const serviceWorkerScriptPath =
       '../../../../public/custom-service-worker.js';
@@ -725,12 +725,12 @@ describe('custom service worker API handler', () => {
   it('truncates sections to 4 items and appends "+ N more"', () => {
     if (!enrichAlerts || !buildNotificationPayload) return;
 
-    const overs = Array.from({ length: 6 }, (_, i) =>
+    const overs = Array.from({ length: 6 }, (_, index) =>
       makeAlert({
-        categoryId: i + 1,
-        categoryName: `Cat ${String(i + 1)}`,
+        categoryId: index + 1,
+        categoryName: `Cat ${String(index + 1)}`,
         budgetAmount: 100,
-        spent: 100 + (i + 1) * 10,
+        spent: 100 + (index + 1) * 10,
         status: 'over',
       })
     );

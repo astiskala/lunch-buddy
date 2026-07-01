@@ -23,9 +23,8 @@ export class BodyScrollLockController {
       return;
     }
 
-    const rawLockCount = Number.parseInt(
-      this.body.getAttribute(this.attributes.lockCount) ?? '0',
-      10
+    const rawLockCount = Number(
+      this.body.getAttribute(this.attributes.lockCount) ?? '0'
     );
     const lockCount =
       Number.isFinite(rawLockCount) && rawLockCount > 0 ? rawLockCount : 0;
@@ -52,9 +51,8 @@ export class BodyScrollLockController {
       return;
     }
 
-    const lockCount = Number.parseInt(
-      this.body.getAttribute(this.attributes.lockCount) ?? '0',
-      10
+    const lockCount = Number(
+      this.body.getAttribute(this.attributes.lockCount) ?? '0'
     );
     const nextCount =
       Number.isFinite(lockCount) && lockCount > 0 ? lockCount - 1 : 0;

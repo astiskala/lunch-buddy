@@ -75,7 +75,7 @@ describe('OfflineService', () => {
     fetchSpy.mockResolvedValueOnce({ ok: false });
 
     // Fast-forward 30 seconds.
-    vi.advanceTimersByTime(30000);
+    vi.advanceTimersByTime(30_000);
     await Promise.resolve();
 
     expect(fetchSpy).toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('OfflineService', () => {
     fetchSpy.mockResolvedValueOnce({ ok: true });
 
     // Fast-forward another 30 seconds.
-    vi.advanceTimersByTime(30000);
+    vi.advanceTimersByTime(30_000);
     await Promise.resolve();
 
     expect(service.getOnlineStatus()()).toBe(true);
@@ -96,7 +96,7 @@ describe('OfflineService', () => {
     setNavigatorOnline(false);
 
     // Trigger the heartbeat.
-    vi.advanceTimersByTime(30000);
+    vi.advanceTimersByTime(30_000);
     await Promise.resolve();
 
     expect(fetchSpy).not.toHaveBeenCalled();

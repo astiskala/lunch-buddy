@@ -14,7 +14,10 @@ import { LunchMoneyService } from '../../core/services/lunchmoney.service';
 import { BackgroundSyncService } from '../../core/services/background-sync.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { BudgetService, CategoryPreferences } from './budget.service';
-import { createSpyObj, type SpyObj } from '../../../test/vitest-spy';
+import {
+  createSpyObj as createSpyObject,
+  type SpyObj as SpyObject,
+} from '../../../test/vitest-spy';
 
 const PREFERENCES_KEY = 'lunchbuddy.categoryPreferences';
 const CUSTOM_PERIOD_KEY = 'lunchbuddy.customPeriod';
@@ -111,9 +114,9 @@ const createTransaction = (overrides: Partial<Transaction>): Transaction => ({
   currency: 'USD',
   to_base:
     overrides.to_base ??
-    (Number.isNaN(Number.parseFloat(overrides.amount ?? '-10'))
+    (Number.isNaN(Number(overrides.amount ?? '-10'))
       ? 0
-      : Number.parseFloat(overrides.amount ?? '-10')),
+      : Number(overrides.amount ?? '-10')),
   payee: 'Test',
   category_id: null,
   notes: null,
@@ -161,18 +164,20 @@ const storeLegacyPreferences = (prefs: Partial<CategoryPreferences>) => {
 
 const shiftMonthStart = (monthStart: string, monthDelta: number): string => {
   const [yearText, monthText] = monthStart.split('-');
-  const year = Number.parseInt(yearText, 10);
-  const month = Number.parseInt(monthText, 10);
+  const year = Number(yearText);
+  const month = Number(monthText);
   const shifted = new Date(year, month - 1 + monthDelta, 1);
   const shiftedMonth = String(shifted.getMonth() + 1).padStart(2, '0');
   return `${shifted.getFullYear().toString()}-${shiftedMonth}-01`;
 };
 
 interface LoggerSpies {
-  debug: Mock<(message: string, ...args: unknown[]) => void>;
-  info: Mock<(message: string, ...args: unknown[]) => void>;
-  warn: Mock<(message: string, ...args: unknown[]) => void>;
-  error: Mock<(message: string, error?: unknown, ...args: unknown[]) => void>;
+  debug: Mock<(message: string, ...arguments_: unknown[]) => void>;
+  info: Mock<(message: string, ...arguments_: unknown[]) => void>;
+  warn: Mock<(message: string, ...arguments_: unknown[]) => void>;
+  error: Mock<
+    (message: string, error?: unknown, ...arguments_: unknown[]) => void
+  >;
 }
 
 describe('BudgetService background sync', () => {
@@ -191,7 +196,7 @@ describe('BudgetService background sync', () => {
     ) => Promise<void>;
   }
 
-  let backgroundSync: SpyObj<BackgroundSyncStub>;
+  let backgroundSync: SpyObject<BackgroundSyncStub>;
   let service: BudgetService;
 
   beforeEach(() => {
@@ -209,9 +214,10 @@ describe('BudgetService background sync', () => {
       warn: loggerSpies.warn,
       error: loggerSpies.error,
     } as unknown as LoggerService;
-    backgroundSync = createSpyObj<BackgroundSyncStub>('BackgroundSyncService', [
-      'updateBudgetPreferences',
-    ]);
+    backgroundSync = createSpyObject<BackgroundSyncStub>(
+      'BackgroundSyncService',
+      ['updateBudgetPreferences']
+    );
 
     backgroundSync.updateBudgetPreferences.mockResolvedValue();
   });
@@ -364,7 +370,8 @@ describe('BudgetService background sync', () => {
     const incomes = service.getIncomes();
     const uncategorisedIncome = incomes.find(
       item =>
-        item.categoryId == null && item.categoryName === 'Uncategorised Income'
+        item.categoryId == undefined &&
+        item.categoryName === 'Uncategorised Income'
     );
     expect(uncategorisedIncome).toBeDefined();
     expect(uncategorisedIncome?.spent).toBeCloseTo(-171.25, 5);

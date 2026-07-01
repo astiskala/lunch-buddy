@@ -18,14 +18,18 @@ export class StatusBadgeComponent {
 
   readonly label = computed(() => {
     switch (this.status()) {
-      case 'over':
+      case 'over': {
         return 'Over';
-      case 'at-risk':
+      }
+      case 'at-risk': {
         return 'At risk';
-      case 'on-track':
+      }
+      case 'on-track': {
         return 'On track';
-      default:
+      }
+      default: {
         return '';
+      }
     }
   });
 }
