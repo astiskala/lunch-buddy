@@ -126,9 +126,9 @@ export class DiagnosticsService {
     }
   }
 
-  async disable(deleteLogs = false) {
+  async disable(shouldDeleteLogs = false) {
     const currentSession = this.session();
-    if (deleteLogs && currentSession) {
+    if (shouldDeleteLogs && currentSession) {
       try {
         await firstValueFrom(
           this.http.request('DELETE', '/api/diagnostics/session', {

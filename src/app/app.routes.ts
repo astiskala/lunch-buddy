@@ -11,9 +11,11 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    loadComponent: async () =>
-      (await import('./features/dashboard/dashboard-page.component'))
-        .DashboardPageComponent,
+    loadComponent: async () => {
+      const dashboardPage =
+        await import('./features/dashboard/dashboard-page.component');
+      return dashboardPage.DashboardPageComponent;
+    },
     canActivate: [authGuard],
   },
   {

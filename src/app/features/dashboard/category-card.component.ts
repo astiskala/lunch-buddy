@@ -222,9 +222,10 @@ export class CategoryCardComponent {
     const item = this.item();
     const upcoming = this.upcomingRecurringTotal();
     const actualSpent = item.isIncome ? Math.abs(item.spent) : item.spent;
-    let remaining = item.budgetAmount
-      ? item.budgetAmount - actualSpent - upcoming
-      : item.remaining - upcoming;
+    const baseRemaining = item.budgetAmount
+      ? item.budgetAmount - actualSpent
+      : item.remaining;
+    let remaining = baseRemaining - upcoming;
     // Invert the sign for income categories.
     if (item.isIncome) {
       remaining = -remaining;
@@ -462,27 +463,64 @@ export class CategoryCardComponent {
       }
       const base = this.buildRecurringEntryBase(instance, isIncomeCategory);
 
-      for (const entry of found) {
-        const entryDate = this.toFoundEntryDate(entry.date, windowRange);
-        if (!entryDate) {
-          continue;
-        }
-        if (this.isDuplicateTransaction(entry.transaction_id, transactions)) {
-          continue;
-        }
-        const deepLink = buildTransactionDeepLink({
-          transactionDate: entry.date,
+      entries.push(
+        ...this.buildFoundEntriesForInstance({
+          found,
+          transactions,
+          windowRange,
           transactionCategoryId: instance.expense.category_id ?? null,
           cardCategoryId,
-        });
-        entries.push({
-          id: `found-${instance.expense.id.toString()}-${entry.transaction_id.toString()}`,
-          kind: 'transaction',
-          date: entryDate,
-          ...base,
-          deepLink,
-        });
+          recurringId: instance.expense.id,
+          base,
+        })
+      );
+    }
+
+    return entries;
+  }
+
+  private buildFoundEntriesForInstance(parameters: {
+    found: NonNullable<RecurringInstance['expense']['found_transactions']>;
+    transactions: Transaction[];
+    windowRange: { start: Date; end: Date } | null;
+    transactionCategoryId: number | null;
+    cardCategoryId: number | null;
+    recurringId: number;
+    base: Omit<ActivityEntry, 'id' | 'kind' | 'date' | 'deepLink'>;
+  }): ActivityEntry[] {
+    const entries: ActivityEntry[] = [];
+
+    for (const entry of parameters.found) {
+      const entryDate = this.toFoundEntryDate(
+        entry.date,
+        parameters.windowRange
+      );
+      if (!entryDate) {
+        continue;
       }
+
+      if (
+        this.isDuplicateTransaction(
+          entry.transaction_id,
+          parameters.transactions
+        )
+      ) {
+        continue;
+      }
+
+      const deepLink = buildTransactionDeepLink({
+        transactionDate: entry.date,
+        transactionCategoryId: parameters.transactionCategoryId,
+        cardCategoryId: parameters.cardCategoryId,
+      });
+
+      entries.push({
+        id: `found-${parameters.recurringId.toString()}-${entry.transaction_id.toString()}`,
+        kind: 'transaction',
+        date: entryDate,
+        ...parameters.base,
+        deepLink,
+      });
     }
 
     return entries;
@@ -573,8 +611,11 @@ export class CategoryCardComponent {
     }
 
     const normalizedId = this.normalizeRecurringId(instance.expense.id);
+    const isRecurringIdRecorded =
+      normalizedId !== null && context.recordedRecurringIds.has(normalizedId);
+
     return !(
-      (normalizedId && context.recordedRecurringIds.has(normalizedId)) ??
+      isRecurringIdRecorded ||
       this.hasMatchingTransaction(instance, context.transactions)
     );
   }

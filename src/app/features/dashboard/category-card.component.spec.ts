@@ -101,6 +101,30 @@ describe('CategoryCardComponent', () => {
     ...overrides,
   });
 
+  beforeEach(async () => {
+    mockLunchmoneyService = createSpyObject<LunchMoneyService>(
+      'LunchMoneyService',
+      ['getCategoryTransactions']
+    );
+    mockLunchmoneyService.getCategoryTransactions.mockReturnValue(
+      of({ transactions: [], total: 0, has_more: false })
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [CategoryCardComponent],
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: LunchMoneyService,
+          useValue: mockLunchmoneyService,
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(CategoryCardComponent);
+    component = fixture.componentInstance;
+  });
+
   it('should only show uncategorised income transactions in income group', () => {
     const incomeTxn = buildTransaction({
       id: 301,
@@ -264,30 +288,6 @@ describe('CategoryCardComponent', () => {
 
     return expandCard();
   };
-
-  beforeEach(async () => {
-    mockLunchmoneyService = createSpyObject<LunchMoneyService>(
-      'LunchMoneyService',
-      ['getCategoryTransactions']
-    );
-    mockLunchmoneyService.getCategoryTransactions.mockReturnValue(
-      of({ transactions: [], total: 0, has_more: false })
-    );
-
-    await TestBed.configureTestingModule({
-      imports: [CategoryCardComponent],
-      providers: [
-        provideZonelessChangeDetection(),
-        {
-          provide: LunchMoneyService,
-          useValue: mockLunchmoneyService,
-        },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(CategoryCardComponent);
-    component = fixture.componentInstance;
-  });
 
   it('should create', () => {
     expect(component).toBeTruthy();

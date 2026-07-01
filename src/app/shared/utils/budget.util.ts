@@ -102,10 +102,11 @@ export const mergeSummaryWithCategories = (
   summary: SummaryResponse | null | undefined,
   categories: LunchMoneyCategory[] | null | undefined
 ): BudgetSummaryItem[] => {
+  const categoryList = categories ?? [];
   const categoryMap = new Map<number, LunchMoneyCategory>();
   const groupNameMap = new Map<number, string>();
 
-  for (const category of categories ?? []) {
+  for (const category of categoryList) {
     categoryMap.set(category.id, category);
     if (category.is_group) {
       groupNameMap.set(category.id, category.name);
@@ -138,7 +139,7 @@ export const mergeSummaryWithCategories = (
     });
   });
 
-  for (const category of categories ?? []) {
+  for (const category of categoryList) {
     if (seen.has(category.id)) {
       continue;
     }

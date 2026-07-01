@@ -82,15 +82,15 @@ export class SiteDataService {
     return new Promise(resolve => {
       try {
         const request = indexedDB.deleteDatabase(name);
-        request.onsuccess = () => {
+        request.addEventListener('success', () => {
           resolve();
-        };
-        request.onerror = () => {
+        });
+        request.addEventListener('error', () => {
           resolve();
-        };
-        request.onblocked = () => {
+        });
+        request.addEventListener('blocked', () => {
           resolve();
-        };
+        });
       } catch (error) {
         this.logger.warn(
           'SiteDataService: failed to delete IndexedDB database',

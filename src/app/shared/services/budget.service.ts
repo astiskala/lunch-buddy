@@ -1095,7 +1095,7 @@ export class BudgetService {
   }
 
   private shiftDisplayedMonth(monthDelta: number): void {
-    if (!Number.isInteger(monthDelta) || monthDelta === 0) {
+    if (!Number.isSafeInteger(monthDelta) || monthDelta === 0) {
       return;
     }
 

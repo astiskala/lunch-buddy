@@ -112,7 +112,6 @@ export class BackgroundSyncService implements OnDestroy {
     };
 
     try {
-      // eslint-disable-next-line unicorn/require-post-message-target-origin
       worker.postMessage(message);
     } catch (error) {
       this.logger.error(

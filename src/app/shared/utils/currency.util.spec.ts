@@ -25,7 +25,7 @@ describe('Currency Utils', () => {
     });
 
     it('parses string amount when toBase is null', () => {
-      expect(resolveAmount('123.45', null)).toBe(123.45);
+      expect(resolveAmount('123.45', null)).toBeCloseTo(123.45, 5);
     });
 
     it('returns 0 for invalid string without toBase', () => {

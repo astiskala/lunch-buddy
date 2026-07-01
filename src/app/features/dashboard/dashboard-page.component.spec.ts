@@ -21,6 +21,18 @@ import {
   type SpyObj as SpyObject,
 } from '../../../test/vitest-spy';
 
+function dialogItemIds(
+  fixture: ReturnType<typeof TestBed.createComponent<DashboardPageComponent>>,
+  input: 'items' | 'hiddenItems'
+): (number | null)[] {
+  const dialog = fixture.debugElement.query(
+    By.directive(CategoryPreferencesDialogComponent)
+  ).componentInstance as CategoryPreferencesDialogComponent;
+  return dialog[input]()
+    .map(c => c.categoryId)
+    .toSorted((a, b) => (a ?? 0) - (b ?? 0));
+}
+
 describe('DashboardPageComponent - Unit Tests', () => {
   interface BudgetServiceStub {
     refresh: () => void;
@@ -64,7 +76,12 @@ describe('DashboardPageComponent - Unit Tests', () => {
         { provide: Router, useValue: mockRouter },
       ],
     });
-    expect(true).toBeTruthy();
+
+    const fixture = TestBed.createComponent(DashboardPageComponent);
+    expect(fixture.componentInstance).toBeTruthy();
+    expect(TestBed.inject(BudgetService)).toBe(mockBudgetService);
+    expect(TestBed.inject(AuthService)).toBe(mockAuthService);
+    expect(TestBed.inject(Router)).toBe(mockRouter);
   });
 });
 
@@ -76,18 +93,6 @@ describe('DashboardPageComponent - settings dialog category source', () => {
     includeAllTransactions: true,
     hideGroupedCategories: false,
   };
-
-  function dialogItemIds(
-    fixture: ReturnType<typeof TestBed.createComponent<DashboardPageComponent>>,
-    input: 'items' | 'hiddenItems'
-  ): (number | null)[] {
-    const dialog = fixture.debugElement.query(
-      By.directive(CategoryPreferencesDialogComponent)
-    ).componentInstance as CategoryPreferencesDialogComponent;
-    return dialog[input]()
-      .map(c => c.categoryId)
-      .toSorted((a, b) => (a ?? 0) - (b ?? 0));
-  }
 
   function setup() {
     const budgetStub = {
