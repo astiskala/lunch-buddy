@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { AuthService } from './auth.service';
-import { firstValueFrom, skip } from 'rxjs';
+import { filter, firstValueFrom } from 'rxjs';
 import { vi } from 'vitest';
 import { BackgroundSyncService } from './background-sync.service';
 
@@ -160,7 +160,11 @@ describe('AuthService', () => {
   });
 
   it('should emit the current API key to subscribers', async () => {
-    const apiKeyPromise = firstValueFrom(service.apiKey$.pipe(skip(1)));
+    const apiKeyPromise = firstValueFrom(
+      service.apiKey$.pipe(
+        filter((apiKey): apiKey is string => apiKey !== null)
+      )
+    );
     service.setApiKey(TEST_API_KEY);
     const apiKey = await apiKeyPromise;
     expect(apiKey).toBe(TEST_API_KEY);

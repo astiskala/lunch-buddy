@@ -7,7 +7,6 @@ import {
   inject,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { environment } from '../../../environments/environment';
@@ -17,7 +16,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './login-page.component.html',
   styleUrls: ['./login-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, NgOptimizedImage],
+  imports: [NgOptimizedImage],
 })
 export class LoginPageComponent {
   private readonly authService = inject(AuthService);

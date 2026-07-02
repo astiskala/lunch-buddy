@@ -202,8 +202,7 @@ describe('CategoryPreferencesDialogComponent', () => {
 
   it('initializes local state from preferences on init', () => {
     setRequiredInputs();
-
-    component.ngOnInit();
+    fixture.detectChanges();
 
     expect(component.orderedIds()).toEqual(basePreferences.customOrder);
     expect([...component.hiddenIds()]).toEqual(
@@ -294,7 +293,7 @@ describe('CategoryPreferencesDialogComponent', () => {
 
   it('moves visible category ordering in both directions and clamps at boundaries', () => {
     setRequiredInputs();
-    component.ngOnInit();
+    fixture.detectChanges();
 
     expect(component.visibleCategories().map(item => item.categoryId)).toEqual([
       1,
@@ -354,7 +353,7 @@ describe('CategoryPreferencesDialogComponent', () => {
 
   it('reports move eligibility from list indexes', () => {
     setRequiredInputs();
-    component.ngOnInit();
+    fixture.detectChanges();
     component.toggleVisibility(2);
 
     expect(component.canMoveUp(0)).toBe(false);

@@ -1,16 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   OnInit,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { filter, map } from 'rxjs';
+import { filter } from 'rxjs';
 import { BackgroundSyncService } from './core/services/background-sync.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { OfflineIndicatorComponent } from './shared/components/offline-indicator/offline-indicator.component';
@@ -32,6 +34,7 @@ export class App implements OnInit {
   protected readonly _backgroundSyncService = inject(BackgroundSyncService);
   protected readonly _appUpdateService = inject(AppUpdateService);
   protected readonly _swUpdate = inject(SwUpdate);
+  private readonly componentDestroyRef = inject(DestroyRef);
 
   public ngOnInit(): void {
     void this._appUpdateService.init().catch((error: unknown) => {
@@ -43,11 +46,7 @@ export class App implements OnInit {
         filter(
           (event): event is VersionReadyEvent => event.type === 'VERSION_READY'
         ),
-        map(event => ({
-          type: 'UPDATE_AVAILABLE',
-          current: event.currentVersion,
-          available: event.latestVersion,
-        }))
+        takeUntilDestroyed(this.componentDestroyRef)
       )
       .subscribe(() => {
         void (async () => {

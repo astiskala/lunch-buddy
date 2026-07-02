@@ -1,6 +1,6 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID, Signal, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { LoggerService } from './logger.service';
 import { SiteDataService } from './site-data.service';
 import { resolveLunchMoneyApiKey } from '../../../environments/resolve-api-key';
@@ -19,32 +19,36 @@ export class AuthService {
   private readonly logger = inject(LoggerService);
   private readonly siteDataService = inject(SiteDataService);
   private readonly apiBase = resolveLunchMoneyApiBase();
-  private readonly apiKey = new BehaviorSubject<string | null>(null);
+  private readonly apiKey = signal<string | null>(null);
   private initialized = false;
 
-  public readonly apiKey$ = this.apiKey.asObservable();
+  public readonly apiKey$ = toObservable(this.apiKey);
 
   constructor() {
     this.initialize();
   }
 
   getApiKey(): string | null {
-    return this.apiKey.getValue();
+    return this.apiKey();
+  }
+
+  getApiKeySignal(): Signal<string | null> {
+    return this.apiKey.asReadonly();
   }
 
   setApiKey(key: string): void {
     this.storeApiKey(key);
-    this.apiKey.next(key);
+    this.apiKey.set(key);
   }
 
   async clearApiKey(): Promise<void> {
     this.removeApiKey();
-    this.apiKey.next(null);
+    this.apiKey.set(null);
     await this.siteDataService.clearSiteData();
   }
 
   hasApiKey(): boolean {
-    return this.apiKey.getValue() !== null;
+    return this.apiKey() !== null;
   }
 
   ready(): Promise<void> {
@@ -61,7 +65,7 @@ export class AuthService {
         if (this.shouldIgnoreApiKey(stored)) {
           this.removeApiKey();
         } else {
-          this.apiKey.next(stored);
+          this.apiKey.set(stored);
           return;
         }
       }
@@ -74,15 +78,15 @@ export class AuthService {
           );
         } else {
           this.storeApiKey(environmentKey);
-          this.apiKey.next(environmentKey);
+          this.apiKey.set(environmentKey);
           return;
         }
       }
 
-      this.apiKey.next(null);
+      this.apiKey.set(null);
     } catch (error) {
       this.logger.error('AuthService: failed to load stored API key', error);
-      this.apiKey.next(null);
+      this.apiKey.set(null);
     }
   }
 

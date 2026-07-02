@@ -1,6 +1,5 @@
-import { Injectable, PLATFORM_ID, inject, OnDestroy } from '@angular/core';
+import { Injectable, PLATFORM_ID, effect, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
@@ -33,15 +32,15 @@ interface BackgroundConfigPayload {
 @Injectable({
   providedIn: 'root',
 })
-export class BackgroundSyncService implements OnDestroy {
+export class BackgroundSyncService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
   private readonly apiBaseUrl = environment.lunchmoneyApiBase;
+  private readonly apiKey = this.authService.getApiKeySignal();
 
   private registrationPromise: Promise<ServiceWorkerRegistration | null> | null =
     null;
-  private readonly authSubscription: Subscription;
   private currentConfig: BackgroundConfigPayload = {
     apiKey: null,
     apiBaseUrl: this.apiBaseUrl,
@@ -53,13 +52,9 @@ export class BackgroundSyncService implements OnDestroy {
   };
 
   constructor() {
-    this.authSubscription = this.authService.apiKey$.subscribe(apiKey => {
-      void this.updateApiCredentials(apiKey);
+    effect(() => {
+      void this.updateApiCredentials(this.apiKey());
     });
-  }
-
-  ngOnDestroy(): void {
-    this.authSubscription.unsubscribe();
   }
 
   private async updateApiCredentials(apiKey: string | null): Promise<void> {

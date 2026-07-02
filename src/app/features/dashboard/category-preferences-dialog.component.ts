@@ -5,7 +5,6 @@ import {
   computed,
   output,
   input,
-  OnInit,
   inject,
   viewChild,
   ElementRef,
@@ -13,7 +12,6 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -54,12 +52,12 @@ const DENIAL_MESSAGES: Record<
 
 @Component({
   selector: 'category-preferences-dialog',
-  imports: [FormsModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
   templateUrl: './category-preferences-dialog.component.html',
   styleUrls: ['./category-preferences-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
+export class CategoryPreferencesDialogComponent implements OnDestroy {
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly logger = inject(LoggerService);
   private readonly versionService = inject(VersionService);
@@ -113,6 +111,11 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
   });
 
   constructor() {
+    // Keep local preference state synchronized with the input.
+    effect(() => {
+      this.hydrateFromPreferences(this.preferences());
+    });
+
     // Keep dialog visibility synchronized with the open input signal.
     effect(() => {
       const dialog = this.dialogElement().nativeElement;
@@ -132,9 +135,7 @@ export class CategoryPreferencesDialogComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
-    // Initialize local state from persisted preferences.
-    const prefs = this.preferences();
+  private hydrateFromPreferences(prefs: CategoryPreferences): void {
     this.orderedIds.set([...prefs.customOrder]);
     this.hiddenIds.set(new Set(prefs.hiddenCategoryIds));
     this.notificationsEnabled.set(prefs.notificationsEnabled);

@@ -1,6 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import {
+  PLATFORM_ID,
+  provideZonelessChangeDetection,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { vi, type Mock } from 'vitest';
 import {
   createSpyObj as createSpyObject,
@@ -56,10 +60,10 @@ type BudgetPreferencesPayload = Parameters<
 describe('BackgroundSyncService', () => {
   let loggerSpy: SpyObject<LoggerService>;
   let authServiceSpy: SpyObject<AuthService>;
-  let apiKeySubject: BehaviorSubject<string | null>;
+  let apiKeySignal: WritableSignal<string | null>;
 
   const setup = (platformId: object | string = 'browser') => {
-    apiKeySubject = new BehaviorSubject<string | null>(null);
+    apiKeySignal = signal<string | null>(null);
 
     loggerSpy = createSpyObject<LoggerService>('LoggerService', [
       'debug',
@@ -68,9 +72,12 @@ describe('BackgroundSyncService', () => {
       'error',
     ]);
 
-    authServiceSpy = createSpyObject<AuthService>('AuthService', [], {
-      apiKey$: apiKeySubject.asObservable(),
-    });
+    authServiceSpy = createSpyObject<AuthService>('AuthService', [
+      'getApiKey',
+      'getApiKeySignal',
+    ]);
+    authServiceSpy.getApiKey.mockImplementation(() => apiKeySignal());
+    authServiceSpy.getApiKeySignal.mockReturnValue(apiKeySignal.asReadonly());
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -220,12 +227,6 @@ describe('BackgroundSyncService', () => {
       expect(service).toBeTruthy();
     });
 
-    it('unsubscribes cleanly on destroy', () => {
-      expect(() => {
-        service.ngOnDestroy();
-      }).not.toThrow();
-    });
-
     it('skips browser-only work when updating preferences', async () => {
       const getRegistrationSpy = vi
         .spyOn(service as unknown as PrivateApi, 'getRegistration')
@@ -242,7 +243,7 @@ describe('BackgroundSyncService', () => {
 
     it('reacts to api key emissions without throwing', () => {
       expect(() => {
-        apiKeySubject.next('new-key');
+        apiKeySignal.set('new-key');
       }).not.toThrow();
     });
   });
