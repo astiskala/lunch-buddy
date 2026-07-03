@@ -799,12 +799,7 @@ describe('CategoryCardComponent', () => {
       );
       expect(anchor).not.toBeNull();
       expect(anchor?.getAttribute('href')).toBe(
-        'https://my.lunchmoney.app/transactions/2026/05' +
-          '?category=4242' +
-          '&start_date=2026-05-15' +
-          '&end_date=2026-05-15' +
-          '&match=all' +
-          '&time=custom'
+        'https://my.lunchmoney.app/transactions?transaction_id=9001'
       );
       expect(anchor?.getAttribute('target')).toBe('_blank');
       expect(anchor?.getAttribute('rel')).toBe('noopener noreferrer');

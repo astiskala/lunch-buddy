@@ -2,76 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { buildTransactionDeepLink } from './lunchmoney-link.util';
 
 describe('buildTransactionDeepLink', () => {
-  it('builds the canonical URL for a transaction with its own category', () => {
+  it('builds a deep link with the transaction ID', () => {
     const url = buildTransactionDeepLink({
-      transactionDate: '2026-05-15',
-      transactionCategoryId: 1_766_103,
-      cardCategoryId: 99,
+      transactionId: 1_766_103,
     });
     expect(url).toBe(
-      'https://my.lunchmoney.app/transactions/2026/05' +
-        '?category=1766103' +
-        '&start_date=2026-05-15' +
-        '&end_date=2026-05-15' +
-        '&match=all' +
-        '&time=custom'
+      'https://my.lunchmoney.app/transactions?transaction_id=1766103'
     );
   });
 
-  it('zero-pads single-digit months', () => {
+  it('handles large transaction IDs', () => {
     const url = buildTransactionDeepLink({
-      transactionDate: '2026-03-04',
-      transactionCategoryId: 7,
-      cardCategoryId: null,
+      transactionId: 999_999_999,
     });
-    expect(url).toContain('/transactions/2026/03');
-    expect(url).toContain('start_date=2026-03-04');
-    expect(url).toContain('end_date=2026-03-04');
+    expect(url).toContain('transaction_id=999999999');
   });
 
-  it('falls back to the card categoryId when transaction.category_id is null', () => {
+  it('returns a valid URL string', () => {
     const url = buildTransactionDeepLink({
-      transactionDate: '2026-05-15',
-      transactionCategoryId: null,
-      cardCategoryId: 4242,
+      transactionId: 42,
     });
-    expect(url).toContain('category=4242');
-  });
-
-  it('omits the category param when neither id is present', () => {
-    const url = buildTransactionDeepLink({
-      transactionDate: '2026-05-15',
-      transactionCategoryId: null,
-      cardCategoryId: null,
-    });
-    expect(url).not.toContain('category=');
-    expect(url).toContain('start_date=2026-05-15');
-  });
-
-  it('returns null when the date cannot be parsed', () => {
-    expect(
-      buildTransactionDeepLink({
-        transactionDate: 'not-a-date',
-        transactionCategoryId: 1,
-        cardCategoryId: null,
-      })
-    ).toBeNull();
-  });
-
-  it('returns null when the date is missing', () => {
-    expect(
-      buildTransactionDeepLink({
-        transactionDate: null,
-        transactionCategoryId: 1,
-        cardCategoryId: null,
-      })
-    ).toBeNull();
-    expect(
-      buildTransactionDeepLink({
-        transactionDate: undefined,
-        transactionCategoryId: 1,
-        cardCategoryId: null,
-      })
-    ).toBeNull();
+    expect(url).toBe(
+      'https://my.lunchmoney.app/transactions?transaction_id=42'
+    );
   });
 });

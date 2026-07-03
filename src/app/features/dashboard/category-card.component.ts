@@ -292,7 +292,6 @@ export class CategoryCardComponent {
     transactions: Transaction[]
   ): ActivityEntry[] {
     const isIncomeCategory = this.isIncomeCategory();
-    const cardCategoryId = this.safeItem()?.categoryId ?? null;
     return transactions.map(transaction => {
       const rawAmount = resolveAmount(
         transaction.amount,
@@ -311,9 +310,7 @@ export class CategoryCardComponent {
         transaction.to_base ?? null
       );
       const deepLink = buildTransactionDeepLink({
-        transactionDate: transaction.date,
-        transactionCategoryId: transaction.category_id,
-        cardCategoryId,
+        transactionId: transaction.id,
       });
 
       return {
@@ -509,9 +506,7 @@ export class CategoryCardComponent {
       }
 
       const deepLink = buildTransactionDeepLink({
-        transactionDate: entry.date,
-        transactionCategoryId: parameters.transactionCategoryId,
-        cardCategoryId: parameters.cardCategoryId,
+        transactionId: entry.transaction_id,
       });
 
       entries.push({
