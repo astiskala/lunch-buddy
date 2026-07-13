@@ -100,7 +100,7 @@
     "@semantic-release/github": "^12.0.8",
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@types/node": "^26.1.0",
-    "@vercel/node": "^5.8.22",
+    "@vercel/node": "^5.8.23",
     "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "^22.1.0",
     "eslint": "^10.6.0",
@@ -122,7 +122,7 @@
     "stylelint-scss": "^7.2.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.62.1",
-    "vercel": "^54.20.1",
+    "vercel": "^55.0.0",
     "vitest": "^4.1.6"
   },
   "engines": {
