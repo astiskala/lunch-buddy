@@ -599,6 +599,21 @@ describe('BudgetService background sync', () => {
     expect(service.getStartDate()).toBe(currentMonth);
   });
 
+  it('ignores a zero month delta', () => {
+    initService();
+    const refreshSpy = vi.spyOn(service, 'refresh');
+    const initialMonth = service.getStartDate();
+
+    (
+      service as unknown as {
+        shiftDisplayedMonth: (monthDelta: number) => void;
+      }
+    ).shiftDisplayedMonth(0);
+
+    expect(service.getStartDate()).toBe(initialMonth);
+    expect(refreshSpy).not.toHaveBeenCalled();
+  });
+
   it('refresh reuses budget and recurring loaders', () => {
     initService();
     const loadBudgetSpy = vi.spyOn(
