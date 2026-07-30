@@ -552,14 +552,14 @@ export class CategoryCardComponent {
 
       const txnPayee = this.normalizeTransactionPayee(txn);
       const isPayeeMatches = this.payeesAlign(recurringPayee, txnPayee);
-      if (!txn.is_pending && isPayeeMatches) {
+      if (isPayeeMatches && !txn.is_pending) {
         return true;
       }
 
       const isAmountsClose = this.amountsAlign(recurringAmount, txn, 0.01);
       const hasPayeeConflict =
         recurringPayee !== null && txnPayee !== null && !isPayeeMatches;
-      if (!txn.is_pending && !hasPayeeConflict && isAmountsClose) {
+      if (!hasPayeeConflict && isAmountsClose && !txn.is_pending) {
         return true;
       }
     }

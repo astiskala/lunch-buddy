@@ -67,8 +67,12 @@ jobs:
       - name: Lint styles
         run: npx stylelint "**/*.scss" --max-warnings=0
 
-      - name: Security audit
-        run: npm audit --audit-level=high || true
+      - name: Security audit (runtime dependencies)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Security audit (development tooling)
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Run unit tests
         run: npm test

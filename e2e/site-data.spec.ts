@@ -63,24 +63,21 @@ test.describe('SiteDataService', () => {
     // 6. Wait for redirect to login
     await expect(page).toHaveURL(/\/login$/);
 
-    // Give it a moment for the async deletion to finish
-    await page.waitForTimeout(1000);
-
-    // 7. Verify data is cleared
-    const results = await page.evaluate(async () => {
-      const apiKey = localStorage.getItem('lunchbuddy_api_key');
-      const databases = await (indexedDB as any).databases();
-      const dbStillExists = databases.some(
-        (db: any) => db.name === 'lunchbuddy-background'
-      );
-
-      return {
-        apiKey,
-        dbStillExists,
-      };
-    });
-
-    expect(results.apiKey).toBeNull();
-    expect(results.dbStillExists).toBe(false);
+    // 7. Verify data is cleared once the asynchronous cleanup completes.
+    await expect
+      .poll(() =>
+        page.evaluate(() => localStorage.getItem('lunchbuddy_api_key'))
+      )
+      .toBeNull();
+    await expect
+      .poll(() =>
+        page.evaluate(async () => {
+          const databases = await (indexedDB as any).databases();
+          return databases.some(
+            (db: any) => db.name === 'lunchbuddy-background'
+          );
+        })
+      )
+      .toBe(false);
   });
 });

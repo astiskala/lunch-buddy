@@ -41,7 +41,10 @@ type TabType = 'expenses' | 'income';
     CustomPeriodDialogComponent,
   ],
   templateUrl: './dashboard-page.component.html',
-  styleUrls: ['./dashboard-page.component.scss'],
+  styleUrls: [
+    './dashboard-page.component.scss',
+    './dashboard-page-skeleton.component.scss',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPageComponent {

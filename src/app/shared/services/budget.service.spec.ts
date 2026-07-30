@@ -163,7 +163,7 @@ const storeLegacyPreferences = (prefs: Partial<CategoryPreferences>) => {
 };
 
 const shiftMonthStart = (monthStart: string, monthDelta: number): string => {
-  const [yearText, monthText] = monthStart.split('-');
+  const [yearText, monthText] = monthStart.split('-', 2);
   const year = Number(yearText);
   const month = Number(monthText);
   const shifted = new Date(year, month - 1 + monthDelta, 1);
@@ -597,6 +597,21 @@ describe('BudgetService background sync', () => {
 
     service.goToNextMonth();
     expect(service.getStartDate()).toBe(currentMonth);
+  });
+
+  it('ignores a zero month delta', () => {
+    initService();
+    const refreshSpy = vi.spyOn(service, 'refresh');
+    const initialMonth = service.getStartDate();
+
+    (
+      service as unknown as {
+        shiftDisplayedMonth: (monthDelta: number) => void;
+      }
+    ).shiftDisplayedMonth(0);
+
+    expect(service.getStartDate()).toBe(initialMonth);
+    expect(refreshSpy).not.toHaveBeenCalled();
   });
 
   it('refresh reuses budget and recurring loaders', () => {

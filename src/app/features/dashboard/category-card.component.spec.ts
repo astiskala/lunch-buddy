@@ -672,6 +672,57 @@ describe('CategoryCardComponent', () => {
     expectOnlyTransactionEntries(hostElement);
   });
 
+  it('checks pending, payee, and amount conditions before marking a recurring entry charged', () => {
+    const itemWithTransactions: BudgetProgress = {
+      ...mockItem,
+      transactionList: [
+        buildTransaction({
+          id: 3001,
+          amount: '15.00',
+          to_base: 15,
+          payee: 'Google',
+          is_pending: true,
+        }),
+        buildTransaction({
+          id: 3002,
+          amount: '99.00',
+          to_base: 99,
+          payee: 'Different payee',
+        }),
+        buildTransaction({
+          id: 3003,
+          amount: '99.00',
+          to_base: 99,
+          payee: null as unknown as string,
+        }),
+        buildTransaction({
+          id: 3004,
+          amount: '15.00',
+          to_base: 15,
+          payee: null as unknown as string,
+        }),
+      ],
+    };
+    const recurring = buildRecurringInstance(
+      {
+        id: 3000,
+        payee: 'Google',
+        amount: '15.00',
+        to_base: 15,
+      },
+      new Date('2025-10-05T00:00:00.000Z')
+    );
+
+    setupComponent(fixture, {
+      item: itemWithTransactions,
+      recurringExpenses: [recurring],
+      includeAllTransactions: true,
+      referenceDate: new Date('2025-10-10T00:00:00.000Z'),
+    });
+
+    expect(component.upcomingRecurringTotal()).toBe(0);
+  });
+
   it('treats found transactions as charged and hides upcoming entry', () => {
     const chargedInstance = buildRecurringInstance(
       {

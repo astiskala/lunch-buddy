@@ -97,26 +97,27 @@ describe('Date Utils', () => {
   });
 
   describe('deriveReferenceDate', () => {
-    it('should return start if today is before window', () => {
-      const today = new Date(2025, 9, 1); // Oct 1
+    it.each([
+      {
+        caseName: 'start if today is before window',
+        today: new Date(2025, 9, 1),
+        expectedDay: 10,
+      },
+      {
+        caseName: 'day after end if today is after window',
+        today: new Date(2025, 9, 25),
+        expectedDay: 21,
+      },
+      {
+        caseName: 'today if within window',
+        today: new Date(2025, 9, 15),
+        expectedDay: 15,
+      },
+    ])('should return $caseName', ({ today, expectedDay }) => {
       const reference = deriveReferenceDate('2025-10-10', '2025-10-20', today);
       expect(reference.getFullYear()).toBe(2025);
       expect(reference.getMonth()).toBe(9);
-      expect(reference.getDate()).toBe(10);
-    });
-    it('should return day after end if today is after window', () => {
-      const today = new Date(2025, 9, 25); // Oct 25
-      const reference = deriveReferenceDate('2025-10-10', '2025-10-20', today);
-      expect(reference.getFullYear()).toBe(2025);
-      expect(reference.getMonth()).toBe(9);
-      expect(reference.getDate()).toBe(21);
-    });
-    it('should return today if within window', () => {
-      const today = new Date(2025, 9, 15); // Oct 15
-      const reference = deriveReferenceDate('2025-10-10', '2025-10-20', today);
-      expect(reference.getFullYear()).toBe(2025);
-      expect(reference.getMonth()).toBe(9);
-      expect(reference.getDate()).toBe(15);
+      expect(reference.getDate()).toBe(expectedDay);
     });
     it('should return today if start/end invalid', () => {
       const today = new Date(2025, 9, 15); // Oct 15

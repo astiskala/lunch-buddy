@@ -377,8 +377,8 @@ export const isRecurringInstancePending = (
     });
 
   if (
-    (options?.includePastOccurrences ?? false) &&
     isWithinWindow &&
+    (options?.includePastOccurrences ?? false) &&
     occurrence.getTime() <= reference.getTime()
   ) {
     return true;

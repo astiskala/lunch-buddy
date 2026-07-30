@@ -86,8 +86,11 @@ DIAGNOSTICS_ADMIN_TOKEN=your_secret node tools/fetch-logs.mjs <supportCode>
 - `npm test` - Run unit tests with coverage
 - `npm run test:watch` - Run unit tests in watch mode
 - `npm run test:e2e` - Run Playwright tests
-- `npm run lint` - Auto-fix lint/style/format issues
-- `npm run lint:check` - Run lint/style/format checks
+- `npm run test:integration` - Run integration tests
+- `npm run lint` - Run lint/style/format checks
+- `npm run lint:fix` - Auto-fix lint/style/format issues
+- `npm run typecheck` - Run TypeScript type checking
+- `npm run mcp:check` - Smoke-test the diagnostics MCP server
 - `npm run generate:env` - Regenerate runtime env module
 
 ## Security and API Key Storage

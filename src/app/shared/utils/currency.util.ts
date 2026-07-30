@@ -63,11 +63,7 @@ export const formatCurrencyWithCode = (
   const displayCurrency = resolveCurrency(currency, options.fallbackCurrency);
   const originalCurrency = normalizeCurrencyCode(options.originalCurrency);
 
-  if (
-    originalCurrency &&
-    originalCurrency.length > 0 &&
-    originalCurrency !== displayCurrency
-  ) {
+  if (originalCurrency && originalCurrency !== displayCurrency) {
     return `${formatted} ${displayCurrency}`;
   }
 

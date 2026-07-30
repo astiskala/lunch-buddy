@@ -4,7 +4,7 @@ Thanks for helping improve Lunch Buddy. Keep changes focused, tested, and easy t
 
 ## Prerequisites
 
-- Node.js `>=24.0.0`
+- Node.js `24.x`
 - npm `10+`
 
 ## Quick Start
@@ -37,6 +37,10 @@ Run this before opening a pull request:
 npm run lint
 npm run typecheck
 npm test
+npm run test:integration
+npm run test:e2e
+npm run mcp:check
+npm audit --omit=dev --audit-level=high
 npm run build
 ```
 
