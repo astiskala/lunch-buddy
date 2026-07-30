@@ -2,7 +2,7 @@
   "framework": "angular",
   "buildCommand": "npm run build",
   "installCommand": "npm ci --ignore-scripts",
-  "ignoreCommand": "if [ \"$VERCEL_ENV\" != \"production\" ] && printf '%s\\n' \"$VERCEL_GIT_COMMIT_REF\" | grep -q '^dependabot/'; then echo 'Skipping Dependabot preview deployment'; exit 0; fi; if [ \"$VERCEL_ENV\" != \"production\" ]; then exit 1; fi; if git log -1 --pretty=%B | grep -q '^chore(release):'; then exit 1; fi; echo 'Skipping production deploy: non-release commit'; exit 0",
+  "ignoreCommand": "node tools/vercel-ignore-build.mjs",
   "outputDirectory": "dist/lunch-buddy/browser",
   "rewrites": [
     {
