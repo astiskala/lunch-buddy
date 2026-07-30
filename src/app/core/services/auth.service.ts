@@ -95,7 +95,7 @@ export class AuthService {
   }
 
   private isMockApiKey(key: string): boolean {
-    return key.trim().startsWith(MOCK_API_KEY_PREFIX);
+    return key.trimStart().startsWith(MOCK_API_KEY_PREFIX);
   }
 
   private isMockApiBase(): boolean {

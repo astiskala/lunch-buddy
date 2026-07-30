@@ -163,7 +163,7 @@ const storeLegacyPreferences = (prefs: Partial<CategoryPreferences>) => {
 };
 
 const shiftMonthStart = (monthStart: string, monthDelta: number): string => {
-  const [yearText, monthText] = monthStart.split('-');
+  const [yearText, monthText] = monthStart.split('-', 2);
   const year = Number(yearText);
   const month = Number(monthText);
   const shifted = new Date(year, month - 1 + monthDelta, 1);

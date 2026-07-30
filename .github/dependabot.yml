@@ -51,6 +51,10 @@ updates:
           - '@upstash/redis'
           - 'vercel'
           - '@vercel/*'
+    ignore:
+      # Angular 22 currently requires TypeScript >=6.0 <6.1.
+      - dependency-name: 'typescript'
+        versions: ['>=7.0.0']
 
   - package-ecosystem: github-actions
     directory: /

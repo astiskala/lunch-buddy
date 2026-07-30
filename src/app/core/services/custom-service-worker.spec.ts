@@ -51,6 +51,16 @@ const API_SUMMARY_URL = 'https://api.lunchmoney.dev/v2/summary';
 const API_CATEGORIES_URL = 'https://api.lunchmoney.dev/v2/categories';
 const AUTH_HEADERS = { Authorization: 'Bearer test-key' } as const;
 
+const requireTestHandler = <T>(
+  handler: T | undefined,
+  skip: (note?: string) => never
+): T => {
+  if (handler === undefined) {
+    skip();
+  }
+  return handler;
+};
+
 const createNavigationRequest = (url: URL): Request => {
   const request = new Request(url.href);
   try {
@@ -219,14 +229,12 @@ describe('custom service worker API handler', () => {
     expect(buildSignature).toBeTypeOf('function');
   });
 
-  it('recognizes the production Lunch Money API host', () => {
-    if (!isApiRequest) {
-      return;
-    }
+  it('recognizes the production Lunch Money API host', ({ skip }) => {
+    const isApiRequestHandler = requireTestHandler(isApiRequest, skip);
 
-    expect(isApiRequest(new URL('https://api.lunchmoney.app/v2/summary'))).toBe(
-      true
-    );
+    expect(
+      isApiRequestHandler(new URL('https://api.lunchmoney.app/v2/summary'))
+    ).toBe(true);
   });
 
   it('returns cached API data when the network is slow', async () => {
@@ -637,10 +645,16 @@ describe('custom service worker API handler', () => {
     ...overrides,
   });
 
-  it('includes category names and per-item amounts in the notification body', () => {
-    if (!enrichAlerts || !buildNotificationPayload) return;
+  it('includes category names and per-item amounts in the notification body', ({
+    skip,
+  }) => {
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildNotificationPayloadHandler = requireTestHandler(
+      buildNotificationPayload,
+      skip
+    );
 
-    const enriched = enrichAlerts(
+    const enriched = enrichAlertsHandler(
       [
         makeAlert({
           categoryId: 1,
@@ -667,7 +681,7 @@ describe('custom service worker API handler', () => {
       0.55
     );
 
-    const payload = buildNotificationPayload(enriched, 'USD', 0.55);
+    const payload = buildNotificationPayloadHandler(enriched, 'USD', 0.55);
 
     expect(payload.title).toBe('Budget alerts · 2 over, 1 at risk');
     expect(payload.body).toContain('55% through month');
@@ -680,10 +694,16 @@ describe('custom service worker API handler', () => {
     expect(findLine(payload.body, 'Entertainment')).toContain('left');
   });
 
-  it('sorts over-budget by largest overage and at-risk by least remaining', () => {
-    if (!enrichAlerts || !buildNotificationPayload) return;
+  it('sorts over-budget by largest overage and at-risk by least remaining', ({
+    skip,
+  }) => {
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildNotificationPayloadHandler = requireTestHandler(
+      buildNotificationPayload,
+      skip
+    );
 
-    const enriched = enrichAlerts(
+    const enriched = enrichAlertsHandler(
       [
         makeAlert({
           categoryId: 1,
@@ -717,13 +737,17 @@ describe('custom service worker API handler', () => {
       0.4
     );
 
-    const { body } = buildNotificationPayload(enriched, 'USD', 0.4);
+    const { body } = buildNotificationPayloadHandler(enriched, 'USD', 0.4);
     expect(body.indexOf('Big Over')).toBeLessThan(body.indexOf('Small Over'));
     expect(body.indexOf('Tight')).toBeLessThan(body.indexOf('Roomy'));
   });
 
-  it('truncates sections to 4 items and appends "+ N more"', () => {
-    if (!enrichAlerts || !buildNotificationPayload) return;
+  it('truncates sections to 4 items and appends "+ N more"', ({ skip }) => {
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildNotificationPayloadHandler = requireTestHandler(
+      buildNotificationPayload,
+      skip
+    );
 
     const overs = Array.from({ length: 6 }, (_, index) =>
       makeAlert({
@@ -735,8 +759,8 @@ describe('custom service worker API handler', () => {
       })
     );
 
-    const payload = buildNotificationPayload(
-      enrichAlerts(overs, 0.5),
+    const payload = buildNotificationPayloadHandler(
+      enrichAlertsHandler(overs, 0.5),
       'USD',
       0.5
     );
@@ -746,8 +770,13 @@ describe('custom service worker API handler', () => {
     ).toHaveLength(4);
   });
 
-  it('includes income-behind section when month is past half', () => {
-    if (!filterAlerts || !enrichAlerts || !buildNotificationPayload) return;
+  it('includes income-behind section when month is past half', ({ skip }) => {
+    const filterAlertsHandler = requireTestHandler(filterAlerts, skip);
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildNotificationPayloadHandler = requireTestHandler(
+      buildNotificationPayload,
+      skip
+    );
 
     const income = makeAlert({
       categoryId: 10,
@@ -758,9 +787,9 @@ describe('custom service worker API handler', () => {
       status: 'at-risk',
     });
 
-    const filtered = filterAlerts([income], [], 0.6);
-    const enriched = enrichAlerts(filtered, 0.6);
-    const payload = buildNotificationPayload(enriched, 'USD', 0.6);
+    const filtered = filterAlertsHandler([income], [], 0.6);
+    const enriched = enrichAlertsHandler(filtered, 0.6);
+    const payload = buildNotificationPayloadHandler(enriched, 'USD', 0.6);
 
     expect(payload.title).toContain('1 income behind');
     expect(payload.body).toContain('Income behind:');
@@ -768,8 +797,10 @@ describe('custom service worker API handler', () => {
     expect(findLine(payload.body, 'Salary')).toContain('short');
   });
 
-  it('suppresses income-behind alerts in the first half of the month', () => {
-    if (!filterAlerts) return;
+  it('suppresses income-behind alerts in the first half of the month', ({
+    skip,
+  }) => {
+    const filterAlertsHandler = requireTestHandler(filterAlerts, skip);
 
     const income = makeAlert({
       categoryId: 10,
@@ -780,12 +811,15 @@ describe('custom service worker API handler', () => {
       status: 'at-risk',
     });
 
-    expect(filterAlerts([income], [], 0.2)).toHaveLength(0);
-    expect(filterAlerts([income], [], 0.5)).toHaveLength(1);
+    expect(filterAlertsHandler([income], [], 0.2)).toHaveLength(0);
+    expect(filterAlertsHandler([income], [], 0.5)).toHaveLength(1);
   });
 
-  it('buckets amounts in the signature so small changes do not re-fire', () => {
-    if (!enrichAlerts || !buildSignature) return;
+  it('buckets amounts in the signature so small changes do not re-fire', ({
+    skip,
+  }) => {
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildSignatureHandler = requireTestHandler(buildSignature, skip);
 
     const base = (spent: number): RawAlert =>
       makeAlert({
@@ -796,18 +830,28 @@ describe('custom service worker API handler', () => {
         status: 'over',
       });
 
-    const sigAt140 = buildSignature(enrichAlerts([base(140)], 0.5));
-    const sigAt145 = buildSignature(enrichAlerts([base(145)], 0.5));
-    const sigAt155 = buildSignature(enrichAlerts([base(155)], 0.5));
+    const sigAt140 = buildSignatureHandler(
+      enrichAlertsHandler([base(140)], 0.5)
+    );
+    const sigAt145 = buildSignatureHandler(
+      enrichAlertsHandler([base(145)], 0.5)
+    );
+    const sigAt155 = buildSignatureHandler(
+      enrichAlertsHandler([base(155)], 0.5)
+    );
 
     expect(sigAt140).toBe(sigAt145);
     expect(sigAt140).not.toBe(sigAt155);
   });
 
-  it('decodes HTML entities in category names', () => {
-    if (!enrichAlerts || !buildNotificationPayload) return;
+  it('decodes HTML entities in category names', ({ skip }) => {
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildNotificationPayloadHandler = requireTestHandler(
+      buildNotificationPayload,
+      skip
+    );
 
-    const enriched = enrichAlerts(
+    const enriched = enrichAlertsHandler(
       [
         makeAlert({
           categoryName: 'Food &amp; Drink',
@@ -819,15 +863,19 @@ describe('custom service worker API handler', () => {
       0.5
     );
 
-    const payload = buildNotificationPayload(enriched, 'USD', 0.5);
+    const payload = buildNotificationPayloadHandler(enriched, 'USD', 0.5);
     expect(payload.body).toContain('Food & Drink');
     expect(payload.body).not.toContain('&amp;');
   });
 
-  it('respects preferred currency in formatted amounts', () => {
-    if (!enrichAlerts || !buildNotificationPayload) return;
+  it('respects preferred currency in formatted amounts', ({ skip }) => {
+    const enrichAlertsHandler = requireTestHandler(enrichAlerts, skip);
+    const buildNotificationPayloadHandler = requireTestHandler(
+      buildNotificationPayload,
+      skip
+    );
 
-    const enriched = enrichAlerts(
+    const enriched = enrichAlertsHandler(
       [
         makeAlert({
           categoryName: 'Groceries',
@@ -839,7 +887,7 @@ describe('custom service worker API handler', () => {
       0.5
     );
 
-    const payload = buildNotificationPayload(enriched, 'EUR', 0.5);
+    const payload = buildNotificationPayloadHandler(enriched, 'EUR', 0.5);
     const line = findLine(payload.body, 'Groceries');
     expect(line).toContain('40');
     expect(line).toContain('over');

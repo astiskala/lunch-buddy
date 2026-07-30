@@ -236,25 +236,29 @@ export default tseslint.config(
         'error',
         {
           default: 'disallow',
-          rules: [
+          policies: [
             // features can import from core, shared, and other features
             {
-              from: [{ type: 'features' }],
-              allow: [
-                { to: { type: 'core' } },
-                { to: { type: 'shared' } },
-                { to: { type: 'features' } },
-              ],
+              from: { element: { type: 'features' } },
+              allow: {
+                to: {
+                  element: {
+                    types: { anyOf: ['core', 'shared', 'features'] },
+                  },
+                },
+              },
             },
             // core can import from shared and other core
             {
-              from: [{ type: 'core' }],
-              allow: [{ to: { type: 'shared' } }, { to: { type: 'core' } }],
+              from: { element: { type: 'core' } },
+              allow: {
+                to: { element: { types: { anyOf: ['shared', 'core'] } } },
+              },
             },
             // shared can import from other shared only
             {
-              from: [{ type: 'shared' }],
-              allow: [{ to: { type: 'shared' } }],
+              from: { element: { type: 'shared' } },
+              allow: { to: { element: { type: 'shared' } } },
             },
           ],
         },
