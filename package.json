@@ -99,7 +99,7 @@
     "@semantic-release/git": "^11.0.1",
     "@semantic-release/github": "^12.0.9",
     "@semantic-release/release-notes-generator": "^14.1.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@vercel/node": "^5.9.5",
     "@vitest/coverage-v8": "^4.1.10",
     "angular-eslint": "^22.1.0",
