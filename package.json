@@ -101,7 +101,7 @@
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@types/node": "^26.2.0",
     "@vercel/node": "^5.9.5",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "angular-eslint": "^22.1.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
