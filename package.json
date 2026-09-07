@@ -101,7 +101,7 @@
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@types/node": "^26.4.1",
     "@vercel/node": "^5.9.5",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "angular-eslint": "^22.2.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
@@ -123,7 +123,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.65.0",
     "vercel": "^58.7.1",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": "24.x"
